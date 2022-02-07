@@ -1,0 +1,145 @@
+;; -*-asm-*-
+;;*****************
+;; Object definitions
+;; (c) 1994 Bastian Schick
+;;****************
+;; Objekt-Defs   *
+NEXT_OBJ	EQU 1
+
+OBJ_BITMAP	EQU 0
+OBJ_SCALED	EQU 1
+OBJ_GPU		EQU 2
+OBJ_BRANCH	EQU 3
+OBJ_STOP	EQU 4
+
+OBJ_SKIP	EQU 9
+OBJ_ILLEGAL	EQU 10
+
+;;**************************************
+;; BitMap oder Scaled BitMap - Objekte *
+;;**************************************
+	RSRESET
+	RSW obj_bm_type                ;; Type
+	RSW obj_bm_l                   ;; size of object (for MakeOBL)
+	RSL obj_bm_data                ;; Data
+	RSW obj_bm_x                   ;; X
+	RSW obj_bm_y                   ;; Y pos in in half line
+	RSW obj_bm_height              ;; height OR cc if BRANCH OBJECT
+	RSW obj_bm_link                ;; next object
+	RSB obj_bm_bits                ;; Bits per Pixel
+	RSB obj_bm_pitch               ;; Pitch
+	RSW obj_bm_dwidth              ;; width in Phrases
+	RSW obj_bm_iwidth              ;; canvas size (visible)
+	RSB obj_bm_cindex              ;; color index
+	RSB obj_bm_flags               ;; Flags
+	RSW obj_bm_firstpx             ;; FirstPixel
+obj_bm_len      = RSCOUNT
+
+	RSB obj_dummy1
+	RSB obj_sc_rem
+	RSB obj_sc_vscale
+	RSB obj_sc_hscale              ;; extension for Scaled BitMap
+obj_sc_len      = RSCOUNT
+
+;;*************
+;; GPU-Object *
+;;*************
+	RSRESET
+	RSW obj_gp_type
+	RSW obj_gp_l                   ;; size of object (for MakeOBL)
+	RSL obj_gp_data1
+	RSL obj_gp_data2
+	RSW obj_gp_link
+
+obj_gp_len      = RSCOUNT
+
+;;****************
+;; Branch-Object *
+;;****************
+	RSRESET
+	RSW obj_br_type
+	RSW obj_br_l                   ;; size of object (for MakeOBL)
+	RSW obj_br_y
+	RSW obj_br_cc                  ;; condition
+	RSW obj_br_link,2
+obj_br_len      = RSCOUNT
+
+;;**************
+;; Stop-Object *
+;;**************
+	RSRESET
+	RSW obj_st_type
+	RSW obj_st_l
+	RSW obj_st_int
+	RSL obj_st_data1
+	RSL obj_st_data2
+obj_st_len      = RSCOUNT
+
+ IF TJ_ASS = 0
+	macro BITMAP_OBJ data, x, y, height, bits, pitch, dwidth, iwidth, cindex, flags, firstpx, link
+	dc.w OBJ_BITMAP, obj_bm_len
+	dc.l \data
+x_\data:
+	dc.w \x
+y_\data:
+	dc.w \y
+	dc.w \height,\link
+	dc.b \bits,\pitch
+dw_\data EQU (\dwidth<<\bits)>>6
+iw_\data EQU (\iwidth<<\bits)>>6
+	dc.w dw_\data, iw_\data
+	dc.b \cindex,\flags
+	dc.w \firstpx
+	endm
+
+	macro SCALED_OBJ data, x, y, height, bits, pitch, dwidth, iwidth, cindex, flags, firstpx, rem,vscale,hscale, link
+	dc.w OBJ_SCALED, obj_bm_len
+	dc.l \data
+x_\data:
+	dc.w \x
+y_\data:
+	dc.w \y
+	dc.w \height,\link
+	dc.b \bits,\pitch
+dw_\data EQU (\dwidth<<\bits)>>6
+iw_\data EQU (\iwidth<<\bits)>>6
+	dc.w dw_\data, iw_\data
+	dc.b \cindex,\flags
+	dc.w \firstpx
+	dc.b 0,\rem,\vscale,\hscale
+	endm
+
+	macro GPU_OBJ data1,data2,link
+	dc.w OBJ_GPU, obj_gp_len
+	dc.l \data1, \data2
+	dc.w \link
+	endm
+
+	macro BRA_OBJ name,y_pos,cc,dest
+\name:
+	dc.w OBJ_BRANCH,obj_br_len
+	dc.w \y_pos         ;; y
+	if \cc = "<"
+	dc.w 1
+	else
+	if \cc = ">"
+	dc.w 2
+	else
+	if \cc = "="
+	dc.w 0
+	endif
+	endif
+	endif
+	dc.w \dest,NEXT_OBJ
+	endm
+
+	macro STOP_OBJ  data1, data2
+	dc.w OBJ_STOP, obj_st_len
+	dc.w 0
+	dc.l \data1, \data2
+	endm
+
+	macro END_OF_LIST
+	dc.w OBJ_ILLEGAL, 0
+	endm
+ ENDIF

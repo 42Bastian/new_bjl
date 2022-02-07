@@ -1,0 +1,12 @@
+****************
+* Keyboard-variables
+* created : 01.10.96 42Bastian Schick
+* last modified :
+                RSW KeyPtrIn
+                RSW KeyPtrOut
+                RSL KeyBuffer,8
+                RSL KeyLast
+                RSL KeyLastRep
+                RSL KeyCurrent
+                RSL KeyMask
+                RSW KeyCounter

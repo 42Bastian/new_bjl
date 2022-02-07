@@ -1,0 +1,55 @@
+; -*-asm-*-
+	.macro RSRESET off
+	if \# = 1
+RSCOUNT set \off
+	else
+RSCOUNT set 0
+	endif
+	endm
+
+	macro RSB label,count
+\label = RSCOUNT
+	if \# = 2
+RSCOUNT set RSCOUNT+\count
+	else
+RSCOUNT set RSCOUNT+1
+	endif
+	endm
+
+	macro RSW label,count
+\label = RSCOUNT
+	if \# = 2
+RSCOUNT set RSCOUNT+\count*2
+	else
+RSCOUNT set RSCOUNT+2
+	endif
+	endm
+
+	macro RSL label,count
+\label = RSCOUNT
+	if \# = 2
+RSCOUNT set RSCOUNT+\count*4
+	else
+RSCOUNT set RSCOUNT+4
+	endif
+	endm
+
+	macro RSP label,count
+\label = RSCOUNT
+	if \# = 2
+RSCOUNT set RSCOUNT+\count*8
+	else
+RSCOUNT set RSCOUNT+8
+	endif
+	endm
+
+	macro RSO label,count
+\label = RSCOUNT
+	if \# = 2
+RSCOUNT set RSCOUNT+\count*32
+	else
+RSCOUNT set RSCOUNT+32
+	endif
+	endm
+
+	RSRESET

@@ -1,0 +1,78 @@
+* Macros um das Joypad 1 oder 2 auszulesen
+* vom 68000Code her entwickelt
+* erstellt : 5.12.94 (B.Schick)
+*
+* Datum        Änderung
+*---------------------------------
+* 2.6.95        einige Tasten wurden nicht erkannt
+*
+; Store a bitmask of the current state of the joystick 1 in LastJoy.
+; The variables LastJoy+4 stores a state bitmap of new key 'down' events
+; (never 'up' events) since the last time JOYPAD1 was called.
+;
+; The code below may be altered by removing the AND instruction so that
+; LastJoy+4 contain a bitmap of keys that have changed (not
+; pressed). If desired, this data could be compared to LastJoy
+; to determine the actual button state.
+
+
+
+	MACRO JOYPAD1
+IFVAR \0
+JOY             REG (\0)
+VALUE           REG (\0)+1
+MASKE_GJ        REG (\0)+2
+JOY_REG         REG (\0)+3
+DUMMY0          REG (\0)+4
+ELSE
+JOY             REG 0
+VALUE           REG 1
+MASKE_GJ        REG 2
+JOY_REG         REG 3
+DUMMY0          REG 4
+ENDIF
+	movei	#$F0FFFFFC,MASKE_GJ
+	moveq	#0,JOY
+	movei	#$f14000,JOY_REG
+	subq	#1,JOY
+	movei	#$81FE,DUMMY0
+	storew	DUMMY0,(JOY_REG)
+	subq	#1,DUMMY0		; -> $810D
+	load	(JOY_REG),VALUE
+	or	MASKE_GJ,VALUE
+	rorq	#4,VALUE
+	and	VALUE,JOY	; xxApxxxx RLDUxxxx xxxxxxxx xxxxxxxx
+
+	storew	DUMMY0,(JOY_REG)
+	subq	#2,DUMMY0		; -> $810B
+	load	(JOY_REG),VALUE
+	or	MASKE_GJ,VALUE
+	rorq	#8,VALUE
+	and	VALUE,JOY	; xxApxxBx RLDU741* xxxxxxxx xxxxxxxx
+
+	storew	DUMMY0,(JOY_REG)
+	subq	#4,DUMMY0		; -> $8107
+	load	(JOY_REG),VALUE
+	or	MASKE_GJ,VALUE
+	rorq	#32-12,VALUE
+	and	VALUE,JOY	; xxApxxBx RLDU741* xxCxxxxx 2580xxxx
+
+	storew	DUMMY0,(JOY_REG)
+	movei	#$8170,DUMMY0
+	load	(JOY_REG),VALUE
+	storew	DUMMY0,(JOY_REG)
+	or	MASKE_GJ,VALUE
+	rorq	#32-8,VALUE
+	and	VALUE,JOY	; xxAPxxBx RLDU741* xxCxxxOx 2580369#
+
+	movei	#LastJoy,DUMMY0
+	not	JOY
+	load	(DUMMY0),VALUE		; VALUE = last
+	store	JOY,(DUMMY0)		; LastJoy = current
+	addqt	#4,DUMMY0
+	xor	JOY,VALUE
+	and	JOY,VALUE		; optional remove (see comment)
+	store	VALUE,(DUMMY0)		; lastJoy+4 = last
+.xx
+	UNREG JOY, VALUE, MASKE_GJ, JOY_REG, DUMMY0
+	ENDM

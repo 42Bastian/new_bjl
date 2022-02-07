@@ -1,0 +1,229 @@
+;-*-asm-*-
+IFND _GPU
+_GPU		 set 1
+ENDIF
+
+SP		reg 31		; Register reservieren
+SP.a		reg 31		; auch altenative
+LR	reg 30		; nochmal
+LR.a	reg 30
+
+;>FREE_REG	  set 29
+;>FREE_REG.a	  set 29
+
+IF _GPU
+SP_start	set $f04000
+ELSE
+SP_start	set $f1d000
+ENDIF
+
+IFD DebugUser
+
+DEBUG0		reg 30
+DEBUG1		reg 29
+DEBUG2		reg 28
+DEBUG3		reg 27
+DEBUG4		reg 26
+DEBUG5		reg 25
+
+SP_start	set SP_start-$80
+ENDIF
+
+		MACRO STOP_GPU
+		movei $f02114,r0
+		load (r0),r1
+		bclr #0,r1
+.\sgwait	store r1,(r0)
+		jr .\sgwait
+		nop
+		ENDM
+
+		MACRO STOP_DSP
+		movei $f1a114,r0
+		load (r0),r1
+		bclr #0,r1
+.\sdwait	store r1,(r0)
+		jr .\sdwait
+		nop
+		ENDM
+***************
+		MACRO EVEN
+		align 2
+		ENDM
+
+		MACRO LONG
+		align 4
+		ENDM
+
+		MACRO PHRASE
+		align 8
+		ENDM
+
+		MACRO DPHRASE
+		align 16
+		ENDM
+***************
+		MACRO PUSH
+		IFVAR \0
+		subqt #4,SP
+		store \0,(SP)
+		ENDIF
+		IFVAR \1
+		subqt #4,SP
+		store \1,(SP)
+		ENDIF
+		IFVAR \2
+		subqt #4,SP
+		store \2,(SP)
+		ENDIF
+		IFVAR \3
+		subqt #4,SP
+		store \3,(SP)
+		ENDIF
+		IFVAR \4
+		subqt #4,SP
+		store \4,(SP)
+		ENDIF
+		IFVAR \5
+		subqt #4,SP
+		store \5,(SP)
+		ENDIF
+		IFVAR \6
+		subqt #4,SP
+		store \6,(SP)
+		ENDIF
+		IFVAR \7
+		subqt #4,SP
+		store \7,(SP)
+		ENDIF
+		ENDM
+
+		MACRO POP
+		IFVAR \0
+		  load (SP),\0
+		  addqt #4,SP
+		ENDIF
+		IFVAR \1
+		  load (SP),\1
+		  addqt #4,SP
+		ENDIF
+		IFVAR \2
+		  load (SP),\2
+		  addqt #4,SP
+		ENDIF
+		IFVAR \3
+		  load (SP),\3
+		  addqt #4,SP
+		ENDIF
+		IFVAR \4
+		  load (SP),\4
+		  addqt #4,SP
+		ENDIF
+		IFVAR \5
+		  load (SP),\5
+		  addqt #4,SP
+		ENDIF
+		IFVAR \6
+		  load (SP),\6
+		  addqt #4,SP
+		ENDIF
+		IFVAR \7
+		  load (SP),\7
+		  addqt #4,SP
+		ENDIF
+		ENDM
+
+		MACRO BL
+		move  pc,LR
+		jump  \0
+		addqt #6,LR
+		ENDM
+
+		MACRO JSR
+		IFVAR \1	; Bedingung ??
+		jr \0,.\ok_jsr
+		nop
+		jr .\exit_jsr
+		nop
+		ENDIF
+.\ok_jsr	move pc,LR
+		subqt #4,SP
+		IF *<$f00000
+		  IF *&3<>0
+		    addqt #10,LR
+		  ELSE
+		    addqt #12,LR
+		  ENDIF
+		ELSE
+		   addqt #10,LR
+		ENDIF
+		IFVAR \1
+		  jump \0,\1
+		ELSE
+		  jump \0
+		ENDIF
+		store LR,(SP)
+.\exit_jsr
+
+		ENDM
+
+		MACRO RTS
+		load (SP),LR
+		jump (LR)
+		addqt #4,SP
+		ENDM
+****************
+
+		MACRO INITDEBUG
+DEBUG0		reg 30
+DEBUG1		reg 29
+DEBUG2		reg 28
+DEBUG3		reg 27
+DEBUG4		reg 26
+DEBUG5		reg 25
+		movei debug_rout,r0
+		moveta r0,DEBUG0
+		movei $f02100,r0
+		load (r0),r1
+		bclr #14,r1
+		store r1,(r0)
+		ENDM
+
+		MACRO DEBUG
+		moveta r0,DEBUG1
+		movefa DEBUG0,r0
+		JSR (r0)
+		ENDM
+
+		MACRO DEBUG_ROUT
+IFND debug_rout
+		org $f03f80-100
+debug_rout	movei $f02100,r0
+		moveta r1,DEBUG2
+		load (r0),r1
+		bset #14,r1
+		store r1,(r0)			; 2. Bank einschalten
+		moveta DEBUG1,r0
+		moveta DEBUG2,r1		; und die benutzten Reg. zurÅck
+		movei $f03f80-4,DEBUG0
+		movei .\_addq,DEBUG1
+		moveq #31,DEBUG2
+		movei $089E9419,DEBUG3		; movefa R0,R25
+		store DEBUG3,(DEBUG1)		; selbst mumifizieren
+.\dloop		addq #32,DEBUG3			; R0 <- R1
+		nop
+.\_addq		addq #4,DEBUG0
+		movefa r0,DEBUG5
+		store DEBUG3,(DEBUG1)
+		subq #1,DEBUG2
+		store DEBUG5,(DEBUG0)
+		jr nn,.\dloop
+		nop
+
+		movei $f02100,DEBUG0
+		load (DEBUG0),DEBUG1
+		bclr #14,DEBUG1
+		store DEBUG1,(DEBUG0)
+		RTS
+ENDIF
+		ENDM
