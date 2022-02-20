@@ -31,7 +31,7 @@ mandel.rom: mandel.o
 
 mandel.j64: mandel.rom
 	cat $(BJL_ROOT)/bin/Univ.bin $< >mandel.xj64
-	bzcat  allff.bin.bz2 >> mandel.xj64
+	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> mandel.xj64
 	dd if=mandel.xj64 of=mandel.j64 bs=1M count=1
 	rm mandel.xj64
 
