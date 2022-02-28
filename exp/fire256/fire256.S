@@ -188,10 +188,11 @@ CopyOBL:
 	dbra	d7,.co0
 	rts
 jag_end:
+ IF ^^defined DEBUG = 0
 	rept 256-(jag_end-start)
 	dc.b $42
 	endr
-
+ ENDIF
 ;;****************
 
 
