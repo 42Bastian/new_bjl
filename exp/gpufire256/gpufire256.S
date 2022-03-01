@@ -1,7 +1,6 @@
 ;;*****************
 ;;; GPUFire256 - Fire algo based on minfire from xeleh
-;;; Don't expect mind-blasting speed ;-)
-;;; Size: 250 bytes
+;;; Size: 252 bytes
 
 	.68000
 
@@ -90,7 +89,6 @@ ci2:
 	move.l	a0,$0100.w
 
 	move.w	#$1F01,$E0(a5)
-	move	#$2000,sr
 ;;; --------------------
 ;;; Start GPU
 ;;; --------------------
@@ -107,7 +105,6 @@ copy_gpu:
 ;;; --------------------
 ;;; Init OP
 ;;; --------------------
-//->	move.l	#4,OBL0_end+4
 	bsr.s	CopyOBL
  IF ^^defined DEBUG
 	move.l	#1,$20(a5)
@@ -154,11 +151,11 @@ gpu:
 	.incbin	"fire.o"
 gpue:
 jag_end:
-//-> IF ^^defined DEBUG = 0
-//->	rept 256-(jag_end-start)
-//->	dc.b $42
-//->	endr
-//-> ENDIF
+ IF ^^defined DEBUG = 0 & ^^defined SKUNK = 0
+	rept 256-(jag_end-start)
+	dc.b $42
+	endr
+ ENDIF
 ;;****************
 
 
