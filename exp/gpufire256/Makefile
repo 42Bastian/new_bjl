@@ -8,7 +8,6 @@ TJASS= lyxass
 RMAC= rmac
 RLN= rln
 
-
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
 TJFLAGS= -sh -w
 
@@ -20,7 +19,7 @@ ifdef SKUNK
 _68KFLAGS+= -DSKUNK
 endif
 
-upload: _68KFLAGS+= -DSKUNK
+jaggd upload: _68KFLAGS+= -DSKUNK
 
 vj: _68KFLAGS+= -DDEBUG
 

@@ -1,6 +1,7 @@
 ;;*****************
 ;;; GPUFire256 - Fire algo based on minfire from xeleh
-;;; Size: 252 bytes
+;;; Don't expect mind-blasting speed ;-)
+;;; Size: 246 bytes
 
 	.68000
 
@@ -64,31 +65,31 @@ vars		equ $2000
 
 start:
 	lea	$f00000,a5
+ IF ^^defined SKUNK
+	VideoInit		; SKUNK does not setup video!
+ ENDIF
+	move.w	#ScreenMode,$28(a5)
 ;;; --------------------
 ;;; CLUT init
 ;;; --------------------
 	lea	$400(a5),a0
 	moveq	#0,d0
-	move.w	#255,d2
+	moveq	#0,d2
 ci:	move.w	d0,(a0)+
 	cmp.w	#$F800,d0
 	bhs.s	ci1
-	add.w	#1<<11,d0
-	bra.s	ci2
+	add.w	#(1<<11)-1,d0
 ci1:
 	addq.w	#1,d0
-ci2:
-	dbra	d2,ci
- IF ^^defined SKUNK
-	VideoInit		; SKUNK does not setup video!
- ENDIF
+	addq.b	#1,d2
+	bne.s	ci
 ;;; --------------------
 ;;; Init Interrupts
 ;;; --------------------
 	lea	my_irq(pc),a0
 	move.l	a0,$0100.w
-
-	move.w	#$1F01,$E0(a5)
+	move.l	#$1f01<<16,d6
+	move.l	d6,$E0(a5)
 ;;; --------------------
 ;;; Start GPU
 ;;; --------------------
@@ -100,7 +101,8 @@ ci2:
 copy_gpu:
 	move.l	(a2)+,(a0)+
 	dbra	d0,copy_gpu
-	move.l	#(1<<11)|1,(a1)
+	moveq	#1,d0
+	move.l	d0,(a1)
 
 ;;; --------------------
 ;;; Init OP
@@ -111,7 +113,6 @@ copy_gpu:
  ELSE
 	clr.l	$20(a5)	 ; OPL = $0
  ENDIF
-	move.w	#ScreenMode,$28(a5)
 
 wait:
 	stop	#$2000		; release bus until interrupt
@@ -121,7 +122,7 @@ wait:
 ;;      IRQ      *
 my_irq:
 	bsr.s	CopyOBL
-	move.l	#$0101<<16,$E0(a5)
+	move.l	d6,$E0(a5)
 	rte
 
 CopyOBL:
