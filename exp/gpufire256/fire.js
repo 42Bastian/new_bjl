@@ -4,7 +4,7 @@
 
 screen		equ $100000
 
-	run	$802008
+	run	$f03000
 
 	moveq	#$10,r20
 	shlq	#16,r20		; r20 = $100000
@@ -15,8 +15,7 @@ screen		equ $100000
 	add	r24,r21		; r21 = $1000a0
 	move	r21,r22
 	addqt	#1,r22		; r22 = $1000a1
-	moveq	#$f,r14
-	shlq	#20,r14		; r14 = $f00000
+	movei	#$f00004,r25
 	movei	#loop,r29
 loop:
 	move	r23,r0		; r0 = 160*120
@@ -38,13 +37,12 @@ x:
 	shrq	#26,r4
 	subq	#1,r0
 	storeb	r4,(r1)
-	nop
 	jr	nz,x
 	addqt	#1,r1
 
 	move	r24,r0
 fill:
-	load	(r14+4),r2
+	loadw	(r25),r2
 	xor	r2,r4
 	add	r2,r4
 	storeb	r4,(r1)

@@ -1,3 +1,5 @@
+# makefile for tj_mandl.prg
+#
 DEMO=gpufire256
 
 OS:=$(shell uname -s)
@@ -7,12 +9,18 @@ RMAC= rmac
 RLN= rln
 
 
-ifdef DEBUG
-_68KFLAGS=-4 -i$(BJL_ROOT) -DDEBUG
-else
-_68KFLAGS=-4 -i$(BJL_ROOT)
-endif
+_68KFLAGS=-4 ~oall -i$(BJL_ROOT)
 TJFLAGS= -sh -w
+
+ifdef DEBUG
+_68KFLAGS+= -DDEBUG
+endif
+
+ifdef SKUNK
+_68KFLAGS+= -DSKUNK
+endif
+
+upload: _68KFLAGS+= -DSKUNK
 
 vj: _68KFLAGS+= -DDEBUG
 
@@ -79,4 +87,4 @@ clean:
 	rm -f *.o
 	rm -f *.equ
 	rm -f *~
-	rm -f *.j64 *.rom *.abs
+	rm -f *.j64 *.abs
