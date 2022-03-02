@@ -9,7 +9,7 @@ RMAC= rmac
 RLN= rln
 
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
-TJFLAGS= -sh -w
+TJFLAGS= -sh -w -d
 
 ifdef DEBUG
 _68KFLAGS+= -DDEBUG
