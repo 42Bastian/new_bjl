@@ -1,0 +1,32 @@
+ IF ^^defined PAL = 0
+
+PAL		EQU 1
+NTSC		EQU 2
+
+	.macro VideoData
+ IF VID_MODE = PAL
+vidinit:
+	dc.w	PAL_HMID-(PAL_WIDTH>>1)+4	; HDB1/2
+	dc.w	((PAL_WIDTH>>1)-1)|$0400	; HDE
+	dc.w	PAL_VMID-PAL_HEIGHT		; VDB
+	dc.w	(PAL_VMID+PAL_HEIGHT)|1		; VDE
+ ELSE
+vidinit:
+	dc.w	NTSC_HMID-(NTSC_WIDTH>>1)+4	; HDB1/2
+	dc.w	((NTSC_WIDTH>>1)-1)|$0400	; HDE
+	dc.w	NTSC_VMID-NTSC_HEIGHT		; VDB
+	dc.w	(NTSC_VMID+NTSC_HEIGHT)|1	; VDE
+ ENDIF
+	.endm
+
+	.macro VideoInit
+	lea	vidinit(pc),a0
+	lea	$38(a5),a1
+	move.w	(a0),(a1)+	; HDB1
+	move.l	(a0)+,(a1)+	; HDB2/HDE
+	lea	$46-$3e(a1),a1
+	move.w	(a0)+,(a1)+	; VDB
+	move.w	(a0),(a1)	; VDE
+	move.w	(a0),$4e-$48(a1)
+	endm
+ ENDIF
