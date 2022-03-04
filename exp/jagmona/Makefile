@@ -37,7 +37,7 @@ $(DEMO).abs: $(DEMO).o
 	$(RLN) -z -b -a 4000 x x -o $@ $<
 
 $(DEMO).rom: $(DEMO).o
-	@$(RLN) -z -n -a 802000 x x -o $@ $<
+	@$(RLN) -z -rw -n -a 802000 x x -o $@ $<
 
 .ONESHELL:
 $(DEMO).j64: $(DEMO).rom
