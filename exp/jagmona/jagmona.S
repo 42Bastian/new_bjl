@@ -1,6 +1,6 @@
 ;;*****************
 ;;; JagMona - A port of Mona from Ilmenit
-;;; Size: 314 bytes
+;;; Size: 312 bytes
 
 	.68000
 
@@ -63,6 +63,7 @@ loop0:
 	subq.w	#1,d6
 finish:
 	beq.s	finish
+
 	moveq	#3,d3
 	and.w	d6,d3
 	lsl.w	#5,d2
@@ -87,11 +88,11 @@ cont:
 	moveq	#$7f,d4
 	and.w	d4,d0
 	and.w	d4,d1
+	move.w	d0,a0
 	move.w	d1,d4
-	lea	screen.w,a0
 	lsl.w	#7,d4
-	add.w	d0,d4
-	move.b	d3,0(a0,d4)
+	add.w	d4,a0
+	move.b	d3,screen(a0)
 	subq.w	#1,d2
 	bne.s	loop
 	bra.s	loop0
