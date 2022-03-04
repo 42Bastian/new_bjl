@@ -1,6 +1,6 @@
 ;;*****************
 ;;; JagMona - A port of Mona from Ilmenit
-;;; Size: 312 bytes
+;;; Size: 306 bytes
 
 	.68000
 
@@ -36,14 +36,13 @@ start:
 	lea	my_irq(pc),a0
 	move.l	a0,$0100.w
 	move.l	#$1f01<<16,a6
-	move.l	a6,$e0(a5)
+	bsr.s	irq_init
 ;;; --------------------
 ;;; Init OP
 ;;; --------------------
  IF ^^defined SKUNK
 	move.w	#$2000,sr	; not needed after BIOS
  ENDIF
-	bsr.s	CopyOBL
  IF ^^defined DEBUG
 	moveq	#1,d0
 	move.l	d0,$20(a5)
@@ -99,11 +98,10 @@ cont:
 
 ;;****************
 ;;      IRQ      *
+irq_init:
+	move.w	sr,-(sp)	// prepare rte
 my_irq:
-	move.l	a6,$e0(a5)
-	bsr.s	CopyOBL
-	rte
-	;; fall thru
+
 CopyOBL:
 	lea	OBL0(pc),a3
  IF ^^defined DEBUG
@@ -116,7 +114,9 @@ CopyOBL:
 	move.l	(a3)+,(a4)+
 	move.l	(a3)+,(a4)+
 	move.w	#4,6(a4)	;add STOP object
-	rts
+
+	move.l	a6,$e0(a5)
+	rte
 
 brush:
 	dc.w $030A, $37BE, $2F9B, $072B, $0E3C, $F59B, $8A91, $1B0B
