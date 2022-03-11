@@ -1,121 +1,98 @@
-		MACRO MODULE ; NAME[,start]
-		ALIGN 4
-MODextern_\0::	EQU 1
-		IFVAR \1
-MODrun_\0::	EQU \1
-		ELSE
-		  IF GPU
-MODrun_\0::	EQU $f03040
-		  ELSE
-MODrun_\0::	EQU $f1b040
-		  ENDIF
-		ENDIF
-		RUN MODrun_\0
-		ENDM
+;;; -*-asm-*-
+;;; Overlay macros
+;;;
 
-		MACRO ENDMODULE
-		ALIGN 4
+;;; ----------------------------------------
+;;; MODULE name[,start]
+;;; Define a overlay module <name> with option <start> address.
+
+	MACRO MODULE ; NAME[,start]
+		ALIGN 8
+MODextern_\0::	EQU 1
+	IFVAR \1
+MODrun_\0::	EQU \1
+	ELSE
+	  IF GPU
+MODrun_\0::	EQU $f03040
+	  ELSE
+MODrun_\0::	EQU $f1b040
+	  ENDIF
+	ENDIF
+MODstart_\0	EQU *
+	RUN MODrun_\0
+	ENDM
+
+	MACRO ENDMODULE
+		ALIGN 8
 MODend_\0::
 MODlen_\0::	EQU MODend_\0-MODrun_\0
-		ENDM
+		RUN MODstart_\0+MODend_\0-MODrun_\0
+	ENDM
 
-		MACRO IMODULE ; NAME
-		ALIGN 4
-		include "\0.equ"		; globale Label
+;;; ----------------------------------------
+;;; IMODULE name
+;;; include a binary module <name>
+
+	MACRO IMODULE ; NAME
+	ALIGN 4
+	include "\0.equ"	; globale Label
 echo "MODULE \0 %HMODrun_\0 (%DMODlen_\0)"
 
 MODstart_\0	SET *
-		ibytes "\0.o"
-MODstart_\0	SET MODstart_\0+12		 ; Header-Offset
-		ENDM
+	ibytes "\0.o"
+MODstart_\0	SET MODstart_\0+12	 ; Header-Offset
+	ENDM
 
-		MACRO INITMODULE ; NAME
-		movei #MODrun_\0,r0		; dest-adr
-		movei #MODstart_\0,r1
-		movei #(MODlen_\0)>>2,r2
-		load (r1),r3	; first long
-.\loop_ilsub	addq #4,r1	; src += 4
-		subq #1,r2	; count -=1
-		store r3,(r0)
-		addqt #4,r0	; dst += 4
-		jr nz,.\loop_ilsub
-		load (r1),r3	; next long
-		ENDM
+;;; ----------------------------------------
+;;; INITMODULE name
+;;; Load a module from store address to run address
 
-		MACRO MCALL ; Name
-		IFVAR \0
-		movei #MODrun_\0,r0
-		JSR (r0)
-		ELSE
-		FAIL
-		ENDIF
-		ENDM
+	MACRO INITMODULE ; NAME
+		movei #MODrun_\0+$8000,r0		; dest-adr
+	movei #MODstart_\0,r1
+		ifd MODlen_\0
+		if  MODlen_\0>>3 <= 31
+		moveq #(MODlen_\0)>>3,r2
+		else
+		movei #(MODlen_\0)>>3,r2
+		endif
+		else
+		movei #(MODlen_\0)>>3,r2
+		endif
+		loadp (r1),r3	; first phrase
+.\loop_ilsub	addq #8,r1	; src += 4
+	subq #1,r2	; count -=1
+		storep r3,(r0)
+		addqt #8,r0	; dst += 4
+	jr nz,.\loop_ilsub
+		loadp (r1),r3	; next phrase
+	ENDM
 
+;;; ----------------------------------------
+;;; MCALL name
+;;; Call module <name>
+
+	MACRO MCALL ; Name
+	IFVAR \0
+	movei #MODrun_\0,r0
+	JSR (r0)
+	ELSE
+	FAIL
+	ENDIF
+	ENDM
 ****************
-		MACRO LSUB ; Name[,start]
-		ALIGN 8
-		IFVAR \1
-LSUBrun_\0::	EQU \1
-		ELSE
-		  IF GPU
-LSUBrun_\0::	EQU $f03040
-		  ELSE
-LSUBrun_\0::	EQU $f1b040
-		  ENDIF
-		ENDIF
-LSUBstart_\0::
-		RUN LSUBrun_\0
-		ENDM
-
-
-		MACRO ENDLSUB ; Name
-		IFND LSUBstart_\0
-		  FAIL "LSUBEND without LSUB"
-		ELSE
-		ALIGN 8
-LSUBend_\0::
-		RUN LSUBstart_\0+LSUBend_\0-LSUBrun_\0
-		ENDIF
-LSUBlen_\0::	equ (LSUBend_\0-LSUBrun_\0)
-
-echo "LSUB \0 %HLSUBrun_\0 (%DLSUBlen_\0) END:%HLSUBend_\0"
-		ENDM
-
-		MACRO INITLSUB ; Name
-		movei #LSUBrun_\0,r0		; dest-adr
-		movei #LSUBstart_\0,r1
-		movei #(LSUBlen_\0)>>2,r2
-		load (r1),r3	; first long
-.\loop_ilsub	addq #4,r1	; src += 4
-		subq #1,r2	; count -=1
-		store r3,(r0)
-		addqt #4,r0	; dst += 4
-		jr nz,.\loop_ilsub
-		load (r1),r3	; next long
-		ENDM
-
-		MACRO CALL ; Name
-		IFVAR \0
-		movei #LSUBrun_\0,r0
-		JSR (r0)
-		ELSE
-		FAIL
-		ENDIF
-		ENDM
-
-****************
-		MACRO GLOBALREG ; name
-\0		REG FREE_REG
+	MACRO GLOBALREG ; name
+\0	REG FREE_REG
 FREE_REG	set FREE_REG-1
-		IF FREE_REG=10
-				fail "Too many GLOBALREG !!"
-		ENDIF
-		ENDM
+	IF FREE_REG=10
+		fail "Too many GLOBALREG !!"
+	ENDIF
+	ENDM
 
-		MACRO GLOBALREG.a ; name
-\0		REG FREE_REG.a
+	MACRO GLOBALREG.a ; name
+\0	REG FREE_REG.a
 FREE_REG.a	set FREE_REG.a-1
-		IF FREE_REG.a=10
-				fail "Too many GLOBALREG.a !!"
-		ENDIF
-		ENDM
+	IF FREE_REG.a=10
+		fail "Too many GLOBALREG.a !!"
+	ENDIF
+	ENDM
