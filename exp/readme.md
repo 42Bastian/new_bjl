@@ -25,3 +25,7 @@ A minimal 68k program as template for size coding.
 ## tj_mandel
 
 Mandelbrot set calculation using GPU and DSP in parallel.
+
+## gpumandel_256
+
+Mandelbrot set in 256 bytes with GPU.
