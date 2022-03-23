@@ -19,9 +19,13 @@ vidinit:
  ENDIF
 	.endm
 
-	.macro VideoInit
+	.macro VideoInit base
 	lea	vidinit(pc),a0
+ .if \?{base}
+	lea	$38(\base),a1
+ .else
 	lea	$38(a5),a1
+ .endif
 	move.w	(a0),(a1)+	; HDB1
 	move.l	(a0)+,(a1)+	; HDB2/HDE
 	lea	$46-$3e(a1),a1
