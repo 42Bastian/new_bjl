@@ -3,65 +3,65 @@
 *
 ;Blitter Command-Register
 
-BLIT_SRCEN      EQU $00000001   ; d00:source data read (inner loop)
-BLIT_SRCENZ     EQU $00000002   ; d01:source Z read (inner loop)
-BLIT_SRCENX     EQU $00000004   ; d02:source data read (realign)
-BLIT_DSTEN      EQU $00000008   ; d03:destination data read (inner loop)
-BLIT_DSTENZ     EQU $00000010   ; d04:destination Z read (inner loop)
-BLIT_DSTWRZ     EQU $00000020   ; d05:destination Z write (inner loop)
-BLIT_CLIP_A1    EQU $00000040   ; d06:A1 clipping enable
-BLIT_NOGO       EQU $00000080   ; d07:diagnostic
-BLIT_UPDA1F     EQU $00000100   ; d08:A1 update step fraction
-BLIT_UPDA1      EQU $00000200   ; d09:A1 update step
-BLIT_UPDA2      EQU $00000400   ; d10:A2 update step
-BLIT_DSTA2      EQU $00000800   ; d11:reverse usage of A1 and A2
-BLIT_GOURD      EQU $00001000   ; d12:enable Gouraud shading
-BLIT_ZBUFF      EQU $00002000   ; d13:polygon Z data updates
-BLIT_TOPBEN     EQU $00004000   ; d14:intensity carry into byte
-BLIT_TOPNEN     EQU $00008000   ; d15:intensity carry into nibble
-BLIT_PATDSEL    EQU $00010000   ; d16:Select pattern data
-BLIT_ADDDSEL    EQU $00020000   ; d17:diagnostic
+BLIT_SRCEN       EQU $00000001   ; d00:source data read (inner loop)
+BLIT_SRCENZ      EQU $00000002   ; d01:source Z read (inner loop)
+BLIT_SRCENX      EQU $00000004   ; d02:source data read (realign)
+BLIT_DSTEN       EQU $00000008   ; d03:destination data read (inner loop)
+BLIT_DSTENZ      EQU $00000010   ; d04:destination Z read (inner loop)
+BLIT_DSTWRZ      EQU $00000020   ; d05:destination Z write (inner loop)
+BLIT_CLIP_A1     EQU $00000040   ; d06:A1 clipping enable
+BLIT_NOGO        EQU $00000080   ; d07:diagnostic
+BLIT_UPDA1F      EQU $00000100   ; d08:A1 update step fraction
+BLIT_UPDA1       EQU $00000200   ; d09:A1 update step
+BLIT_UPDA2       EQU $00000400   ; d10:A2 update step
+BLIT_DSTA2       EQU $00000800   ; d11:reverse usage of A1 and A2
+BLIT_GOURD       EQU $00001000   ; d12:enable Gouraud shading
+BLIT_ZBUFF       EQU $00002000   ; d13:polygon Z data updates
+BLIT_TOPBEN      EQU $00004000   ; d14:intensity carry into byte
+BLIT_TOPNEN      EQU $00008000   ; d15:intensity carry into nibble
+BLIT_PATDSEL     EQU $00010000   ; d16:Select pattern data
+BLIT_ADDDSEL     EQU $00020000   ; d17:diagnostic
 ; d18-d20: Z comparator inhibit
-BLIT_ZMODELT    EQU $00040000   ;                source < destination
-BLIT_ZMODEEQ    EQU $00080000   ;                source = destination
-BLIT_ZMODEGT    EQU $00100000   ;                source > destination
+BLIT_ZMODELT     EQU $00040000   ;  source < destination
+BLIT_ZMODEEQ     EQU $00080000   ;  source = destination
+BLIT_ZMODEGT     EQU $00100000   ;  source > destination
 ; d21-d24: Logic function control
-BLIT_LFU_NAN    EQU $00200000   ;                !source & !destination
-BLIT_LFU_NA     EQU $00400000   ;                !source &  destination
-BLIT_LFU_AN     EQU $00800000   ;                 source & !destination
-BLIT_LFU_A      EQU $01000000   ;                 source &  destination
+BLIT_LFU_NAN     EQU $00200000   ; !source & !destination
+BLIT_LFU_NA      EQU $00400000   ; !source &  destination
+BLIT_LFU_AN      EQU $00800000   ;  source & !destination
+BLIT_LFU_A       EQU $01000000   ;  source &  destination
 
 ; The following are ALL 16 possible logical operations of the LFUs
 
-BLIT_LFU_ZERO   EQU $00000000   ; All Zeros
-BLIT_LFU_NSAND  EQU $00200000   ; NOT Source AND NOT Destination
-BLIT_LFU_NSAD   EQU $00400000   ; NOT Source AND Destination
-BLIT_LFU_NOTS   EQU $00600000   ; NOT Source
-BLIT_LFU_SAND   EQU $00800000   ; Source AND NOT Destination
-BLIT_LFU_NOTD   EQU $00A00000   ; NOT Destination
-BLIT_LFU_N_SXORD                EQU $00C00000     ; NOT (Source XOR Destination)
-BLIT_LFU_NSORND EQU $00E00000   ; NOT Source OR NOT Destination
-BLIT_LFU_SAD    EQU $01000000   ; Source AND Destination
-BLIT_LFU_SXORD  EQU $01200000   ; Source XOR Destination
-BLIT_LFU_D      EQU $01400000   ; Destination
-BLIT_LFU_NSORD  EQU $01600000   ; NOT Source OR Destination
-BLIT_LFU_S      EQU $01800000   ; Source
-BLIT_LFU_SORND  EQU $01A00000   ; Source OR NOT Destination
-BLIT_LFU_SORD   EQU $01C00000   ; Source OR Destination
-BLIT_LFU_ONE    EQU $01E00000   ; All Ones
+BLIT_LFU_ZERO    EQU $00000000   ; All Zeros
+BLIT_LFU_NSAND   EQU $00200000   ; NOT Source AND NOT Destination
+BLIT_LFU_NSAD    EQU $00400000   ; NOT Source AND Destination
+BLIT_LFU_NOTS    EQU $00600000   ; NOT Source
+BLIT_LFU_SAND    EQU $00800000   ; Source AND NOT Destination
+BLIT_LFU_NOTD    EQU $00A00000   ; NOT Destination
+BLIT_LFU_N_SXORD EQU $00C00000   ; NOT (Source XOR Destination)
+BLIT_LFU_NSORND  EQU $00E00000   ; NOT Source OR NOT Destination
+BLIT_LFU_SAD     EQU $01000000   ; Source AND Destination
+BLIT_LFU_SXORD   EQU $01200000   ; Source XOR Destination
+BLIT_LFU_D       EQU $01400000   ; Destination
+BLIT_LFU_NSORD   EQU $01600000   ; NOT Source OR Destination
+BLIT_LFU_S       EQU $01800000   ; Source
+BLIT_LFU_SORND   EQU $01A00000   ; Source OR NOT Destination
+BLIT_LFU_SORD    EQU $01C00000   ; Source OR Destination
+BLIT_LFU_ONE     EQU $01E00000   ; All Ones
 
 ; These are some common combinations with less boolean names
 
-BLIT_LFU_REPLACE                EQU $01800000     ; Source REPLACEs destination
-BLIT_LFU_XOR    EQU $01200000   ; Source XOR with destination
-BLIT_LFU_CLEAR  EQU $00000000   ; CLEAR destination
+BLIT_LFU_REPLACE EQU $01800000   ; Source REPLACEs destination
+BLIT_LFU_XOR     EQU $01200000   ; Source XOR with destination
+BLIT_LFU_CLEAR   EQU $00000000   ; CLEAR destination
 
-BLIT_CMPDST     EQU $02000000   ; d25: pixel compare pattern & dest
-BLIT_BCOMPEN    EQU $04000000   ; d26: bit compare write inhibit
-BLIT_DCOMPEN    EQU $08000000   ; d27: data compare write inhibit
-BLIT_BKGWREN    EQU $10000000   ; d28: data write back
-BLIT_BUSHI      EQU $20000000   ; d29: blitter priority
-BLIT_SRCSHADE   EQU $40000000   ; d30: shade src data w/IINC value
+BLIT_CMPDST      EQU $02000000   ; d25: pixel compare pattern & dest
+BLIT_BCOMPEN     EQU $04000000   ; d26: bit compare write inhibit
+BLIT_DCOMPEN     EQU $08000000   ; d27: data compare write inhibit
+BLIT_BKGWREN     EQU $10000000   ; d28: data write back
+BLIT_BUSHI       EQU $20000000   ; d29: blitter priority
+BLIT_SRCSHADE    EQU $40000000   ; d30: shade src data w/IINC value
 ;*======================================================================*
 ;* BLITTER Flags (A1 or A2) register equates
 ;*======================================================================*
