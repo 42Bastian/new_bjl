@@ -9,7 +9,7 @@ vidinit:
 	dc.w	PAL_HMID-(PAL_WIDTH>>1)+4	; HDB1/2
 	dc.w	((PAL_WIDTH>>1)-1)|$0400	; HDE
 	dc.w	PAL_VMID-PAL_HEIGHT		; VDB
-	dc.w	(PAL_VMID+PAL_HEIGHT)|1		; VDE
+	dc.w	(PAL_VMID+PAL_HEIGHT)		; VDE
  ELSE
 vidinit:
 	dc.w	NTSC_HMID-(NTSC_WIDTH>>1)+4	; HDB1/2
@@ -30,7 +30,7 @@ vidinit:
 	move.l	(a0)+,(a1)+	; HDB2/HDE
 	lea	$46-$3e(a1),a1
 	move.w	(a0)+,(a1)+	; VDB
-	move.w	(a0),(a1)	; VDE
+	move.w	#$ffff,(a1)	; VDE
 	move.w	(a0),$4e-$48(a1)
 	endm
  ENDIF
