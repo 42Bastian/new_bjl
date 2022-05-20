@@ -60,6 +60,31 @@ LBUFA		EQU REGSTART+$0800	; Line Buffer A
 LBUFB		EQU REGSTART+$1000	; Line Buffer B
 LBUFC		EQU REGSTART+$1800	; Line Buffer Current
 
+;;; The following are Video Mode register flags
+
+VIDEN	EQU     $0001	        ; Enable video-time base generator
+
+CRY16	EQU     $0000	        ; Enable 16-bit CRY mode
+RGB24	EQU     $0002	        ; Enable 24-bit RGB mode
+DIRECT16	EQU     $0004	        ; Enable 16-bit DIRECT mode
+RGB16	EQU     $0006	        ; Enable 16-bit RGB mode
+
+GENLOCK	EQU     $0008	        ; Not Supported in Jaguar Console
+INCEN	EQU     $0010	        ; Enable encrustation
+BINC	EQU     $0020	        ; Select local border color
+CSYNC	EQU     $0040	        ; Enable composite sync
+BGEN	EQU     $0080	        ; Clear line buffer to BG
+VARMOD	EQU     $0100	        ; Enable variable-color resolution mode
+
+PWIDTH1	EQU     $0000	        ; Select pixels 1 clock wide
+PWIDTH2	EQU     $0200	        ; Select pixels 2 clocks wide
+PWIDTH3	EQU     $0400	        ; Select pixels 3 clocks wide
+PWIDTH4	EQU     $0600	        ; Select pixels 4 clocks wide
+PWIDTH5	EQU     $0800	        ; Select pixels 5 clocks wide
+PWIDTH6	EQU     $0A00	        ; Select pixels 6 clocks wide
+PWIDTH7	EQU     $0C00	        ; Select pixels 7 clocks wide
+PWIDTH8	EQU     $0E00	        ; Select pixels 8 clocks wide
+
 ;
 ;       GPU REGISTERS
 ;
