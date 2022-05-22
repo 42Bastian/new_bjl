@@ -135,7 +135,7 @@ clearmem:         movem.l d0-d3,-(a0)
 		clr.l   Cursor(a6)
 		lea     Hallo(pc),a0
 		bsr     PrintA0
-		moveq   #0*4,d0
+		moveq   #4*4,d0
 
 again:            move.l  d0,object_ptr(a6)
 		lea     faces_tab(pc),a0
@@ -761,9 +761,10 @@ xy_text:	DC.W 14,70               ; x,y
 		DC.B 0,0
 		DC.W 0
 
-screen1_type:	DC.W 0,obj_bm_len
+screen1_type:
+		DC.W 0,obj_bm_len
 		DC.L screen1
-xy_gra1:	DC.W 40,70+2*max_y_txt,max_y_gr
+xy_gra1:	DC.W 14,70+2*max_y_txt,max_y_gr
 		DC.W NEXT_OBJ
 		DC.B 4,1
 		DC.W max_x*16>>6,max_x*16>>6
@@ -771,9 +772,10 @@ xy_gra1:	DC.W 40,70+2*max_y_txt,max_y_gr
 		DC.w 0
 
 
-screen2_type:     DC.W $ffff,obj_bm_len
+screen2_type:
+		DC.W $ffff,obj_bm_len
 		DC.L screen2
-xy_gra2:          DC.W 40,70+2*max_y_txt,max_y_gr
+xy_gra2:	DC.W 14,70+2*max_y_txt,max_y_gr
 		DC.W NEXT_OBJ
 		DC.B 4,1
 		DC.W max_x*16>>6,max_x*16>>6
@@ -783,9 +785,10 @@ xy_gra2:          DC.W 40,70+2*max_y_txt,max_y_gr
 		DC.W $AFFE
 ******************
 * swap
-swap:             subq.w  #1,swap_flag(a6)
-		stop    #$2000
-		rts
+swap:
+	subq.w  #1,swap_flag(a6)
+	stop    #$2000
+	rts
 ******************
 * IRQ
 my_irq:		movem.l d0-d1/a0,-(sp)

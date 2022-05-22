@@ -14,7 +14,7 @@
 
 GPU	set 1
 _8Bit	set 0
-GOURAUD	set 1
+GOURAUD	set 0
 HIDDEN	set 1
 
 
@@ -26,14 +26,14 @@ HIDDEN	set 1
 *
 * parameters
 *
-XYZ_POS	equ GPU_ENDRAM-3*4
-ANGLE	equ XYZ_POS-3*4
+XYZ_POS		equ GPU_ENDRAM-3*4
+ANGLE		equ XYZ_POS-3*4
 PROJ_POINTS	equ ANGLE-4
-POINTS	equ PROJ_POINTS-4
-X_SAVE	equ POINTS-4
-SCREEN	equ X_SAVE-4
-FACES::	equ SCREEN-4
-FLAG	equ FACES-4
+POINTS		equ PROJ_POINTS-4
+X_SAVE		equ POINTS-4
+SCREEN		equ X_SAVE-4
+FACES::		equ SCREEN-4
+FLAG		equ FACES-4
 
 
 * rez
@@ -76,6 +76,7 @@ ENDIF
 	ENDM
 
 ****************
+
 	 run $f03000
 ****************
 * Init
@@ -86,7 +87,8 @@ ENDIF
 	store	r1,(r0)
 ****************
 * main loop
-main_loop	movei	#FLAG,r0
+main_loop:
+	movei	#FLAG,r0
 	xor	r1,r1
 	store	r1,(r0)
 .wait	cmpq	#0,r1
@@ -96,13 +98,14 @@ main_loop	movei	#FLAG,r0
 ****************
 * CLS
 
-blitter	reg 14
+blitter		reg 14
 screen_ptr	reg 1
-dummy	reg 0
+dummy		reg 0
+
 CLS::	movei	#BLIT_A1_BASE,blitter
 	movei	#SCREEN,screen_ptr
 	movei	#BLIT_WID384|BLIT_PITCH1|BLIT_PIXEL32,dummy
-	load (screen_ptr),screen_ptr
+	load	(screen_ptr),screen_ptr
 	store	dummy,(blitter+4)
 	xor	dummy,dummy
 	store	screen_ptr,(blitter)
@@ -111,11 +114,11 @@ CLS::	movei	#BLIT_A1_BASE,blitter
 	movei	#BLIT_PATD,blitter
 	store	dummy,(blitter)
 	store	dummy,(blitter+4)
-	    IF _8Bit
+ IF _8Bit
 	movei	#1<<16|(384*200)>>2,dummy
-	    ELSE
+ ELSE
 	movei	#1<<16|(384*200<<1)>>2,dummy
-	    ENDIF
+ ENDIF
 	movei	#BLIT_CMD,blitter
 	store	dummy,(blitter+4)
 	movei	#BLIT_PATDSEL,dummy
@@ -128,54 +131,56 @@ UNREG blitter,screen_ptr
 * c=cos(beta)  d=sin(beta)
 * e=cos(alpha) f=sin(alpha)
 
-a	reg 20
-b	reg 19
-c	reg 18
-d	reg 17
-e	reg 16
-f	reg 15
-af	reg 14
-bf	reg 13
-ae	reg 12
-be	reg 11
+a		reg 20
+b		reg 19
+c		reg 18
+d		reg 17
+e		reg 16
+f		reg 15
+af		reg 14
+bf		reg 13
+ae		reg 12
+be		reg 11
 mtx_addr	reg 10
 
-m1	reg 9	;
-m2	reg 8	;
-m3	reg 7	;          / ac adf-be ade+bf \
-m4	reg 6	;          |                  |
-m5	reg 5	; D(x,y,z)=| bc bdf+ae bde-af |
-m6	reg 4	;          |                  |
-m7	reg 3	;          \-d    cf     ce   /
-m8	reg 2	;
-m9	reg 1	;
+m1		reg 9	;
+m2		reg 8	;
+m3		reg 7	;          / ac adf-be ade+bf \
+m4		reg 6	;          |                  |
+m5		reg 5	; D(x,y,z)=| bc bdf+ae bde-af |
+m6		reg 4	;          |                  |
+m7		reg 3	;          \-d    cf     ce   /
+m8		reg 2	;
+m9		reg 1	;
 
 rotate::
 	movei	#ANGLE,r14	; fetch cosine and sine
-	load	(r14),a	; from the table
+	movei	#64,dummy
+	load	(r14),a		; from the table
 	load	(r14+4),c
 	load	(r14+8),e
-	movei	#64,dummy
 	move	a,b
-	move	c,d
-	move	e,f
 	add	dummy,a
+	move	c,d
 	add	dummy,c
+	move	e,f
 	add	dummy,e
 
-	movei	#$ff,dummy
-	and	dummy,b
-	and	dummy,d
-	and	dummy,f
-	shlq	#2,b
-	shlq	#2,d
-	shlq	#2,f
-	and	dummy,a
-	and	dummy,c
-	and	dummy,e
-	shlq	#2,a
-	shlq	#2,c
-	shlq	#2,e
+	shlq	#24,b
+	shlq	#24,d
+	shrq	#22,b
+	shrq	#22,d
+
+	shlq	#24,f
+	shlq	#24,a
+	shrq	#22,f
+	shrq	#22,a
+
+	shlq	#24,c
+	shlq	#24,e
+	shrq	#22,c
+	shrq	#22,e
+
 	movei	#SinTab,r14
 	load	(r14+a),a	; sin alpha
 	load	(r14+b),b	; cos alpha
@@ -187,65 +192,60 @@ rotate::
 ** compute rotational matrix
 *
 	move	a,af
-	imult	f,af
-	sharq	#15,af
-
 	move	a,ae
+	imult	f,af
 	imult	e,ae
+	sharq	#15,af
 	sharq	#15,ae
 
 	move	b,bf
-	imult	f,bf
-	sharq	#15,bf
-
 	move	b,be
+	imult	f,bf
 	imult	e,be
+	sharq	#15,bf
 	sharq	#15,be
 
 	move	a,m1
-	imult	c,m1
-	sharq	#15,m1
-
 	move	af,m2
+	imult	c,m1
 	imult	d,m2
+	sharq	#15,m1
 	sharq	#15,m2
 
 	sub	be,m2
 
 	move	ae,m3
-	imult	d,m3
-	sharq	#15,m3
-	add	bf,m3
-
 	move	b,m4
+	imult	d,m3
 	imult	c,m4
+	sharq	#15,m3
 	sharq	#15,m4
 
-	move	bf,m5
-	imult	d,m5
-	sharq	#15,m5
-	add	ae,m5
+	add	bf,m3
 
+	move	bf,m5
 	move	be,m6
+	imult	d,m5
 	imult	d,m6
+	sharq	#15,m5
 	sharq	#15,m6
+
+	add	ae,m5
 	sub	af,m6
 
 	move	d,m7
-	neg	m7
-
 	move	f,m8
+	neg	m7
 	imult	c,m8
-	sharq	#15,m8
-
 	move	c,m9
+	sharq	#15,m8
 	imult	e,m9
 	sharq	#15,m9
 *
-* now move	it into the local ram (for	MMULT !)
+* now move it into the local ram (for MMULT !)
 *
 	movei	#$f02104,mtx_addr
-	movei	#3,dummy	; 3x1-Matrix
+	moveq	#3,dummy		; 3x1-Matrix
 	store	dummy,(mtx_addr)
 	addq	#4,mtx_addr
 	movei	#rot_mat,r14
@@ -268,27 +268,26 @@ rot_mat_ptr	reg 1
 
 ****************
 * rotate and project
-counter	REG 29
-LOOP	REG 28
-dist	REG 27
+counter		REG 29
+LOOP		REG 28
+dist		REG 27
 
-xcenter	REG 25
-ycenter	REG 24
+xcenter		REG 25
+ycenter		REG 24
 hi_phrase	REG 23
-x0	reg 22
-y0	reg 21
-z0	reg 20
-x1	reg 19
-y1	reg 18
-z1	reg 17
-xyz_ptr	reg 16
+x0		reg 22
+y0		reg 21
+z0		reg 20
+x1		reg 19
+y1		reg 18
+z1		reg 17
+xyz_ptr		reg 16
 proj_ptr	reg 15
 
-x_pos	reg 14
-y_pos	reg 13
-z_pos	reg 12
-CONT1	reg 11
-
+x_pos		reg 14
+y_pos		reg 13
+z_pos		reg 12
+CONT1		reg 11
 
 proj_ptr.a	reg 15
 
@@ -317,20 +316,19 @@ proj_ptr.a	reg 15
 	movei	#max_x>>1,xcenter
 	movei	#max_y>>1,ycenter
 
-
 .loop_xyz
 	moveta	y0,r0
 	load	(hi_phrase),x0
 	addq	#8,xyz_ptr
 	moveta	x0,r1
 	store	rot_mat_ptr,(mtx_addr)	; GPU increases address !!
-	nop		   ; *** clear WRITE BACK score-board
-	mmult	r0,x1	   ; x1=m1*x0+m2*y0+m3*z0
-	nop		   ; *** clear WRITE BACK score-board
-	mmult	r0,y1	   ; y1=m4*x0+m5*y0+m6*z0
+	nop			; *** clear WRITE BACK score-board
+	mmult	r0,x1		; x1=m1*x0+m2*y0+m3*z0
+	nop			; *** clear WRITE BACK score-board
+	mmult	r0,y1		; y1=m4*x0+m5*y0+m6*z0
 	sharq	#15,x1
-	nop		   ; *** clear WRITE BACK score-board
-	mmult	r0,z1	   ; z1=m7*x0+m8*y0+m9*z0
+	nop			; *** clear WRITE BACK score-board
+	mmult	r0,z1		; z1=m7*x0+m8*y0+m9*z0
 	sharq	#15,y1
 	sharq	#15,z1
 ****************
@@ -351,8 +349,8 @@ proj_ptr.a	reg 15
 	abs	y1
 	mult	dist,x1
 	add	z_pos,z1
-	mult dist,y1
-	add	dist,z1	; z'=z+z_pos+dist
+	mult	dist,y1
+	add	dist,z1		; z'=z+z_pos+dist
 	move	z1,dummy
 	jump	z,(CONT1)
 	abs	z1
@@ -367,15 +365,15 @@ proj_ptr.a	reg 15
 	nop
 	neg	y1
 
-
-.cont1	add	xcenter,x1
+.cont1
+	add	xcenter,x1
 	add	ycenter,y1
 	shlq	#16,x1
 	shlq	#16,y1
 	shrq	#16,y1
 	or	x1,y1
 	subq	#1,counter
-	store	y1,(proj_ptr)   ; save Xscreen/Yscreen
+	store	y1,(proj_ptr)	; save Xscreen/Yscreen
 	addqt	#4,proj_ptr
 	jump	nz,(LOOP)
 	loadp	(xyz_ptr),y0
@@ -388,40 +386,40 @@ proj_ptr.a	reg 15
 	UNREG mtx_addr,rot_mat_ptr
 ****************
 * draw polys
-RETURN	reg 30
+RETURN		reg 30
 x_save.a	reg 29
-xy0.a	reg 28
+xy0.a		reg 28
 inc_color.a	reg 27
-EDGE.a	reg 26
-GOON.a	reg 25
+EDGE.a		reg 26
+DRAW_LINES.a	reg 25
 
-x0	reg 26
-y0	reg 25
-x1	reg 24
-y1	reg 23
-x2	reg 22
-y2	reg 21
+x0		reg 26
+y0		reg 25
+x1		reg 24
+y1		reg 23
+x2		reg 22
+y2		reg 21
 
-blitter	reg 14
+blitter		reg 14
 proj_ptr	reg 15
-pptr	reg 10
-pptr.a	reg 10
+pptr		reg 10
+pptr.a		reg 10
 
-color	reg 6
+color		reg 6
 screen_ptr	reg 5
-POLYGON	reg 4
-ENDE	reg 3
-LOOP	reg 2
+POLYGON		reg 4
+ENDE		reg 3
+LOOP		reg 2
 
 * REG 0 = dummy
 
-
-Drawfaces::	movei	#FACES,r14
+Drawfaces::
+	movei	#FACES,r14
 	load	(r14),pptr
 	moveta	pptr,pptr.a
 	load	(r14+4),screen_ptr
 *load	(r14+8),dummy
-	movei	#_x_save,dummy	 ; save left/right X in internal RAM
+	movei	#_x_save,dummy		; save left/right X in internal RAM
 	moveta	dummy,x_save.a
 	movei	#.loop,LOOP
 	movei	#.exit,ENDE
@@ -438,7 +436,7 @@ Drawfaces::	movei	#FACES,r14
 	movei	#Edge,dummy
 	moveta	dummy,EDGE.a
 	movei	#DrawLines,dummy
-	moveta	dummy,GOON.a
+	moveta	dummy,DRAW_LINES.a
 *
 ** setup Blitter
 *
@@ -452,8 +450,6 @@ Drawfaces::	movei	#FACES,r14
 	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WIDTH|BLIT_XADDPHR,dummy
  ENDIF
 	store	dummy,(blitter+$04)
-;movei	#max_y<<16|max_x,dummy
-;store	dummy,(blitter+$08)
 	movei	#$00010000,dummy
 	store	dummy,(blitter+$1c)
 	moveq	#0,dummy
@@ -477,7 +473,8 @@ Drawfaces::	movei	#FACES,r14
 
 	movei	#$f02238,blitter
 ****************
-.loop	load	(pptr),dummy
+.loop
+	load	(pptr),dummy
 	addq	#4,pptr
 	cmpq	#-1,dummy
 	load	(proj_ptr+dummy),y0
@@ -539,42 +536,43 @@ return	movefa	inc_color.a,dummy
 * faces	: point-list
 * proj	:  x1,y1,x2,y2,x3,y3..
 
-x0.a	reg 24
-y0.a	reg 23
+x0.a		reg 24
+y0.a		reg 23
 * pptr = 10
-point	reg 11
-EDGE	reg 12
-LOOP	reg 13
-GOON	reg 14
+point		reg 11
+EDGE		reg 12
+POLY_LOOP	reg 13
+DRAW_LINES	reg 14
 
-x1	reg 20
-y1	reg 21
-x2	reg 22
-y2	reg 23
+x1		reg 20
+y1		reg 21
+x2		reg 22
+y2		reg 23
 
 
-polygon::	movefa	x_save.a,dummy
+polygon::
+
+	;; Setup min/max X table
+	movefa	x_save.a,dummy
 	movei	#max_y,point
-	subq	#4,dummy
-	movei	#max_x<<16,x1
-
-.loop0	subq	#1,point
-	addqt	#4,dummy
+	movei	#max_x<<16,x1	; minX:maxX
+.loop0
+	subq	#1,point
+	store	x1,(dummy)
 	jr	nz,.loop0
-	store	x1,(dummy)	; Tabelle init
+	addqt	#4,dummy
 
-	movei	#.loop1,LOOP
+	movei	#.poly_loop,POLY_LOOP
 	movefa	pptr.a,pptr
 	movefa	proj_ptr.a,proj_ptr
 
 	movefa	EDGE.a,EDGE
-	movefa	GOON.a,GOON
+	movefa	DRAW_LINES.a,DRAW_LINES
 
+	;; get first point
 	load	(pptr),point
 	addq	#4,pptr
-	cmpq	#-1,point
 	moveta	pptr,pptr.a
-	jump	z,(GOON)
 	load	(proj_ptr+point),y1
 	move	y1,x1
 	shlq	#16,y1
@@ -585,11 +583,12 @@ polygon::	movefa	x_save.a,dummy
 	moveta	x1,x0.a
 	moveta	y1,y0.a
 
-.loop1	load	(pptr),point
+.poly_loop
+	load	(pptr),point
 	addq	#4,pptr
-	cmpq	#-1,point
+	cmpq	#-1,point	; last?
 	moveta	pptr,pptr.a
-	jump	z,(GOON)
+	jump	z,(DRAW_LINES)
 	load	(proj_ptr+point),y2
 	movefa	y0.a,y1
 	movefa	x0.a,x1
@@ -602,7 +601,7 @@ polygon::	movefa	x_save.a,dummy
 	moveta	x2,x0.a
 	moveta	y2,y0.a
 
-	UNREG point,EDGE,LOOP,GOON,x1,x2,y1,y2
+	UNREG point,EDGE,DRAW_LINES,x1,x2,y1,y2
 ****************
 * edge (x1,y1)-(x2,y2)
 * Bresenham-Algo.
@@ -630,7 +629,7 @@ Edge::	move	y2,delta_y
 	sub	y1,delta_y
 	move	y1,r25
 	jr	nn,.cont0
-	move	x1,dummy	 ; (x1,y1) <-> (x2,y2)
+	move	x1,dummy	; (x1,y1) <-> (x2,y2)
 	move	x2,x1
 	move	dummy,x2
 	move	r24,y1
@@ -649,13 +648,13 @@ Edge::	move	y2,delta_y
 	jump	nn,(LOOP)	; delta_x<delta_y => LOOP
 	nop
 ***************
+	;; delta_y >= delta_x
 	shlq	#1,delta_y
 	movei	#.loop0,LOOP
 	move	delta_y,delta
 	move	delta_x,step
 	sub	delta_x,delta
 	shlq	#1,delta_x
-
 
 	cmpq	#0,y1
 	movei	#.positiv0,dummy
@@ -671,22 +670,22 @@ Edge::	move	y2,delta_y
 	subq	#1,step
 	jr	nn,.loop001
 	add	delta_y,delta
-	jump	(r13)	    ;.exit
+	jump	(POLY_LOOP)		;.exit
 	nop
 .cont04
 	add	delta_y,delta
 	sub	delta_x,delta
 	subq	#1,step
-	jump	n,(r13)	  ;.exit
+	jump	n,(POLY_LOOP)	  ;.exit
 	addq	#1,y1
 	jr	n,.loop002
 	cmpq	#0,delta
 .positiv0
 	sub	y1,y_count
-	jump	n,(r13)	  ;.exit
+	jump	n,(POLY_LOOP)		;.exit
 	movefa	x_save.a,ptr
-	jump	z,(r13)	  ;.exit
-	shlq	#2,y1	    ; als ptr fr x-save
+	jump	z,(POLY_LOOP)		;.exit
+	shlq	#2,y1		; as ptr for x-save
 	add	y1,ptr
 
 CONT2	reg 21		; redef
@@ -718,18 +717,18 @@ CONT3	reg 16
 	subq	#1,step
 	jump	nn,(LOOP)
 	add	delta_y,delta
-	jump	(r13)
+	jump	(POLY_LOOP)
 	nop
 
 .cont4	sub	delta_x,delta
 	subq	#1,y_count
 	store	dummy1,(ptr)
-	jump	z,(r13)	  ;exit
+	jump	z,(POLY_LOOP)	  ;exit
 	subq	#1,step
 	addqt	#4,ptr
 	jump	nn,(LOOP)
 	load	(ptr),dummy1
-	jump	(r13)
+	jump	(POLY_LOOP)
 	nop
 ****************
 .cont5	movei	#.loop1,LOOP
@@ -754,7 +753,7 @@ CONT3	reg 16
 	subq	#1,step
 	jr	nn,.loop11
 	nop
-	jump	(r13)	    ;exit
+	jump	(POLY_LOOP)		;exit
 .cont18	add	d_x,x1
 	sub	delta_y,delta
 	addq	#1,y1
@@ -762,14 +761,14 @@ CONT3	reg 16
 	subq	#1,step
 	jr	nn,.loop11
 	nop
-.exit01	jump	(r13)
+.exit01	jump	(POLY_LOOP)
 	nop
 
 .positiv1	sub	y1,y_count
-	jump	n,(r13)	  ;exit
+	jump	n,(POLY_LOOP)		;exit
 	movefa	x_save.a,ptr
-	jump	z,(r13)	  ;.exit
-	shlq	#2,y1	    ; ptr for	x-save
+	jump	z,(POLY_LOOP)		;.exit
+	shlq	#2,y1		; ptr for x-save
 	add	y1,ptr
 
 CONT6	reg 21		; redef
@@ -798,43 +797,43 @@ CONT7	reg 16		; redef
 	jr	nn,.cont8
 	subq	#1,y_count
 	addqt	#4,ptr
-	jump	z,(r13)	  ; exit
+	jump	z,(POLY_LOOP)	  ; exit
 	subq	#1,step
 	load	(ptr),dummy
 	jump	nn,(LOOP)
 	add	delta_x,delta
-	jump	(r13)
+	jump	(POLY_LOOP)
 	nop
 
 .cont8	addqt	#4,ptr
-	jump	z,(r13)	  ; y_count=0 => exit
+	jump	z,(POLY_LOOP)		; y_count=0 => exit
 	sub	delta_y,delta
 	subq	#1,step
 	load	(ptr),dummy
 	jump	nn,(LOOP)	; step >= 0 => LOOP
 	add	d_x,x1
-	jump	(r13)
+	jump	(POLY_LOOP)
 	nop
 
 	unreg	LOOP,delta_x,delta_y,x1,y1,y2,x2,dummy1
 ****************
 * draw H-Lines
 
-pel_ptr	reg 29
-bstart	reg 28
-xptr	reg 27
-LOOP2	reg 26
-LOOP	reg 25
+pel_ptr		reg 29
+bstart		reg 28
+xptr		reg 27
+LOOP2		reg 26
+LOOP		reg 25
 line_counter	reg 24
 leave_it	reg 23
-x1	reg 22
-x2	reg 21
-y1	reg 20
+x1		reg 22
+x2		reg 21
+y1		reg 20
 
-CONT1	reg 18
+CONT1		reg 18
 bcounter	reg 17
 bpattern	reg 16
-blitter	reg 14
+blitter		reg 14
 
 * dummy = 0
 DrawLines::
@@ -855,17 +854,20 @@ DrawLines::
 	movei	#.loop3,LOOP
 	movei	#.loop2,LOOP2
 	movei	#.cont1,CONT1
+
+	;; find lowest Y
 	xor	y1,y1
 	subq	#1,y1
 .loop2	load	(xptr),x2
 	subq	#1,line_counter
 	addqt	#4,xptr
 	jump	z,(RETURN)
-	cmp	leave_it,x2
+	cmp	leave_it,x2	; still original min/max?
 	addqt	#1,y1
 	jump	z,(LOOP2)
 
-.loop3	move	x2,x1
+.loop3
+	move	x2,x1
 	shlq	#16,x2
 	jump	n,(CONT1)
 	sharq	#16,x1
