@@ -622,7 +622,7 @@ delta_y	reg 26
 delta	reg 27
 dummy1	reg 28
 
-ptr	reg 23	; redefined reg. !!
+ptr	reg 23!	; redefined reg. !!
 
 Edge::	move	y2,delta_y
 	move	y2,r24
@@ -688,11 +688,6 @@ Edge::	move	y2,delta_y
 	shlq	#2,y1		; as ptr for x-save
 	add	y1,ptr
 
-CONT2	reg 21		; redef
-CONT3	reg 16
-
-	movei	#.cont2,CONT2
-	movei	#.cont3,CONT3
 	load	(ptr),dummy1
 	sub	delta_y,delta_x
 .loop0	move	dummy1,dummy
@@ -702,10 +697,10 @@ CONT3	reg 16
 	sharq	#16,dummy
 
 	cmp	x1,x2
-	jump	n,(CONT2)
+	jr	n,.cont2
 	cmp	dummy,x1
 	move	x1,x2
-.cont2	jump	n,(CONT3)
+.cont2	jr	n,.cont3
 	shlq	#16,x2
 	move	x1,dummy
 .cont3	or	x2,dummy
@@ -731,7 +726,8 @@ CONT3	reg 16
 	jump	(POLY_LOOP)
 	nop
 ****************
-.cont5	movei	#.loop1,LOOP
+.cont5
+	movei	#.loop1,LOOP
 	shlq	#1,delta_x
 	move	delta_x,delta
 	move	delta_y,step
@@ -754,7 +750,8 @@ CONT3	reg 16
 	jr	nn,.loop11
 	nop
 	jump	(POLY_LOOP)		;exit
-.cont18	add	d_x,x1
+.cont18
+	add	d_x,x1
 	sub	delta_y,delta
 	addq	#1,y1
 	jump	nn,(dummy)
@@ -771,23 +768,18 @@ CONT3	reg 16
 	shlq	#2,y1		; ptr for x-save
 	add	y1,ptr
 
-CONT6	reg 21		; redef
-CONT7	reg 16		; redef
-
-	movei	#.cont6,CONT6
-	movei	#.cont7,CONT7
-
 	load	(ptr),dummy
 	sub	delta_x,delta_y
-.loop1	move	dummy,x2
+.loop1
+	move	dummy,x2
 	shlq	#16,dummy
 	sharq	#16,x2
 	sharq	#16,dummy
 	cmp	x1,x2
-	jump	n,(CONT6)
+	jr	n,.cont6
 	cmp	dummy,x1
 	move	x1,x2
-.cont6	jump	n,(CONT7)
+.cont6	jr	n,.cont7
 	shlq	#16,x2
 	move	x1,dummy
 .cont7	or	dummy,x2
@@ -796,6 +788,7 @@ CONT7	reg 16		; redef
 	store	x2,(ptr)
 	jr	nn,.cont8
 	subq	#1,y_count
+
 	addqt	#4,ptr
 	jump	z,(POLY_LOOP)	  ; exit
 	subq	#1,step
@@ -805,7 +798,8 @@ CONT7	reg 16		; redef
 	jump	(POLY_LOOP)
 	nop
 
-.cont8	addqt	#4,ptr
+.cont8
+	addqt	#4,ptr
 	jump	z,(POLY_LOOP)		; y_count=0 => exit
 	sub	delta_y,delta
 	subq	#1,step
@@ -815,7 +809,8 @@ CONT7	reg 16		; redef
 	jump	(POLY_LOOP)
 	nop
 
-	unreg	LOOP,delta_x,delta_y,x1,y1,y2,x2,dummy1
+ UNREG step,LOOP,x1,x2,y1,y2,d_x,delta,delta_x,delta_y,dummy1,y_count
+
 ****************
 * draw H-Lines
 
