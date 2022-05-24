@@ -13,10 +13,9 @@
 *  May 2022     Move over to new lyxass and rmac/rln
 
 GPU	set 1
-_8Bit	set 0
+_8Bit::	set 0
 GOURAUD	set 0
 HIDDEN	set 1
-
 
 	include <js/symbols/jagregeq.js>
 	include <js/symbols/blit_eq.js>
@@ -28,13 +27,12 @@ HIDDEN	set 1
 *
 XYZ_POS		equ GPU_ENDRAM-3*4
 ANGLE		equ XYZ_POS-3*4
-PROJ_POINTS	equ ANGLE-4
-POINTS		equ PROJ_POINTS-4
-X_SAVE		equ POINTS-4
-SCREEN		equ X_SAVE-4
+POINTS		equ ANGLE-4
+SCREEN		equ POINTS-4
 FACES::		equ SCREEN-4
 FLAG		equ FACES-4
 
+	echo "FLAG: %HFLAG"
 
 * rez
 max_x	equ 384-1
@@ -80,9 +78,7 @@ ENDIF
 	 run $f03000
 ****************
 * Init
-	movei	#GPU_REMAIN,r0
 	xor	r1,r1
-	store	r1,(r0)
 	movei	#$f02100,r0
 	store	r1,(r0)
 ****************
@@ -91,10 +87,13 @@ main_loop:
 	movei	#FLAG,r0
 	xor	r1,r1
 	store	r1,(r0)
+	moveq	#3,r2
+	movei	#$f02114,r3
+	store	r2,(r3)
 .wait	cmpq	#0,r1
-	load (r0),r1
 	jr	z,.wait
-	nop
+	load	(r0),r1
+
 ****************
 * CLS
 
@@ -102,28 +101,24 @@ blitter		reg 14
 screen_ptr	reg 1
 dummy		reg 0
 
-CLS::	movei	#BLIT_A1_BASE,blitter
+CLS::
+	movei	#BLIT_A1_BASE,blitter
 	movei	#SCREEN,screen_ptr
-	movei	#BLIT_WID384|BLIT_PITCH1|BLIT_PIXEL32,dummy
+	movei	#BLIT_PITCH1|BLIT_PIXEL32|BLIT_WID3584|BLIT_XADDPHR,dummy
 	load	(screen_ptr),screen_ptr
 	store	dummy,(blitter+4)
 	xor	dummy,dummy
 	store	screen_ptr,(blitter)
 	store	dummy,(blitter+_BLIT_A1_PIXEL)	; pel ptr
-	store	dummy,(blitter+_BLIT_A1_FPIXEL)	; pel ptr frac
-	movei	#BLIT_PATD,blitter
-	store	dummy,(blitter)
-	store	dummy,(blitter+4)
  IF _8Bit
-	movei	#1<<16|(384*200)>>2,dummy
+	movei	#1<<16|(384*200),dummy
  ELSE
-	movei	#1<<16|(384*200<<1)>>2,dummy
+	movei	#1<<16|(384*200>>1),dummy
  ENDIF
-	movei	#BLIT_CMD,blitter
-	store	dummy,(blitter+4)
-	movei	#BLIT_PATDSEL,dummy
-	store	dummy,(blitter)
-;	WAITBLITTER
+	store	dummy,(blitter+$3c)
+	movei	#BLIT_LFU_ZERO,dummy
+	store	dummy,(blitter+$38)
+
 UNREG blitter,screen_ptr
 ****************
 * compute rotation matrix
@@ -181,7 +176,8 @@ rotate::
 	shrq	#22,c
 	shrq	#22,e
 
-	movei	#SinTab,r14
+//->	movei	#SinTab,r14
+	movei	#$4004,r14
 	load	(r14+a),a	; sin alpha
 	load	(r14+b),b	; cos alpha
 	load	(r14+c),c	; sin beta
@@ -262,9 +258,6 @@ rotate::
 	UNREG m1,m2,m3,m4,m5,m6,m7,m8,m9
 	UNREG a,b,c,d,e,f,af,bf,ae,be	; release registers
 ;---------------
-rot_mat_ptr	reg 1
-
-	move	r14,rot_mat_ptr
 
 ****************
 * rotate and project
@@ -285,50 +278,86 @@ xyz_ptr		reg 16
 proj_ptr	reg 15
 
 x_pos		reg 14
+blitter		reg 14!
 y_pos		reg 13
 z_pos		reg 12
 CONT1		reg 11
 
+rot_mat_ptr	reg 9
+
 proj_ptr.a	reg 15
 
-
+	move	r14,rot_mat_ptr
 * REG 0	 = dummy
-	movei	#POINTS,r14
-	load	(r14),xyz_ptr
+	movei	#POINTS,xyz_ptr
+	load	(xyz_ptr),xyz_ptr
 	load	(xyz_ptr),counter
 	addq	#4,xyz_ptr
-	load	(r14+4),proj_ptr	; point-data from external RAM
+	movei	#proj_points,proj_ptr
 	moveta	proj_ptr,proj_ptr.a
+
+ IF 0
+	movei	#$f02200,blitter
+	WAITBLITTER1
+	movei	#points+$8000,r0
+	store xyz_ptr,(blitter+$24)
+	store r0,(blitter)
+	movei #BLIT_PITCH1|BLIT_PIXEL32|BLIT_WID3584|BLIT_XADDPHR,r0
+	xor r1,r1
+	store r0,(blitter+4)
+	move	counter,r2
+	store r0,(blitter+$28)
+	shlq	#1,r2
+	store r1,(blitter+$c)
+	bset	#16,r2
+	store r1,(blitter+$30)
+	movei #BLIT_SRCEN|BLIT_LFU_REPLACE,r1
+	store r2,(blitter+$3c)
+	store r1,(blitter+$38)
+	WAITBLITTER1
+	movei	#points,xyz_ptr
+ ENDIF
+ IF 0
+	movei	#points,r0
+	move	counter,r1
+	move	r0,r3
+	shlq	#1,r1
+xx:	load	(xyz_ptr),r2
+	addqt	#4,xyz_ptr
+	subq	#1,r1
+	store	r2,(r0)
+	jr	ne,xx
+	addqt	#4,r0
+	move	r3,xyz_ptr
+ ENDIF
 
 	movei	#XYZ_POS,r14
 	load	(r14+8),z_pos
 	load	(r14+4),y_pos
 	load	(r14),x_pos
-
 ***************
-	movei	#$f02118,hi_phrase
 	movei	#.loop_xyz,LOOP
 	movei	#.cont1,CONT1
 
-	loadp	(xyz_ptr),y0	; y/z pre-load
-
+	load	(xyz_ptr),x0	; y/z pre-load
 	movei	#700,dist
 	movei	#max_x>>1,xcenter
 	movei	#max_y>>1,ycenter
 
 .loop_xyz
-	moveta	y0,r0
-	load	(hi_phrase),x0
-	addq	#8,xyz_ptr
+	addqt	#4,xyz_ptr
 	moveta	x0,r1
+	load	(xyz_ptr),y0
+	addqt	#4,xyz_ptr
+	moveta	y0,r0
 	store	rot_mat_ptr,(mtx_addr)	; GPU increases address !!
 	nop			; *** clear WRITE BACK score-board
 	mmult	r0,x1		; x1=m1*x0+m2*y0+m3*z0
 	nop			; *** clear WRITE BACK score-board
 	mmult	r0,y1		; y1=m4*x0+m5*y0+m6*z0
-	sharq	#15,x1
 	nop			; *** clear WRITE BACK score-board
 	mmult	r0,z1		; z1=m7*x0+m8*y0+m9*z0
+	sharq	#15,x1
 	sharq	#15,y1
 	sharq	#15,z1
 ****************
@@ -354,31 +383,33 @@ proj_ptr.a	reg 15
 	move	z1,dummy
 	jump	z,(CONT1)
 	abs	z1
+
 	div	z1,x1
 	xor	dummy,x0
 	jr	nn,.cont0
 	nop
 	neg	x1
-.cont0	div	z1,y1
+.cont0
+	or	x1,x1
+	div	z1,y1
 	xor	dummy,y0
 	jump	nn,(CONT1)
-	nop
-	neg	y1
-
-.cont1
 	add	xcenter,x1
+	neg	y1
+.cont1
 	add	ycenter,y1
 	shlq	#16,x1
 	shlq	#16,y1
 	shrq	#16,y1
 	or	x1,y1
+	load	(xyz_ptr),x0
 	subq	#1,counter
 	store	y1,(proj_ptr)	; save Xscreen/Yscreen
-	addqt	#4,proj_ptr
 	jump	nz,(LOOP)
-	loadp	(xyz_ptr),y0
+	addqt	#4,proj_ptr
 
-	UNREG counter,LOOP
+
+	UNREG counter,LOOP,blitter
 	UNREG dist,xcenter,ycenter
 	UNREG x0,y0,z0,x1,y1,z1
 	UNREG hi_phrase,xyz_ptr,proj_ptr
@@ -418,17 +449,20 @@ Drawfaces::
 	load	(r14),pptr
 	moveta	pptr,pptr.a
 	load	(r14+4),screen_ptr
-*load	(r14+8),dummy
-	movei	#_x_save,dummy		; save left/right X in internal RAM
+	movei	#x_save,dummy		; save left/right X in internal RAM
 	moveta	dummy,x_save.a
 	movei	#.loop,LOOP
 	movei	#.exit,ENDE
-	movei	#$1<<8,dummy
-	moveta	dummy,inc_color.a
-	movei	#$00,color
- IF GOURAUD=0
-	movei	#$ff,color
+	moveq	#1,dummy
+	moveq	#4,color
+ IF _8Bit = 0
+	shlq	#8,dummy
+ IF GOURAUD = 0
+	subq	#5,color
+	shrq	#25,color
  ENDIF
+ ENDIF
+	moveta	dummy,inc_color.a
 	movei	#polygon,POLYGON
 	movei	#return,RETURN
 	movefa	proj_ptr.a,proj_ptr
@@ -441,7 +475,7 @@ Drawfaces::
 ** setup Blitter
 *
 	movei	#$f02200,blitter
-	WAITBLITTER1	  ; aber erst warten !
+	WAITBLITTER1
 
 	store	screen_ptr,(blitter)
  IF _8Bit
@@ -452,6 +486,7 @@ Drawfaces::
 	store	dummy,(blitter+$04)
 	movei	#$00010000,dummy
 	store	dummy,(blitter+$1c)
+ IF 0
 	moveq	#0,dummy
 	store	dummy,(blitter+$08)	; clip size
 	store	dummy,(blitter+$0c)	; pel ptr
@@ -464,14 +499,13 @@ Drawfaces::
 	store	dummy,(blitter+$30)	; window ptr
 	store	dummy,(blitter+$34)	; a2 step
 	store	dummy,(blitter+$78)	; coll contrl
-
-	movei	#$10000,dummy
+ ENDIF
+	movei	#$00010000,dummy
 	store	dummy,(blitter+$70)	; int inc
 	movei	#$20002000,dummy
 	store	dummy,(blitter+$40)
 	store	dummy,(blitter+$44)
 
-	movei	#$f02238,blitter
 ****************
 .loop
 	load	(pptr),dummy
@@ -523,8 +557,14 @@ Drawfaces::
 	moveta	pptr,pptr.a
  ENDIF
 
-return	movefa	inc_color.a,dummy
+return:
+	movefa	inc_color.a,dummy
 	add	dummy,color
+ IF _8Bit
+	sat8	color
+//-> ELSE
+//->	sat16	color
+ ENDIF
 	jump	(LOOP)
 	movefa	pptr.a,pptr
 
@@ -833,11 +873,20 @@ blitter		reg 14
 * dummy = 0
 DrawLines::
 	move	color,dummy
-	movei	#BLIT_A1_PIXEL,pel_ptr
-	shlq	#16,dummy
-	movei	#BLIT_PATD,bpattern
+ IF _8Bit
+	shlq	#8,dummy
 	or	color,dummy
-	movei	#B_DSTEN|B_PATDSEL|B_GOURD*GOURAUD,bstart
+	shlq	#8,dummy
+	or	color,dummy
+	shlq	#8,dummy
+	or	color,dummy
+ ELSE
+	shlq	#16,dummy
+	or	color,dummy
+ ENDIF
+	movei	#BLIT_A1_PIXEL,pel_ptr
+	movei	#BLIT_PATD,bpattern
+	movei	#B_PATDSEL|B_GOURD*GOURAUD,bstart
 	store	dummy,(bpattern)
 	addq	#4,bpattern
 	movefa	x_save.a,xptr
@@ -853,7 +902,8 @@ DrawLines::
 	;; find lowest Y
 	xor	y1,y1
 	subq	#1,y1
-.loop2	load	(xptr),x2
+.loop2
+	load	(xptr),x2
 	subq	#1,line_counter
 	addqt	#4,xptr
 	jump	z,(RETURN)
@@ -886,7 +936,8 @@ DrawLines::
 	store	x2,(blitter+4)
 	store	bstart,(blitter)
 
-.cont1	subq	#1,line_counter
+.cont1
+	subq	#1,line_counter
 	load	(xptr),x2
 	jump	z,(RETURN)
 	cmp	leave_it,x2
@@ -901,46 +952,15 @@ DrawLines::
 	unreg x1,x2,y1,blitter,leave_it,bcounter
 	unreg LOOP,LOOP2,CONT1
 ****************
-* Sine-table   *
-	ALIGN 4
-SinTab::
-DC.L 0,804,1608,2410,3212,4011,4808,5602
-DC.L 6393,7179,7962,8739,9512,10278,11039,11793
-DC.L 12539,13279,14010,14732,15446,16151,16846,17530
-DC.L 18204,18868,19519,20159,20787,21403,22005,22594
-DC.L 23170,23731,24279,24811,25329,25832,26319,26790
-DC.L 27245,27683,28105,28510,28898,29268,29621,29956
-DC.L 30273,30571,30852,31113,31356,31580,31785,31971
-DC.L 32137,32285,32412,32521,32609,32678,32728,32757
-DC.L 32767,32757,32728,32678,32609,32521,32412,32285
-DC.L 32137,31971,31785,31580,31356,31113,30852,30571
-DC.L 30273,29956,29621,29268,28898,28510,28105,27683
-DC.L 27245,26790,26319,25832,25329,24811,24279,23731
-DC.L 23170,22594,22005,21403,20787,20159,19519,18868
-DC.L 18204,17530,16846,16151,15446,14732,14010,13279
-DC.L 12539,11793,11039,10278,9512,8739,7962,7179
-DC.L 6393,5602,4808,4011,3212,2410,1608,804
-DC.L 0,-804,-1608,-2410,-3212,-4011,-4808,-5602
-DC.L -6393,-7179,-7962,-8739,-9512,-10278,-11039,-11793
-DC.L -12539,-13279,-14010,-14732,-15446,-16151,-16846,-17530
-DC.L -18204,-18868,-19519,-20159,-20787,-21403,-22005,-22594
-DC.L -23170,-23731,-24279,-24811,-25329,-25832,-26319,-26790
-DC.L -27245,-27683,-28105,-28510,-28898,-29268,-29621,-29956
-DC.L -30273,-30571,-30852,-31113,-31356,-31580,-31785,-31971
-DC.L -32137,-32285,-32412,-32521,-32609,-32678,-32728,-32757
-DC.L -32767,-32757,-32728,-32678,-32609,-32521,-32412,-32285
-DC.L -32137,-31971,-31785,-31580,-31356,-31113,-30852,-30571
-DC.L -30273,-29956,-29621,-29268,-28898,-28510,-28105,-27683
-DC.L -27245,-26790,-26319,-25832,-25329,-24811,-24279,-23731
-DC.L -23170,-22594,-22005,-21403,-20787,-20159,-19519,-18868
-DC.L -18204,-17530,-16846,-16151,-15446,-14732,-14010,-13279
-DC.L -12539,-11793,-11039,-10278,-9512,-8739,-7962,-7179
-DC.L -6393,-5602,-4808,-4011,-3212,-2410,-1608,-804
-****************
 	align 4
-rot_mat	equ *
-_x_save	equ rot_mat+9*4
-ende:	equ _x_save+max_y*4
-echo "ENDE : %Hende"
+rot_mat		ds.l 9
+x_save		ds.l max_y
+	align 8
+points		ds.l 134*2
+proj_points	ds.l 134
+ende:		equ *
+
+	echo "points: %Hpoints"
+	echo "ENDE : %Hende"
 
 end
