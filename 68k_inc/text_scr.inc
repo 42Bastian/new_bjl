@@ -41,7 +41,7 @@ ok_pb:            bsr     PrintDigit
                   movem.l (sp)+,d0-d2
                   rts
 PrintDEZ::        move.l  d0,-(sp)
-                  and.l   #$0000FFFF,d0
+                  and.l   #$000FFFF,d0
                   divu    #10000,d0
                   bsr     PrintDigit
                   swap    d0
@@ -97,7 +97,7 @@ InitTxtScreen::   add.w d0,d0
                   lea $f00400,a0
                   move.l d1,0(a0,d0.w)
                   move.l  TextScreen(a6),a0
-                  move.w  #(max_x_txt>>3*max_y_txt)>>2-1,d0
+                  move.w  #(((max_x_txt>>3)*max_y_txt)>>2)-1,d0
                   moveq   #0,d1
 .loop:            move.l  d1,(a0)+
                   dbra    d0,.loop
