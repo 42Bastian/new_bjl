@@ -35,10 +35,10 @@ FLAG		equ FACES-4
 	echo "FLAG: %HFLAG"
 
 * rez
-max_x	equ 384-1
+max_x	equ 384
 max_y	equ 200
 
-IF max_x=383
+IF max_x=384
 BLIT_WIDTH	equ BLIT_WID384
 ELSE
 BLIT_WIDTH	equ BLIT_WID192
@@ -417,6 +417,7 @@ xx:	load	(xyz_ptr),r2
 	UNREG mtx_addr,rot_mat_ptr
 ****************
 * draw polys
+ENDE		reg 31
 RETURN		reg 30
 x_save.a	reg 29
 xy0.a		reg 28
@@ -439,7 +440,6 @@ pptr.a		reg 10
 color		reg 6
 screen_ptr	reg 5
 POLYGON		reg 4
-ENDE		reg 3
 LOOP		reg 2
 
 * REG 0 = dummy
@@ -595,7 +595,7 @@ polygon::
 	;; Setup min/max X table
 	movefa	x_save.a,dummy
 	movei	#max_y,point
-	movei	#max_x<<16,x1	; minX:maxX
+	movei	#(max_x)<<16,x1	; minX:maxX
 .loop0
 	subq	#1,point
 	store	x1,(dummy)
@@ -660,7 +660,7 @@ d_x	reg 24
 delta_x	reg 25
 delta_y	reg 26
 delta	reg 27
-dummy1	reg 28
+dummy1	reg 3
 
 ptr	reg 23!	; redefined reg. !!
 
@@ -683,7 +683,8 @@ Edge::	move	y2,delta_y
 	moveq	#1,d_x
 	neg	delta_x
 	subq	#2,d_x
-.cont1	cmp	delta_x,delta_y
+.cont1
+	cmp	delta_x,delta_y
 	movei	#.cont5,LOOP
 	jump	nn,(LOOP)	; delta_x<delta_y => LOOP
 	nop
@@ -699,76 +700,81 @@ Edge::	move	y2,delta_y
 	cmpq	#0,y1
 	movei	#.positiv0,dummy
 	jump	nn,(dummy)
-	nop
+//->	nop			; Atari says, NOP is needed ;-)
 	jump	z,(dummy)
-	nop
-.loop001
+
 	cmpq	#0,delta
-.loop002
+.loop001
 	jr	nn,.cont04
 	add	d_x,x1
 	subq	#1,step
 	jr	nn,.loop001
 	add	delta_y,delta
 	jump	(POLY_LOOP)		;.exit
-	nop
+
 .cont04
 	add	delta_y,delta
 	sub	delta_x,delta
 	subq	#1,step
 	jump	n,(POLY_LOOP)	  ;.exit
 	addq	#1,y1
-	jr	n,.loop002
+	jr	n,.loop001
 	cmpq	#0,delta
+
 .positiv0
 	sub	y1,y_count
-	jump	n,(POLY_LOOP)		;.exit
 	movefa	x_save.a,ptr
-	jump	z,(POLY_LOOP)		;.exit
+	jump	n,(POLY_LOOP)
+//->	nop			; Atari says, NOP is needed ;-)
+	jump	z,(POLY_LOOP)
 	shlq	#2,y1		; as ptr for x-save
 	add	y1,ptr
 
-	load	(ptr),dummy1
+	load	(ptr),dummy
 	sub	delta_y,delta_x
-.loop0	move	dummy1,dummy
-	move	dummy1,x2
+.loop0
+	move	dummy,x2
 	shlq	#16,dummy
 	sharq	#16,x2
 	sharq	#16,dummy
 
+.loop_x_step
 	cmp	x1,x2
 	jr	n,.cont2
 	cmp	dummy,x1
 	move	x1,x2
-.cont2	jr	n,.cont3
-	shlq	#16,x2
+.cont2
+	move	x2,dummy1
+	jr	n,.cont3
+	shlq	#16,dummy1
 	move	x1,dummy
-.cont3	or	x2,dummy
-
+.cont3
 	cmpq	#0,delta
-	move	dummy,dummy1
 	jr	nn,.cont4
 	add	d_x,x1
 	subq	#1,step
-	jump	nn,(LOOP)
+	jr	nn,.loop_x_step
 	add	delta_y,delta
-	jump	(POLY_LOOP)
-	nop
 
-.cont4	sub	delta_x,delta
+	jump	(POLY_LOOP)
+
+.cont4
+	or	dummy,dummy1
+	sub	delta_x,delta
 	subq	#1,y_count
 	store	dummy1,(ptr)
 	jump	z,(POLY_LOOP)	  ;exit
 	subq	#1,step
 	addqt	#4,ptr
 	jump	nn,(LOOP)
-	load	(ptr),dummy1
+	load	(ptr),dummy
+
 	jump	(POLY_LOOP)
-	nop
+
 ****************
 .cont5
-	movei	#.loop1,LOOP
 	shlq	#1,delta_x
+	movei	#.loop1,LOOP
 	move	delta_x,delta
 	move	delta_y,step
 	sub	delta_y,delta
@@ -777,18 +783,19 @@ Edge::	move	y2,delta_y
 	movei	#.positiv1,dummy
 	cmpq	#0,y1
 	jump	nn,(dummy)
-	nop
+//->	nop			; Atari says, NOP is needed ;-)
 	jump	z,(dummy)
-	nop
 
-.loop11	cmpq	#0,delta
+	cmpq	#0,delta
+.loop11
 	jr	nn,.cont18
 	add	delta_x,delta
+
 	addq	#1,y1
 	jump	nn,(dummy)
 	subq	#1,step
 	jr	nn,.loop11
-	nop
+	cmpq	#0,delta
 	jump	(POLY_LOOP)		;exit
 .cont18
 	add	d_x,x1
@@ -797,13 +804,15 @@ Edge::	move	y2,delta_y
 	jump	nn,(dummy)
 	subq	#1,step
 	jr	nn,.loop11
-	nop
-.exit01	jump	(POLY_LOOP)
-	nop
+	cmpq	#0,delta
 
-.positiv1	sub	y1,y_count
-	jump	n,(POLY_LOOP)		;exit
+	jump	(POLY_LOOP)
+
+.positiv1
+	sub	y1,y_count
 	movefa	x_save.a,ptr
+	jump	n,(POLY_LOOP)
+//->	nop			; Atari says, NOP is needed ;-)
 	jump	z,(POLY_LOOP)		;.exit
 	shlq	#2,y1		; ptr for x-save
 	add	y1,ptr
@@ -815,14 +824,17 @@ Edge::	move	y2,delta_y
 	shlq	#16,dummy
 	sharq	#16,x2
 	sharq	#16,dummy
+
 	cmp	x1,x2
 	jr	n,.cont6
 	cmp	dummy,x1
 	move	x1,x2
-.cont6	jr	n,.cont7
+.cont6
+	jr	n,.cont7
 	shlq	#16,x2
 	move	x1,dummy
-.cont7	or	dummy,x2
+.cont7
+	or	dummy,x2
 
 	cmpq	#0,delta
 	store	x2,(ptr)
@@ -893,7 +905,7 @@ DrawLines::
 	store	dummy,(bpattern)
 
 	movei	#max_y+1,line_counter
-	movei	#max_x<<16,leave_it
+	movei	#(max_x)<<16,leave_it
 	movei	#$f02238,blitter
 	movei	#.loop3,LOOP
 	movei	#.loop2,LOOP2
@@ -914,16 +926,15 @@ DrawLines::
 .loop3
 	move	x2,x1
 	shlq	#16,x2
-	jump	n,(CONT1)
 	sharq	#16,x1
 	jr	nn,._0
 	cmp	leave_it,x2
 	moveq	#0,x1
 ._0	jr	n,._1
-	shrq	#16,x2
-	movei	#max_x,x2
+	sharq	#16,x2
+	movei	#max_x-1,x2
 ._1
-* Blitter
+	jump	eq,(CONT1)
 	sub	x1,x2
 	jump	n,(CONT1)
 	shlq	#16,x1
