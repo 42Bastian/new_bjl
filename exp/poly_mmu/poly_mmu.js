@@ -21,7 +21,8 @@ HIDDEN	set 1
 	include <js/symbols/blit_eq.js>
 	include <js/macro/help.mac>
 
-	unreg LR
+	unreg LR,LR.a,SP,SP.a
+	REGTOP	31
 *
 * parameters
 *
@@ -46,13 +47,13 @@ ENDIF
 ****************
 * MACROs       *
 
-* note, as long as we have a dummy register
+* note, as long as we have a tmp0 register
 * we may use it. both version need the same time
 
 	MACRO SWAP
-	move \0,dummy
+	move \0,tmp0
 	move \1,\0
-	move dummy,\1
+	move tmp0,\1
 
 ;	xor	\0,\1
 ;	xor	\1,\0
@@ -60,20 +61,16 @@ ENDIF
 	ENDM
 
 	MACRO WAITBLITTER
-.\waitblit	load (blitter),dummy
-	btst	#0,dummy
-	jr	z,.\waitblit
-	nop
-	ENDM
-
-	MACRO WAITBLITTER1
-.\waitblit	load (blitter+$38),dummy
-	btst	#0,dummy
+.\waitblit	load (blitter+$38),tmp0
+	btst	#0,tmp0
 	jr	z,.\waitblit
 	nop
 	ENDM
 
 ****************
+x_save.a	reg 31
+
+tmp0		reg 0
 
 	 run $f03000
 ****************
@@ -81,6 +78,18 @@ ENDIF
 	xor	r1,r1
 	movei	#$f02100,r0
 	store	r1,(r0)
+
+	movei	#x_save,tmp0		; save left/right X in internal RAM
+	moveta	tmp0,x_save.a
+
+	movei	#max_y,r1
+	movei	#(max_x)<<16,r2	; minX:maxX
+.loop0
+	subq	#1,r1
+	store	r2,(tmp0)
+	jr	nz,.loop0
+	addqt	#4,tmp0
+
 ****************
 * main loop
 main_loop:
@@ -99,25 +108,24 @@ main_loop:
 
 blitter		reg 14
 screen_ptr	reg 1
-dummy		reg 0
 
 CLS::
 	movei	#BLIT_A1_BASE,blitter
 	movei	#SCREEN,screen_ptr
-	movei	#BLIT_PITCH1|BLIT_PIXEL32|BLIT_WID3584|BLIT_XADDPHR,dummy
+	movei	#BLIT_PITCH1|BLIT_PIXEL32|BLIT_WID3584|BLIT_XADDPHR,tmp0
 	load	(screen_ptr),screen_ptr
-	store	dummy,(blitter+4)
-	xor	dummy,dummy
+	store	tmp0,(blitter+4)
+	xor	tmp0,tmp0
 	store	screen_ptr,(blitter)
-	store	dummy,(blitter+_BLIT_A1_PIXEL)	; pel ptr
+	store	tmp0,(blitter+_BLIT_A1_PIXEL)	; pel ptr
  IF _8Bit
-	movei	#1<<16|(384*200),dummy
+	movei	#1<<16|(384*200),tmp0
  ELSE
-	movei	#1<<16|(384*200>>1),dummy
+	movei	#1<<16|(384*200>>1),tmp0
  ENDIF
-	store	dummy,(blitter+$3c)
-	movei	#BLIT_LFU_ZERO,dummy
-	store	dummy,(blitter+$38)
+	store	tmp0,(blitter+$3c)
+	movei	#BLIT_LFU_ZERO,tmp0
+	store	tmp0,(blitter+$38)
 
 UNREG blitter,screen_ptr
 ****************
@@ -150,16 +158,16 @@ m9		reg 1	;
 
 rotate::
 	movei	#ANGLE,r14	; fetch cosine and sine
-	movei	#64,dummy
+	movei	#64,tmp0
 	load	(r14),a		; from the table
 	load	(r14+4),c
 	load	(r14+8),e
 	move	a,b
-	add	dummy,a
+	add	tmp0,a
 	move	c,d
-	add	dummy,c
+	add	tmp0,c
 	move	e,f
-	add	dummy,e
+	add	tmp0,e
 
 	shlq	#24,b
 	shlq	#24,d
@@ -241,8 +249,8 @@ rotate::
 * now move it into the local ram (for MMULT !)
 *
 	movei	#$f02104,mtx_addr
-	moveq	#3,dummy		; 3x1-Matrix
-	store	dummy,(mtx_addr)
+	moveq	#3,tmp0		; 3x1-Matrix
+	store	tmp0,(mtx_addr)
 	addq	#4,mtx_addr
 	movei	#rot_mat,r14
 	store	m3,(r14)
@@ -278,7 +286,6 @@ xyz_ptr		reg 16
 proj_ptr	reg 15
 
 x_pos		reg 14
-blitter		reg 14!
 y_pos		reg 13
 z_pos		reg 12
 CONT1		reg 11
@@ -288,48 +295,13 @@ rot_mat_ptr	reg 9
 proj_ptr.a	reg 15
 
 	move	r14,rot_mat_ptr
-* REG 0	 = dummy
+* REG 0	 = tmp0
 	movei	#POINTS,xyz_ptr
 	load	(xyz_ptr),xyz_ptr
 	load	(xyz_ptr),counter
 	addq	#4,xyz_ptr
 	movei	#proj_points,proj_ptr
 	moveta	proj_ptr,proj_ptr.a
-
- IF 0
-	movei	#$f02200,blitter
-	WAITBLITTER1
-	movei	#points+$8000,r0
-	store xyz_ptr,(blitter+$24)
-	store r0,(blitter)
-	movei #BLIT_PITCH1|BLIT_PIXEL32|BLIT_WID3584|BLIT_XADDPHR,r0
-	xor r1,r1
-	store r0,(blitter+4)
-	move	counter,r2
-	store r0,(blitter+$28)
-	shlq	#1,r2
-	store r1,(blitter+$c)
-	bset	#16,r2
-	store r1,(blitter+$30)
-	movei #BLIT_SRCEN|BLIT_LFU_REPLACE,r1
-	store r2,(blitter+$3c)
-	store r1,(blitter+$38)
-	WAITBLITTER1
-	movei	#points,xyz_ptr
- ENDIF
- IF 0
-	movei	#points,r0
-	move	counter,r1
-	move	r0,r3
-	shlq	#1,r1
-xx:	load	(xyz_ptr),r2
-	addqt	#4,xyz_ptr
-	subq	#1,r1
-	store	r2,(r0)
-	jr	ne,xx
-	addqt	#4,r0
-	move	r3,xyz_ptr
- ENDIF
 
 	movei	#XYZ_POS,r14
 	load	(r14+8),z_pos
@@ -380,19 +352,19 @@ xx:	load	(xyz_ptr),r2
 	add	z_pos,z1
 	mult	dist,y1
 	add	dist,z1		; z'=z+z_pos+dist
-	move	z1,dummy
+	move	z1,tmp0
 	jump	z,(CONT1)
 	abs	z1
 
 	div	z1,x1
-	xor	dummy,x0
+	xor	tmp0,x0
 	jr	nn,.cont0
 	nop
 	neg	x1
 .cont0
 	or	x1,x1
 	div	z1,y1
-	xor	dummy,y0
+	xor	tmp0,y0
 	jump	nn,(CONT1)
 	add	xcenter,x1
 	neg	y1
@@ -409,117 +381,113 @@ xx:	load	(xyz_ptr),r2
 	addqt	#4,proj_ptr
 
 
-	UNREG counter,LOOP,blitter
+	UNREG counter,LOOP
 	UNREG dist,xcenter,ycenter
 	UNREG x0,y0,z0,x1,y1,z1
-	UNREG hi_phrase,xyz_ptr,proj_ptr
+	UNREG hi_phrase,xyz_ptr
 	UNREG x_pos,y_pos,z_pos,CONT1
 	UNREG mtx_addr,rot_mat_ptr
 ****************
 * draw polys
+xy0.a		reg 99
+inc_color.a	reg 99
+EDGE.a		reg 99
+DRAW_LINES.a	reg 99
+pptr.a		reg 99
+
 ENDE		reg 31
 RETURN		reg 30
-x_save.a	reg 29
-xy0.a		reg 28
-inc_color.a	reg 27
-EDGE.a		reg 26
-DRAW_LINES.a	reg 25
-
 x0		reg 26
 y0		reg 25
 x1		reg 24
 y1		reg 23
 x2		reg 22
 y2		reg 21
+color		reg 20
 
 blitter		reg 14
-proj_ptr	reg 15
 pptr		reg 10
-pptr.a		reg 10
 
-color		reg 6
 screen_ptr	reg 5
 POLYGON		reg 4
 LOOP		reg 2
 
-* REG 0 = dummy
+* REG 0 = tmp0
 
 Drawfaces::
 	movei	#FACES,r14
 	load	(r14),pptr
 	moveta	pptr,pptr.a
 	load	(r14+4),screen_ptr
-	movei	#x_save,dummy		; save left/right X in internal RAM
-	moveta	dummy,x_save.a
-	movei	#.loop,LOOP
 	movei	#.exit,ENDE
-	moveq	#1,dummy
+	moveq	#1,tmp0
 	moveq	#4,color
+
  IF _8Bit = 0
-	shlq	#8,dummy
+	shlq	#8,tmp0
  IF GOURAUD = 0
 	subq	#5,color
 	shrq	#25,color
  ENDIF
  ENDIF
-	moveta	dummy,inc_color.a
+	moveta	tmp0,inc_color.a
 	movei	#polygon,POLYGON
 	movei	#return,RETURN
 	movefa	proj_ptr.a,proj_ptr
 
-	movei	#Edge,dummy
-	moveta	dummy,EDGE.a
-	movei	#DrawLines,dummy
-	moveta	dummy,DRAW_LINES.a
+	movei	#Edge,tmp0
+	moveta	tmp0,EDGE.a
+	movei	#DrawLines,tmp0
+	moveta	tmp0,DRAW_LINES.a
 *
 ** setup Blitter
 *
 	movei	#$f02200,blitter
-	WAITBLITTER1
+	WAITBLITTER
 
 	store	screen_ptr,(blitter)
  IF _8Bit
-	movei	#BLIT_PITCH1|BLIT_PIXEL8|BLIT_WIDTH|BLIT_XADDPHR,dummy
+	movei	#BLIT_PITCH1|BLIT_PIXEL8|BLIT_WIDTH|BLIT_XADDPHR,tmp0
  ELSE
-	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WIDTH|BLIT_XADDPHR,dummy
+	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WIDTH|BLIT_XADDPHR,tmp0
  ENDIF
-	store	dummy,(blitter+$04)
-	movei	#$00010000,dummy
-	store	dummy,(blitter+$1c)
+	store	tmp0,(blitter+$04)
+	movei	#$00010000,tmp0
+	store	tmp0,(blitter+$1c)
  IF 0
-	moveq	#0,dummy
-	store	dummy,(blitter+$08)	; clip size
-	store	dummy,(blitter+$0c)	; pel ptr
-	store	dummy,(blitter+$10)	; step
-	store	dummy,(blitter+$14)	; step fract
-	store	dummy,(blitter+$18)	; pel ptr fract
-	store	dummy,(blitter+$1c)	; inc
-	store	dummy,(blitter+$20)	; inc fract
-	store	dummy,(blitter+$2c)	; window mask
-	store	dummy,(blitter+$30)	; window ptr
-	store	dummy,(blitter+$34)	; a2 step
-	store	dummy,(blitter+$78)	; coll contrl
+	moveq	#0,tmp0
+	store	tmp0,(blitter+$08)	; clip size
+	store	tmp0,(blitter+$0c)	; pel ptr
+	store	tmp0,(blitter+$10)	; step
+	store	tmp0,(blitter+$14)	; step fract
+	store	tmp0,(blitter+$18)	; pel ptr fract
+	store	tmp0,(blitter+$1c)	; inc
+	store	tmp0,(blitter+$20)	; inc fract
+	store	tmp0,(blitter+$2c)	; window mask
+	store	tmp0,(blitter+$30)	; window ptr
+	store	tmp0,(blitter+$34)	; a2 step
+	store	tmp0,(blitter+$78)	; coll contrl
  ENDIF
-	movei	#$00010000,dummy
-	store	dummy,(blitter+$70)	; int inc
-	movei	#$20002000,dummy
-	store	dummy,(blitter+$40)
-	store	dummy,(blitter+$44)
+	movei	#$00010000,tmp0
+	store	tmp0,(blitter+$70)	; int inc
+	movei	#$20002000,tmp0
+	store	tmp0,(blitter+$40)
+	store	tmp0,(blitter+$44)
 
 ****************
 .loop
-	load	(pptr),dummy
+	load	(pptr),tmp0
 	addq	#4,pptr
-	cmpq	#-1,dummy
-	load	(proj_ptr+dummy),y0
+	cmpq	#-1,tmp0
+	load	(proj_ptr+tmp0),y0
 	jump	z,(ENDE)
 	nop
-	load	(pptr),dummy
+	load	(pptr),tmp0
 	addq	#4,pptr
-	load	(proj_ptr+dummy),y1
-	load	(pptr),dummy
+	load	(proj_ptr+tmp0),y1
+	load	(pptr),tmp0
 	movefa	pptr.a,pptr
-	load	(proj_ptr+dummy),y2
+	load	(proj_ptr+tmp0),y2
 ** Hidden surface
 	move	y0,x0
 	shlq	#16,y0
@@ -550,58 +518,54 @@ Drawfaces::
  ELSE
 	jump	nn,(POLYGON)
 	nop
-.cont	load	(pptr),dummy
-	cmpq	#-1,dummy
+.cont	load	(pptr),tmp0
+	cmpq	#-1,tmp0
 	addqt	#4,pptr
 	jr	nz,.cont
 	moveta	pptr,pptr.a
  ENDIF
 
 return:
-	movefa	inc_color.a,dummy
-	add	dummy,color
+	movefa	inc_color.a,tmp0
+	add	tmp0,color
  IF _8Bit
 	sat8	color
 //-> ELSE
 //->	sat16	color
  ENDIF
+	movei	#.loop,LOOP
 	jump	(LOOP)
 	movefa	pptr.a,pptr
 
 .exit	movei	#main_loop,r0
 	jump	(r0)
+	nop
 
-	UNREG LOOP,x0,y0,x1,y1,x2,y2,blitter
+	UNREG LOOP,x0,y0,x1,y1,x2,y2,screen_ptr
 ****************
 * faces	: point-list
 * proj	:  x1,y1,x2,y2,x3,y3..
 
-x0.a		reg 24
-y0.a		reg 23
-* pptr = 10
-point		reg 11
-EDGE		reg 12
-POLY_LOOP	reg 13
-DRAW_LINES	reg 14
+x0.a		reg 99
+y0.a		reg 99
 
-x1		reg 20
-y1		reg 21
-x2		reg 22
+point		reg 29
+
 y2		reg 23
+x2		reg 22
+y1		reg 21
+x1		reg 19
 
+y_min		reg 18
+* pptr = 10
+
+EDGE		reg 99
+POLY_LOOP	reg 99
+DRAW_LINES	reg 99
+
+	regmap
 
 polygon::
-
-	;; Setup min/max X table
-	movefa	x_save.a,dummy
-	movei	#max_y,point
-	movei	#(max_x)<<16,x1	; minX:maxX
-.loop0
-	subq	#1,point
-	store	x1,(dummy)
-	jr	nz,.loop0
-	addqt	#4,dummy
-
 	movei	#.poly_loop,POLY_LOOP
 	movefa	pptr.a,pptr
 	movefa	proj_ptr.a,proj_ptr
@@ -622,6 +586,7 @@ polygon::
 
 	moveta	x1,x0.a
 	moveta	y1,y0.a
+	movei	#max_y+1,y_min
 
 .poly_loop
 	load	(pptr),point
@@ -641,42 +606,38 @@ polygon::
 	moveta	x2,x0.a
 	moveta	y2,y0.a
 
-	UNREG point,EDGE,DRAW_LINES,x1,x2,y1,y2
+	UNREG point,EDGE
 ****************
 * edge (x1,y1)-(x2,y2)
 * Bresenham-Algo.
 ****************
-* trashed registers : 16..29
-y_count	reg 17
+delta	reg 99
+delta_y	reg 99
+delta_x	reg 99
+d_x	reg 99
+LOOP	reg 99
+step	reg 99
+y_count	reg 99
+ptr	reg 99
 
-step	reg 18
-LOOP	reg 19
-x1	reg 20
-y1	reg 21
-x2	reg 22
-y2	reg 23
+tmp1	reg 1
 
-d_x	reg 24
-delta_x	reg 25
-delta_y	reg 26
-delta	reg 27
-dummy1	reg 3
-
-ptr	reg 23!	; redefined reg. !!
-
-Edge::	move	y2,delta_y
+	regmap
+Edge::
+	move	y2,delta_y
 	move	y2,r24
 	sub	y1,delta_y
 	move	y1,r25
 	jr	nn,.cont0
-	move	x1,dummy	; (x1,y1) <-> (x2,y2)
+	move	x1,tmp0	; (x1,y1) <-> (x2,y2)
 	move	x2,x1
-	move	dummy,x2
+	move	tmp0,x2
 	move	r24,y1
 	move	r25,y2
 	neg	delta_y
 
-.cont0	move	x2,delta_x
+.cont0
+	move	x2,delta_x
 	movei	#max_y,y_count
 	sub	x1,delta_x
 	jr	nn,.cont1
@@ -698,10 +659,10 @@ Edge::	move	y2,delta_y
 	shlq	#1,delta_x
 
 	cmpq	#0,y1
-	movei	#.positiv0,dummy
-	jump	nn,(dummy)
+	movei	#.positiv0,tmp0
+	jump	nn,(tmp0)
 //->	nop			; Atari says, NOP is needed ;-)
-	jump	z,(dummy)
+	jump	z,(tmp0)
 
 	cmpq	#0,delta
 .loop001
@@ -722,7 +683,12 @@ Edge::	move	y2,delta_y
 	cmpq	#0,delta
 
 .positiv0
+	cmp	y1,y_min
+	jr	n,.min1
 	sub	y1,y_count
+	move	y1,y_min
+.min1
+
 	movefa	x_save.a,ptr
 	jump	n,(POLY_LOOP)
 //->	nop			; Atari says, NOP is needed ;-)
@@ -730,24 +696,24 @@ Edge::	move	y2,delta_y
 	shlq	#2,y1		; as ptr for x-save
 	add	y1,ptr
 
-	load	(ptr),dummy
+	load	(ptr),tmp0
 	sub	delta_y,delta_x
 .loop0
-	move	dummy,x2
-	shlq	#16,dummy
+	move	tmp0,x2
+	shlq	#16,tmp0
 	sharq	#16,x2
-	sharq	#16,dummy
+	sharq	#16,tmp0
 
 .loop_x_step
 	cmp	x1,x2
 	jr	n,.cont2
-	cmp	dummy,x1
+	cmp	tmp0,x1
 	move	x1,x2
 .cont2
-	move	x2,dummy1
+	move	x2,tmp1
 	jr	n,.cont3
-	shlq	#16,dummy1
-	move	x1,dummy
+	shlq	#16,tmp1
+	move	x1,tmp0
 .cont3
 	cmpq	#0,delta
 	jr	nn,.cont4
@@ -759,15 +725,15 @@ Edge::	move	y2,delta_y
 	jump	(POLY_LOOP)
 
 .cont4
-	or	dummy,dummy1
+	or	tmp0,tmp1
 	sub	delta_x,delta
 	subq	#1,y_count
-	store	dummy1,(ptr)
+	store	tmp1,(ptr)
 	jump	z,(POLY_LOOP)	  ;exit
 	subq	#1,step
 	addqt	#4,ptr
 	jump	nn,(LOOP)
-	load	(ptr),dummy
+	load	(ptr),tmp0
 
 	jump	(POLY_LOOP)
 
@@ -780,11 +746,11 @@ Edge::	move	y2,delta_y
 	sub	delta_y,delta
 	shlq	#1,delta_y
 
-	movei	#.positiv1,dummy
+	movei	#.positiv1,tmp0
 	cmpq	#0,y1
-	jump	nn,(dummy)
+	jump	nn,(tmp0)
 //->	nop			; Atari says, NOP is needed ;-)
-	jump	z,(dummy)
+	jump	z,(tmp0)
 
 	cmpq	#0,delta
 .loop11
@@ -792,7 +758,7 @@ Edge::	move	y2,delta_y
 	add	delta_x,delta
 
 	addq	#1,y1
-	jump	nn,(dummy)
+	jump	nn,(tmp0)
 	subq	#1,step
 	jr	nn,.loop11
 	cmpq	#0,delta
@@ -801,7 +767,7 @@ Edge::	move	y2,delta_y
 	add	d_x,x1
 	sub	delta_y,delta
 	addq	#1,y1
-	jump	nn,(dummy)
+	jump	nn,(tmp0)
 	subq	#1,step
 	jr	nn,.loop11
 	cmpq	#0,delta
@@ -809,7 +775,11 @@ Edge::	move	y2,delta_y
 	jump	(POLY_LOOP)
 
 .positiv1
+	cmp	y1,y_min
+	jr	n,.min2
 	sub	y1,y_count
+	move	y1,y_min
+.min2
 	movefa	x_save.a,ptr
 	jump	n,(POLY_LOOP)
 //->	nop			; Atari says, NOP is needed ;-)
@@ -817,24 +787,24 @@ Edge::	move	y2,delta_y
 	shlq	#2,y1		; ptr for x-save
 	add	y1,ptr
 
-	load	(ptr),dummy
+	load	(ptr),tmp0
 	sub	delta_x,delta_y
 .loop1
-	move	dummy,x2
-	shlq	#16,dummy
+	move	tmp0,x2
+	shlq	#16,tmp0
 	sharq	#16,x2
-	sharq	#16,dummy
+	sharq	#16,tmp0
 
 	cmp	x1,x2
 	jr	n,.cont6
-	cmp	dummy,x1
+	cmp	tmp0,x1
 	move	x1,x2
 .cont6
 	jr	n,.cont7
 	shlq	#16,x2
-	move	x1,dummy
+	move	x1,tmp0
 .cont7
-	or	dummy,x2
+	or	tmp0,x2
 
 	cmpq	#0,delta
 	store	x2,(ptr)
@@ -844,7 +814,7 @@ Edge::	move	y2,delta_y
 	addqt	#4,ptr
 	jump	z,(POLY_LOOP)	  ; exit
 	subq	#1,step
-	load	(ptr),dummy
+	load	(ptr),tmp0
 	jump	nn,(LOOP)
 	add	delta_x,delta
 	jump	(POLY_LOOP)
@@ -855,75 +825,64 @@ Edge::	move	y2,delta_y
 	jump	z,(POLY_LOOP)		; y_count=0 => exit
 	sub	delta_y,delta
 	subq	#1,step
-	load	(ptr),dummy
+	load	(ptr),tmp0
 	jump	nn,(LOOP)	; step >= 0 => LOOP
 	add	d_x,x1
 	jump	(POLY_LOOP)
 	nop
 
- UNREG step,LOOP,x1,x2,y1,y2,d_x,delta,delta_x,delta_y,dummy1,y_count
+ UNREG delta,delta_x,delta_y,d_x,step,y_count,ptr,tmp1,LOOP
+
+ UNREG x0.a,y0.a,x1,x2,y1,y2,DRAW_LINES,POLY_LOOP,POLYGON
 
 ****************
 * draw H-Lines
 
-pel_ptr		reg 29
-bstart		reg 28
-xptr		reg 27
-LOOP2		reg 26
-LOOP		reg 25
-line_counter	reg 24
-leave_it	reg 23
-x1		reg 22
-x2		reg 21
-y1		reg 20
+bstart		reg 99
+xptr		reg 99
+LOOP2		reg 99
+LOOP		reg 99
+leave_it	reg 99
+x1		reg 99
+x2		reg 99
+y1		reg 99
+CONT1		reg 99
+x2_next		reg 99
 
-CONT1		reg 18
-bcounter	reg 17
-bpattern	reg 16
-blitter		reg 14
-
-* dummy = 0
 DrawLines::
-	move	color,dummy
+	move	color,tmp0
  IF _8Bit
-	shlq	#8,dummy
-	or	color,dummy
-	shlq	#8,dummy
-	or	color,dummy
-	shlq	#8,dummy
-	or	color,dummy
+	shlq	#8,tmp0
+	or	color,tmp0
+	shlq	#8,tmp0
+	or	color,tmp0
+	shlq	#8,tmp0
+	or	color,tmp0
  ELSE
-	shlq	#16,dummy
-	or	color,dummy
+	shlq	#16,tmp0
+	or	color,tmp0
  ENDIF
-	movei	#BLIT_A1_PIXEL,pel_ptr
-	movei	#BLIT_PATD,bpattern
-	movei	#B_PATDSEL|B_GOURD*GOURAUD,bstart
-	store	dummy,(bpattern)
-	addq	#4,bpattern
-	movefa	x_save.a,xptr
-	store	dummy,(bpattern)
+	store	tmp0,(blitter+_BLIT_PATD)
+	store	tmp0,(blitter+_BLIT_PATD+4)
 
-	movei	#max_y+1,line_counter
+	movei	#B_PATDSEL|B_GOURD*GOURAUD,bstart
+	movefa	x_save.a,xptr
+
 	movei	#(max_x)<<16,leave_it
-	movei	#$f02238,blitter
 	movei	#.loop3,LOOP
-	movei	#.loop2,LOOP2
+	store	leave_it,(xptr)
 	movei	#.cont1,CONT1
 
-	;; find lowest Y
-	xor	y1,y1
-	subq	#1,y1
-.loop2
+	move	y_min,y1
+	shlq	#2,y_min
+	add	y_min,xptr
 	load	(xptr),x2
-	subq	#1,line_counter
-	addqt	#4,xptr
-	jump	z,(RETURN)
-	cmp	leave_it,x2	; still original min/max?
-	addqt	#1,y1
-	jump	z,(LOOP2)
+	store	leave_it,(xptr)
+	addq	#4,xptr
 
 .loop3
+	load	(xptr),x2_next
+	store	leave_it,(xptr)
 	move	x2,x1
 	shlq	#16,x2
 	sharq	#16,x1
@@ -943,29 +902,27 @@ DrawLines::
 	bset	#16,x2
 	rorq	#16,x1
 	WAITBLITTER
-	store	x1,(pel_ptr)
-	store	x2,(blitter+4)
-	store	bstart,(blitter)
-
+	store	x1,(blitter+_BLIT_A1_PIXEL)
+	store	x2,(blitter+_BLIT_COUNT)
+	store	bstart,(blitter+_BLIT_CMD)
 .cont1
-	subq	#1,line_counter
-	load	(xptr),x2
-	jump	z,(RETURN)
+	move	x2_next,x2
+	store	leave_it,(xptr)
 	cmp	leave_it,x2
 	addqt	#4,xptr
 	jump	nz,(LOOP)
 	addq	#1,y1
 
-.goon1	jump	(RETURN)
+	jump	(RETURN)
 	nop
 
-	unreg pel_ptr,bstart,xptr,line_counter,bpattern
-	unreg x1,x2,y1,blitter,leave_it,bcounter
+	unreg bstart,xptr
+	unreg x1,x2,y1,blitter,leave_it
 	unreg LOOP,LOOP2,CONT1
 ****************
 	align 4
 rot_mat		ds.l 9
-x_save		ds.l max_y
+x_save		ds.l max_y+1
 	align 8
 points		ds.l 134*2
 proj_points	ds.l 134
