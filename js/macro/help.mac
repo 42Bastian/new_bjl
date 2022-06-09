@@ -227,3 +227,12 @@ debug_rout	movei $f02100,r0
 		RTS
 ENDIF
 		ENDM
+
+	MACRO BKPT ; [condition]
+	IFVAR \0
+.\stop:	jr \0,.\stop
+	ELSE
+.\stop:	jr .\stop
+	ENDIF
+	nop
+	ENDM
