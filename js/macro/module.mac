@@ -48,24 +48,25 @@ MODstart_\0	SET MODstart_\0+12	 ; Header-Offset
 ;;; Load a module from store address to run address
 
 	MACRO INITMODULE ; NAME
-		movei #MODrun_\0+$8000,r0		; dest-adr
-	movei #MODstart_\0,r1
-		ifd MODlen_\0
-		if  MODlen_\0>>3 <= 31
-		moveq #(MODlen_\0)>>3,r2
-		else
-		movei #(MODlen_\0)>>3,r2
-		endif
-		else
-		movei #(MODlen_\0)>>3,r2
-		endif
-		loadp (r1),r3	; first phrase
-.\loop_ilsub	addq #8,r1	; src += 4
-	subq #1,r2	; count -=1
-		storep r3,(r0)
-		addqt #8,r0	; dst += 4
-	jr nz,.\loop_ilsub
-		loadp (r1),r3	; next phrase
+	movei	#MODrun_\0+$8000,r0		; dest-adr
+	movei	#MODstart_\0,r1
+	ifd MODlen_\0
+	 if MODlen_\0>>2 <= 31
+	   moveq #(MODlen_\0)>>2,r2
+	 else
+	   movei #(MODlen_\0)>>2,r2
+	 endif
+	else
+	 movei #(MODlen_\0)>>2,r2
+	endif
+	load	(r1),r3	; first phrase
+.\loop_ilsub
+	addq	#4,r1	; src += 4
+	subq	#1,r2	; count -=1
+	store	r3,(r0)
+	addqt	#4,r0	; dst += 4
+	jr	nz,.\loop_ilsub
+	load	(r1),r3	; next phrase
 	ENDM
 
 ;;; ----------------------------------------
