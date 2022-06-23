@@ -135,12 +135,16 @@ ENDIF
 
 		MACRO BL
 		move  pc,LR
+		IFVAR \1	; condition?
+		jump \0,\1
+		ELSE
 		jump  \0
+		ENDIF
 		addqt #6,LR
 		ENDM
 
 		MACRO JSR
-		IFVAR \1	; Bedingung ??
+		IFVAR \1	; condition
 		jr \0,.\ok_jsr
 		nop
 		jr .\exit_jsr
