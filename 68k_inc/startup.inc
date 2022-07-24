@@ -27,7 +27,7 @@ INIT:
 	move.l d0,$2100(a0)		; disable GPU-IRQs
 	; disable DSP-IRQs
 	move.l #%10001111100000000,$f1a100
-	move.l #%111111<<8,$f10020	; clear and disable IRQs
+	move.w #%111111<<8,$f10020	; clear and disable IRQs
 
 	move.l	d0,0.w
 	moveq	#4,d0
