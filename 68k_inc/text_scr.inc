@@ -66,8 +66,8 @@ PrintDEZ2::       and.l   #$0000FFFF,d0
                   bsr.s   PrintDigit
                   swap    d0
                   ext.l   d0
-                  bsr.s   PrintDigit
-                  rts
+                  bra.s   PrintDigit
+
 PrintHEXl::       move.l  d0,-(sp)
                   swap    d0
                   bsr.s   PrintHEX
@@ -92,7 +92,7 @@ PrintHEX1:        move.w  d0,-(sp)
                   bsr.s   PrintChar
                   move.w  (sp)+,d0
                   rts
-Ziffern:        DC.B "0123456789ABCDEF"
+Ziffern:          DC.B "0123456789ABCDEF"
 InitTxtScreen::   add.w d0,d0
                   lea $f00400,a0
                   move.l d1,0(a0,d0.w)
