@@ -1,8 +1,8 @@
 ;-*-asm-*-
 	GPU
 
-TurboPacker	EQU 1
-LZ4		EQU 0
+TurboPacker	EQU 0
+LZ4		EQU 1
 
 	include <js/macro/help.mac>
 
@@ -12,16 +12,16 @@ screen	equ $f03ff4
 	run $f03000
 
 GPUstart::
+	movei	#Flag,r15
 	move	pc,r19
 	addq	#4,r19
 loop:
-	movei	#Flag,r15
-	moveq	#1,r1
-	store	r1,(r15)
+	moveq	#1,r0
+	store	r0,(r15)
 waitStart:
-	cmpq	#0,r1
+	cmpq	#0,r0
 	jr	ne,waitStart
-	load	(r15),r1
+	load	(r15),r0
 
 	load	(r15+8),r20
 	cmpq	#0,r20
@@ -42,7 +42,6 @@ waitStart:
 	move	pc,r30
 	jump	(r1)
 	addq	#6,r30
-
 
 	jump	(r19)
 	nop
