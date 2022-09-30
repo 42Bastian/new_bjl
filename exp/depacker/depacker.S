@@ -107,6 +107,10 @@ again:
 	move.l	d1,Cursor(a6)
 	bsr	PrintDEZ
 
+//->	addq.w	#2,Cursor(a6)
+//->	move.l	0.w,d0
+//->	bsr	PrintHEXl
+
 	bsr	swap		; now show last frame and wait for VBL
 
 	bra	again
@@ -125,8 +129,6 @@ InitGPU:
 	move.l	(a0)+,d0	; Length in Bytes
 	adda.l	#$8000,a1
 	bsr	memcpy
-
-	lea	$F03FF0,a0
 
 	move.l	#1,d0
 	move.l	d0,$00F02114
