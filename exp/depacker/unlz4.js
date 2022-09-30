@@ -17,9 +17,10 @@
 
 depack_lz4::
 	move	R20,R13
-	add	R0,R13		; packed buffer end
 	movei	#.dpklz4_lenOffset,R10
-	movei	#$FF,R12
+	add	R0,R13		; packed buffer end
+	move	r10,r12
+	sat8	r12		; r12 = $ff
 
 	loadb	(R20),R0
 .dpklz4_tokenLoop:
