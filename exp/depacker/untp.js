@@ -18,20 +18,18 @@ untp::
 	move	r21,r13
 	addq	#4,r20
 	add	r0,r13
-//->	movei	#.normal,r11
 	move	pc,r10
 .loop
 	cmp	r21,r13
 	jump	mi,(r30)
-	loadb	(r20),r0
+	loadb	(r20),r0	;flags
 	addqt	#1,r20
 	moveq	#8,r1
 	shlq	#24,r0
-	add	r0,r0
 .normal
 	move	pc,r11
 	loadb	(r20),r2
-	jr	cs,.copy
+	jr	mi,.copy
 	addqt	#1,r20		; literal bytes
 	storeb	r2,(r21)
 	subq	#1,r1
