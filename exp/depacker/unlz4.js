@@ -7,60 +7,57 @@
 ;;; r30 : return address
 ;;;
 ;;; Register usage (destroyed!)
-;;; r1,r2,r10,r11,r12,r13
+;;; r1,r2,r11,r12,r13
 ;;;
 ;;; R1,R2     : temp register
-;;; r10       : jump destination
 ;;; r11       : jump destination
 ;;; r12       : $ff
 ;;; r13       : end of packed data
 
 depack_lz4::
+
+	loadb	(R20),R0	; first token
 	move	R20,R13
-	movei	#.dpklz4_lenOffset,R10
+	move	r20,r12
 	add	R0,R13		; packed buffer end
-	move	r10,r12
 	sat8	r12		; r12 = $ff
 
-	loadb	(R20),R0
 .dpklz4_tokenLoop:
 	move	pc,r11
 	addqt	#1,R20
 	move	R0,R1
-	shrq	#4,R1
-	jump	eq,(R10)
+	shrq	#4,R1		; literal length
+	jr	eq,.skip1
 	shlq	#28,r0		; remove high nibble
-
-.dpklz4_readLen1:
 	cmpq	#15,R1
+.dpklz4_readLen1:
+	jr	ne,.dpklz4_litcopy
 	loadb	(R20),R2
-	jr	ne,.dpklz4_readEnd1a ; skip first addq in copy loop!
 	addqt	#1,R20
-.dpklz4_readLoop1:
 	add	R2,R1		; final len could be > 64KiB
+	jr	.dpklz4_readLen1:
 	cmp	R12,R2		; r2 = $ff ?
-.dpklz4_litcopy:
-	loadb	(R20),R2
-	jr	eq,.dpklz4_readLoop1
 
+.dpklz4_litcopy:
 	addqt	#1,R20
-.dpklz4_readEnd1a:
 	subq	#1,R1
 	storeb	R2,(R21)
-	jr	ne,.dpklz4_litcopy
 	addqt	#1,R21
+	jr	ne,.dpklz4_litcopy
+.skip1
+	loadb	(R20),R2
+
 	; end test is always done just after literals
 	cmp	R20,R13
 	jump	eq,(r30)	; done? => return
 
 .dpklz4_lenOffset:
-	loadb	(R20),R1	; read 16bits offset, little endian, unaligned
+	addqt	#1,R20
 	shrq	#28,r0
+	loadb	(R20),R1
 	addqt	#1,R20
-	loadb	(R20),R2
-	shlq	#8,R2
+	shlq	#8,R1
 	add	R2,R1
-	addqt	#1,R20
 	neg	r1
 	cmpq	#15,r0
 	addqt	#4,r0

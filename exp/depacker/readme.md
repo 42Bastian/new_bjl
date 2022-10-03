@@ -19,7 +19,7 @@ https://github.com/lz4/lz4
 
 Pack with: `lz4.exe -9 -l --no-frame-crc [input file] [output file] `
 
-Unpacker size: 108 bytes
+Unpacker size: 100 bytes
 
 ## untp
 
