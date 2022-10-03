@@ -21,6 +21,8 @@ Pack with: `lz4.exe -9 -l --no-frame-crc [input file] [output file] `
 
 Unpacker size: 100 bytes
 
+Speed: 170ms for a 128.000 bytes picture.
+
 ## untp
 
 TurboPacker
@@ -28,3 +30,5 @@ TurboPacker
 https://github.com/42Bastian/tp
 
 Unpacker size: 76 bytes
+
+Speed: 178ms for a 128.000 bytes picture.
