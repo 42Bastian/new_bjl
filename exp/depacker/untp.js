@@ -27,9 +27,9 @@ untp::
 .normal
 	subq	#1,r1
 	move	pc,r10
-	loadb	(r20),r2
+	loadb	(r20),r2	; literal byte or (offset high nibble|count)
 	jr	eq,.loop
-	add	r0,r0
+	add	r0,r0		; test flag
 	moveq	#15,r3
 	jr	cs,.copy
 	addqt	#1,r20		; literal byte
@@ -37,7 +37,7 @@ untp::
 	jr	.normal
 	addqt	#1,r21
 .copy
-	loadb	(r20),r4
+	loadb	(r20),r4	; offest low-byte
 	addqt	#1,r20
 	and	r2,r3
 	shrq	#4,r2
