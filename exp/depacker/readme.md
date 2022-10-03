@@ -27,4 +27,4 @@ TurboPacker
 
 https://github.com/42Bastian/tp
 
-Unpacker size: 78 bytes
+Unpacker size: 76 bytes
