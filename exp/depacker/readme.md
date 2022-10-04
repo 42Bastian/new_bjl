@@ -31,4 +31,4 @@ https://github.com/42Bastian/tp
 
 Unpacker size: 76 bytes
 
-Speed: 178ms for a 128.000 bytes picture.
+Speed: 173ms for a 128.000 bytes picture.
