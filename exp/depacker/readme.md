@@ -37,8 +37,22 @@ Speed: 173ms for a 128.000 bytes picture.
 
 LZSA Format 1 depacker (stream format)
 
+### Original packer
+
 https://github.com/emmanuel-marty/lzsa
 
 Unpacker size: 196
 
 Speed: 182ms for a 128.000 bytes picture.
+
+Be sure to set `POS_OFFSET` 0.
+
+### Extended version
+
+Adds option `-p` to write positive offsets.
+
+https://github.com/42Bastian/lzsa_jaguar
+
+Unpacker size: 182
+
+Speed: 175ms for a 128.000 bytes picture.

@@ -1,5 +1,7 @@
 ;;; -*-asm-*-
 
+POS_OFFSET	EQU 1		; private lzsa with -p switch
+
 ; input:
 ;;; R20 : packed buffer
 ;;; R21 : output buffer
@@ -69,26 +71,33 @@ unlzsa1::
 .nolit:
 	cmp	r20,r3
 	jump	eq,(r14)	; EOD?
-	shlq	#23,r2
-	addqt	#1,r20
 	move	r0,r1
+ IF POS_OFFSET = 0
+	shlq	#23,r2
 	bset	#31,r2
 	sharq	#23,r2		; sign extend 8 byte offset
+ ENDIF
+	addqt	#1,r20
 	shlq	#28,r0
 	shrq	#28,r0		; matchlen
 	shlq	#24,r1		; O flag set ?  16 bit offset)
 	jr	pl,.onebyteoff
 	loadb	(r20),r1
+ IF POS_OFFSET = 0
 	shlq	#24,r2		; remove sign-extension
-	addqt	#1,r20
 	shrq	#24,r2
-	bset	#16,r2
+ ENDIF
+	addqt	#1,r20
 	shlq	#8,r1
 	or	r1,r2
+ IF POS_OFFSET = 0
+	bset	#16,r2
 	shlq	#15,r2
 	sharq	#15,r2		; signexted 16 bit offset
+ ENDIF
 	loadb	(r20),r1
 .onebyteoff:
+	neg	r2
 	add	r21,r2
 	cmpq	#15,r0
 	movei	#238,r12
