@@ -26,9 +26,9 @@ unlzsa1::
 	move	r20,r3
 	jump	eq,(r30)
 	add	r0,r3
+	loadb	(r20),r0	; token : O L L L M M M M
 .loop:
 	move	pc,r11
-	loadb	(r20),r0	; token : O L L L M M M M
 	addqt	#1,r20
 	move	r0,r1
 	shlq	#25,r1
@@ -42,14 +42,15 @@ unlzsa1::
 
 	movei	#249,r12
 	add	r2,r1
-	cmp	r12,r2
+	cmp	r12,r2		; r2 = < 249,249 or 250
 	jr	mi,.copylit
 	loadb	(r20),r2
 
+	move	r2,r1
 	jr	eq,.directlen
 	addqt	#1,r20
-	add	r2,r1
-	addq	#6,r2		; 256
+	add	r12,r1
+	addq	#6,r1		; r12+6 = 256
 	jr	.copylit
 .directlen:
 	loadb	(r20),r2
@@ -67,29 +68,26 @@ unlzsa1::
 	loadb	(r20),r2
 .nolit:
 	cmp	r20,r3
-	jump	eq,(r14)
+	jump	eq,(r14)	; EOD?
 	shlq	#23,r2
 	addqt	#1,r20
-	jr	eq,.nooff
 	move	r0,r1
 	bset	#31,r2
-	sharq	#23,r2
-.nooff
+	sharq	#23,r2		; sign extend 8 byte offset
 	shlq	#28,r0
-	shrq	#28,r0
-	shlq	#24,r1
+	shrq	#28,r0		; matchlen
+	shlq	#24,r1		; O flag set ?  16 bit offset)
 	jr	pl,.onebyteoff
 	loadb	(r20),r1
-
-	addqt	#1,r20		; and r1,r2?
-	shlq	#24,r2
+	shlq	#24,r2		; remove sign-extension
+	addqt	#1,r20
 	shrq	#24,r2
+	bset	#16,r2
 	shlq	#8,r1
 	or	r1,r2
-	loadb	(r20),r1
-	bset	#16,r2
 	shlq	#15,r2
-	sharq	#15,r2
+	sharq	#15,r2		; signexted 16 bit offset
+	loadb	(r20),r1
 .onebyteoff:
 	add	r21,r2
 	cmpq	#15,r0
@@ -119,4 +117,4 @@ unlzsa1::
 	addq	#1,r21
 
 	jump	(r11)
-	nop
+	loadb	(r20),r0	; token : O L L L M M M M
