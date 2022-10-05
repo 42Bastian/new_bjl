@@ -32,3 +32,13 @@ https://github.com/42Bastian/tp
 Unpacker size: 76 bytes
 
 Speed: 173ms for a 128.000 bytes picture.
+
+## unlzsa1
+
+LZSA Format 1 depacker (stream format)
+
+https://github.com/emmanuel-marty/lzsa
+
+Unpacker size: 196
+
+Speed: 182ms for a 128.000 bytes picture.
