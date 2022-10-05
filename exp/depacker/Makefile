@@ -25,16 +25,16 @@ jaggd vj upload: _68KFLAGS+= -DSKUNK
 
 vjd vjd_rom vj_rom vj: _68KFLAGS+= -DDEBUG
 
-tom.o	: unlz4.js
-
 %.o	: %.js
 	$(TJASS) $(TJFLAGS) $<
 
 ALL: $(DEMO).cof $(DEMO).j64
 
+tom.o	: unlz4.js untp.js unlzsa1.js
+
 $(DEMO).o : tom.o
 
-$(DEMO).o : $(DEMO).S
+$(DEMO).o : $(DEMO).S tom.o
 	$(RMAC) $(_68KFLAGS) $(DEMO).S
 
 $(DEMO).cof: $(DEMO).o

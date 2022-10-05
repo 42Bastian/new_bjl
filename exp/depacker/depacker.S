@@ -64,6 +64,10 @@ init:	INCLUDE "68k_inc/startup.inc"
 	move.l	#$20000,d0
 	bsr	memzero
 
+	lea	screen1,a0
+	move.l	#$20000,d0
+	bsr	memzero
+
 //->	lea	piggy,a0
 //->	lea	screen0,a1
 //->	move.l	#320*200*4,d0
@@ -142,13 +146,16 @@ StartGPU:
 	move.l	#packed+8,8(a0)
 	move.l	#packed_e-packed-8,12(a0)
  ENDIF
+ IF ^^defined unlzsa1
+	move.l	#packed+3,8(a0)
+ ENDIF
  IF ^^defined untp
 	move.l	#packed+4,8(a0)
  ENDIF
 	moveq	#0,d1
-	move.l	d1,(a0)
+	clr.l	(a0)
 waitGPU:
-	move.l	(a0),d1		; GPU done? no =>
+	tst.l	(a0)		; GPU done? no =>
 	beq.s	waitGPU
 	rts
 
@@ -306,11 +313,16 @@ mc_wbl1:
 	;;    0123456789012345678901234567890123456789
 Hallo:	dc.b "Jaguar Depacker test                    ",0
 
-	long
+	.dphrase
 	;; pack with "lz4 -9 -l --no-frame-crc"
 packed:
  IF ^^defined depack_lz4
 	incbin	"voyager.cry.lz4"
+//->	incbin	"packed.lz4"
+ ENDIF
+ IF ^^defined unlzsa1
+	incbin	"voyager.cry.lzsa1"
+//->	incbin	"packed.lz4"
  ENDIF
  IF ^^defined untp
 	incbin	"voyager.pck"

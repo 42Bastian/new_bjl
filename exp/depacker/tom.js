@@ -2,7 +2,8 @@
 	GPU
 
 TurboPacker	EQU 0
-LZ4		EQU 1
+LZ4		EQU 0
+LZSA1		EQU 1
 
 	include <js/macro/help.mac>
 
@@ -16,6 +17,10 @@ GPUstart::
 	move	pc,r19
 	addq	#4,r19
 loop:
+	load	(r15),r0
+	cmpq	#0,r0
+	jr	ne,loop
+	nop
 	moveq	#1,r0
 	store	r0,(r15)
 waitStart:
@@ -32,6 +37,12 @@ waitStart:
 	load	(r15+4),r21
 	load	(r15+12),r0
 	movei	#depack_lz4,r1
+ ENDIF
+
+ IF LZSA1 = 1
+	load	(r15+4),r21
+	load	(r15+12),r0
+	movei	#unlzsa1,r1
  ENDIF
 
  IF TurboPacker = 1
@@ -52,6 +63,14 @@ unlz4_e:
 
 unlz4_size	equ unlz4_e - unlz4
 	echo "UNLZ4 size %Dunlz4_size"
+ ENDIF
+ IF LZSA1 = 1
+_unlzsa1:
+	include "unlzsa1.js"
+_unlzsa1_e:
+
+unlzsa1_size	equ _unlzsa1_e - _unlzsa1
+	echo "UNLZSA1 size %Dunlzsa1_size"
  ENDIF
  IF TurboPacker = 1
 _untp:
