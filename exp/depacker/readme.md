@@ -7,7 +7,7 @@ https://brainbox78.artstation.com/
 
 The number shown is the time to depack the picture.
 
-## unlz4
+## [unlz4](unlz4.js)
 
 Based on Ericde45's unlz4 for the YM player.
 
@@ -23,7 +23,7 @@ Unpacker size: 100 bytes
 
 Speed: 170ms for a 128.000 bytes picture.
 
-## untp
+## [untp](untp.js)
 
 TurboPacker
 
@@ -33,7 +33,7 @@ Unpacker size: 76 bytes
 
 Speed: 173ms for a 128.000 bytes picture.
 
-## unlzsa1
+## [unlzsa1](unlzsa1.js)
 
 LZSA Format 1 depacker (stream format)
 
