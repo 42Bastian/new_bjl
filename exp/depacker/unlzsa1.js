@@ -17,8 +17,8 @@ POS_OFFSET	EQU 1		; private lzsa with -p switch
 
 unlzsa1::
 	movei	#.nolit,r13
-	movei	#.copylit1,r10
 	move	pc,r14
+.blockloop:
 	loadb	(r20),r0
 	addq	#1,r20
 	loadb	(r20),r1
@@ -35,29 +35,30 @@ unlzsa1::
 	move	r0,r1
 	shlq	#25,r1
 	shrq	#29,r1
+	movei	#249,r12
 	jump	eq,(r13)	; LLL = 0
 	loadb	(r20),r2
 
 	cmpq	#7,r1
-	jump	ne,(r10)
+	jr	ne,.copylit
+
+	cmp	r12,r2		; r2 = < 249,249 or 250
+	jr	mi,.copylit0
 	addqt	#1,r20
 
-	movei	#249,r12
-	add	r2,r1
-	cmp	r12,r2		; r2 = < 249,249 or 250
-	jr	mi,.copylit
 	loadb	(r20),r2
-
-	move	r2,r1
 	jr	eq,.directlen
 	addqt	#1,r20
-	add	r12,r1
+
+	move	r12,r1
+	jr	.copylit0
 	addq	#6,r1		; r12+6 = 256
-	jr	.copylit
+
 .directlen:
-	loadb	(r20),r2
+	loadb	(r20),r1
 	addqt	#1,r20
 	shlq	#8,r1
+.copylit0:
 	add	r2,r1
 	loadb	(r20),r2
 .copylit:
@@ -77,12 +78,12 @@ unlzsa1::
 	bset	#31,r2
 	sharq	#23,r2		; sign extend 8 byte offset
  ENDIF
-	addqt	#1,r20
 	shlq	#28,r0
-	shrq	#28,r0		; matchlen
+	addqt	#1,r20
 	shlq	#24,r1		; O flag set ?  16 bit offset)
-	jr	pl,.onebyteoff
 	loadb	(r20),r1
+	jr	pl,.onebyteoff
+	shrq	#28,r0		; matchlen
  IF POS_OFFSET = 0
 	shlq	#24,r2		; remove sign-extension
 	shrq	#24,r2
@@ -97,12 +98,14 @@ unlzsa1::
  ENDIF
 	loadb	(r20),r1
 .onebyteoff:
+ IF POS_OFFSET = 1
 	neg	r2
+ ENDIF
 	add	r21,r2
 	cmpq	#15,r0
-	movei	#238,r12
+	subqt	#249-238,r12
 	jr	ne,.copy_match_loop ; 0..14
-	addq	#3,r0
+	addqt	#3,r0
 	cmp	r12,r1
 	jr	mi,.copy_match_loop1 ; nByte < 238 => matchlen = token+nByte
 	addqt	#1,r20

@@ -41,7 +41,7 @@ LZSA Format 1 depacker (stream format)
 
 https://github.com/emmanuel-marty/lzsa
 
-Unpacker size: 196
+Unpacker size: 182
 
 Speed: 182ms for a 128.000 bytes picture.
 
@@ -53,6 +53,8 @@ Adds option `-p` to write positive offsets.
 
 https://github.com/42Bastian/lzsa_jaguar
 
-Unpacker size: 182
+Pack with `lzsa -f 1 -p [input] [output]`
 
-Speed: 175ms for a 128.000 bytes picture.
+Unpacker size: 168
+
+Speed: 170ms for a 128.000 bytes picture.
