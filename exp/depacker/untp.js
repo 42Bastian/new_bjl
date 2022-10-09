@@ -24,20 +24,18 @@ untp::
 	moveq	#8,r1
 	jump	mi,(r30)
 	shlq	#24,r0
-.normal
 	subq	#1,r1
+.normal
 	move	pc,r10
 	loadb	(r20),r2
-	jr	mi,.loop
+	jr	mi,.loop	; r1 < 0 =>
 	add	r0,r0
-	jr	cs,.copy
-	addqt	#1,r20		; literal byte
-
-	storeb	r2,(r21)
-	jr	.normal
-	addqt	#1,r21
-.copy
+	moveq	#1,r3
+	jr	cc,.literal
+	addqt	#1,r20
+	;; match
 	moveq	#15,r3
+.copy
 	loadb	(r20),r4
 	addqt	#1,r20
 	and	r2,r3
@@ -50,6 +48,7 @@ untp::
 .copyloop
 	loadb	(r4),r2
 	addqt	#1,r4
+.literal
 	subq	#1,r3
 	storeb	r2,(r21)
 	jr	ne,.copyloop
