@@ -1,6 +1,7 @@
 ;-*-asm-*-
 	GPU
 
+COPY_RAW	EQU 0
 TurboPacker	EQU 0
 LZ4		EQU 0
 LZSA1		EQU 1
@@ -17,11 +18,9 @@ GPUstart::
 	move	pc,r19
 	addq	#4,r19
 loop:
-	load	(r15),r0
-	cmpq	#0,r0
-	jr	ne,loop
-	nop
-	moveq	#1,r0
+	moveq	#3,r0
+	movei	#$f02114,r1
+	store	r0,(r1)		; wakeup 68k
 	store	r0,(r15)
 waitStart:
 	cmpq	#0,r0
@@ -33,6 +32,19 @@ waitStart:
 	jump	eq,(r19)
 	nop
 
+ IF COPY_RAW = 1
+copy_raw::
+	load	(r15+4),r21
+	load	(r15+12),r0
+.copy:
+	loadb	(r20),r1
+	addqt	#1,r20
+	subq	#1,r0
+	storeb	r1,(r21)
+	jr	ne,.copy
+	addqt	#1,r21
+ ENDIF
+
  IF LZ4 = 1
 	load	(r15+4),r21
 	load	(r15+12),r0
@@ -41,7 +53,6 @@ waitStart:
 
  IF LZSA1 = 1
 	load	(r15+4),r21
-	load	(r15+12),r0
 	movei	#unlzsa1,r1
  ENDIF
 
@@ -50,10 +61,11 @@ waitStart:
 	movei	#untp,r1
  ENDIF
 
+ IF COPY_RAW = 0
 	move	pc,r30
 	jump	(r1)
 	addq	#6,r30
-
+ ENDIF
 	jump	(r19)
 	nop
  IF LZ4 = 1
@@ -72,6 +84,7 @@ _unlzsa1_e:
 unlzsa1_size	equ _unlzsa1_e - _unlzsa1
 	echo "UNLZSA1 size %Dunlzsa1_size"
  ENDIF
+
  IF TurboPacker = 1
 _untp:
 	include "untp.js"

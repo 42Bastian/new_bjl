@@ -1,6 +1,6 @@
 ;;; -*-asm-*-
 
-POS_OFFSET	EQU 1		; private lzsa with -p switch
+POS_OFFSET::	EQU 1		; private lzsa with -p switch
 
 ; input:
 ;;; R20 : packed buffer

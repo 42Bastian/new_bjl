@@ -29,13 +29,11 @@ ScreenMode	EQU CRY16|VIDEN|PWIDTH4|BGEN|CSYNC
 
 	RSW a_vde
 	RSW a_vdb
-	RSW VI_count
 	RSW swap_flag
-	RSW gpu_flag
-	RSW op_flag
+	RSW screen_flag
 
 	.include "68k_var/text_scr.var"
-	RSL max_time
+
 	RSL StackBottom,200
 	RSL stack,1
 
@@ -68,32 +66,28 @@ init:	INCLUDE "68k_inc/startup.inc"
 	move.l	#$20000,d0
 	bsr	memzero
 
-//->	lea	piggy,a0
-//->	lea	screen0,a1
-//->	move.l	#320*200*4,d0
-//->	bsr	memcpy
-//->
-//->	lea	piggy,a0
-//->	lea	screen1,a1
-//->	move.l	#320*200*4,d0
-//->	bsr	memcpy
-
 	;; Setup Text screen
 	move.w	#254,d0
 	move.l	#$1000F740,d1
 	lea	txt_screen,a0
 	move.l	a0,TextScreen(a6)
 	bsr	InitTxtScreen
+
+//->	lea	screen0,a0
+//->	move.l	#1288,d0
+//->x:	move.l	d0,(a0)+
+//->	dbra	d0,x
 ;;;********************
 ;;; Video setup
 	bsr	VideoInit
 	bsr	InitOP
-	move.w #ScreenMode,$f00028
+	move.w	#ScreenMode,$f00028
 
 	bsr	InitGPU
 
 	move	#$2000,sr
 
+;;->	move.w	#4,screen_flag(a6)
 ;;; Initial text out
 	clr.l	Cursor(a6)
 	lea	Hallo(pc),a0
@@ -102,6 +96,10 @@ init:	INCLUDE "68k_inc/startup.inc"
 	move.l	#26590<<16|$ffff,PIT0	 ; 1/1000s-Timer
 	.globl again
 again:
+	move.l	screen(a6),a0
+	move.l	#320*200*2,d0
+	bsr	memzero
+
 	move.w	#$ffff,PIT1
 	bsr	StartGPU
 	move.w	PIT1,d0
@@ -111,9 +109,9 @@ again:
 	move.l	d1,Cursor(a6)
 	bsr	PrintDEZ
 
-//->	addq.w	#2,Cursor(a6)
-//->	move.l	0.w,d0
-//->	bsr	PrintHEXl
+	addq.w	#2,Cursor(a6)
+	move.l	d7,d0
+	bsr	PrintHEXl
 
 	bsr	swap		; now show last frame and wait for VBL
 
@@ -134,6 +132,13 @@ InitGPU:
 	adda.l	#$8000,a1
 	bsr	memcpy
 
+	lea	$F03FF0,a0	; clear parameters
+	moveq	#1,d0
+	move.l	d0,(a0)+
+	move.l	screen(a6),(a0)+
+	clr.l	(a0)+
+	clr.l	(a0)+
+
 	move.l	#1,d0
 	move.l	d0,$00F02114
 	rts
@@ -142,20 +147,26 @@ InitGPU:
 StartGPU:
 	lea	$F03FF0,a0
 	move.l	screen(a6),4(a0)
+ IF ^^defined copy_raw
+	move.l	#packed,8(a0)
+	move.l	#packed_e-packed,12(a0)
+ ENDIF
  IF ^^defined depack_lz4
 	move.l	#packed+8,8(a0)
 	move.l	#packed_e-packed-8,12(a0)
  ENDIF
- IF ^^defined unlzsa1
+ IF ^^defined unlzsa1 | ^^defined unlzsa1a
 	move.l	#packed+3,8(a0)
  ENDIF
  IF ^^defined untp
 	move.l	#packed+4,8(a0)
  ENDIF
-	moveq	#0,d1
-	clr.l	(a0)
+	moveq	#0,d0
+	move.l	d0,(a0)
+	move.l	d7,d6
 waitGPU:
-	tst.l	(a0)		; GPU done? no =>
+	stop	#$2000
+	cmp.l	d7,d6
 	beq.s	waitGPU
 	rts
 
@@ -166,7 +177,7 @@ GPUcode:
 *****************
 *    CopyOBL	*
 CopyOBL:
-	move.w	op_flag(a6),d0
+	move.w	screen_flag(a6),d0
 	add.w	#obls,d0
 	move.l	(a6,d0.w),a1
 	lea	obl(a6),a0
@@ -188,7 +199,7 @@ InitOP:
 io_pal:
 	movem.l	(a0),d0-d1
 	movem.l	d0-d1,obls(a6)
-	move.l	#screen1,screen(a6)
+	move.l	screens(pc),screen(a6)
 
 	bsr	CopyOBL
 
@@ -205,22 +216,21 @@ io_pal:
 	move.l	a0,d0
 	swap	d0
 	move.l	d0,OLP-_BASE(a2)
-	move.l	#$1F01<<16,INT1-_BASE(a2)
+	move.l	#($1F00|C_VIDENA|C_GPUENA)<<16,INT1-_BASE(a2)
 	lea	my_irq(pc),a0
 	move.l	a0,$00000100.w
 	rts
 ******************
 * swap
 swap:
+	st	swap_flag(a6)
+sw1:
 	stop	#$2000
-	move.w	gpu_flag(a6),d1
-	addq.w	#4,d1
-	cmp.w	#2*4,d1
+	tst.w	swap_flag(a6)
 	bne.s	sw1
-	moveq	#0,d1
-sw1:	move.w	d1,gpu_flag(a6)
-	move.l	screens(pc,d1.w),screen(a6)
-	subq.w	#1,swap_flag(a6)
+
+	move.w	screen_flag(a6),d0
+	move.l	screens(pc,d0.w),screen(a6)
 	rts
 ******************
 * IRQ
@@ -231,24 +241,18 @@ my_irq:
 	btst	#0,d2
 	beq.s	no_vi
 
-	addq.w	#1,VI_count(a6)
-
 	tst.w	swap_flag(a6)
 	beq.s	no_swap
 
-	move.w	op_flag(a6),d0
-	addq.w	#4,d0
-	and.w	#4,d0
-//->	cmp	#2*4,d0
-//->	bne.s	x1
-//->	moveq	#0,d0
-//->x1:
-	move.w	d0,op_flag(a6)
+	moveq	#4,d0
+	eor.w	d0,screen_flag(a6)
 	clr.w	swap_flag(a6)
 no_swap:
 	bsr	CopyOBL
 no_vi:
-
+	btst	#1,d2
+	beq.s	cont_irq
+	addq.l	#1,d7
 cont_irq:
 	lsl.w	#8,d2
 	or.w	#C_VIDENA|C_GPUENA,d2
@@ -311,28 +315,48 @@ mc_wbl1:
 ******************
 * text-data
 	;;    0123456789012345678901234567890123456789
-Hallo:	dc.b "Jaguar Depacker test                    ",0
+Hallo:	dc.b "Jaguar Depacker test:"
+ IF ^^defined depack_lz4
+	dc.b "LZ4"
+ ENDIF
+ IF ^^defined unlzsa1
+	dc.b "LZSA1"
+ ENDIF
+ IF ^^defined unlzsa1a
+	dc.b "LZSA1A"
+ ENDIF
+ IF ^^defined untp
+	dc.b "TP"
+ ENDIF
+ IF ^^defined copy_raw
+	dc.b "unpacked"
+ ENDIF
+	dc.b 0
 
 	.dphrase
 	;; pack with "lz4 -9 -l --no-frame-crc"
 packed:
  IF ^^defined depack_lz4
 	incbin	"voyager.cry.lz4"
-//->	incbin	"packed.lz4"
  ENDIF
  IF ^^defined unlzsa1
+ IF POS_OFFSET = 1
 	incbin	"voyager.cry.lzsa1"
-//->	incbin	"packed.lz4"
+ ELSE
+	incbin	"voyager.cry.lzsa1_org"
+ ENDIF
+ ENDIF
+ IF ^^defined unlzsa1a
+	incbin	"voyager.cry.lzsa1a"
  ENDIF
  IF ^^defined untp
 	incbin	"voyager.pck"
  ENDIF
+ IF ^^defined copy_raw
+	incbin	"voyager.cry"
+ ENDIF
 packed_e:
 	.phrase
-
-piggy:
-//->	incbin	"voyager.cry"
-
 *****************
 * Objekte
 

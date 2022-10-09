@@ -7,6 +7,8 @@ https://brainbox78.artstation.com/
 
 The number shown is the time to depack the picture.
 
+Copying the 128.000bytes byte wise takes 114ms, phrase wise 14ms
+
 ## [unlz4](unlz4.js)
 
 Based on Ericde45's unlz4 for the YM player.
@@ -21,7 +23,7 @@ Pack with: `lz4.exe -9 -l --no-frame-crc [input file] [output file] `
 
 Unpacker size: 100 bytes
 
-Speed: 170ms for a 128.000 bytes picture.
+Speed: 134ms for a 128.000 bytes picture.
 
 ## [untp](untp.js)
 
@@ -31,7 +33,7 @@ https://github.com/42Bastian/tp
 
 Unpacker size: 76 bytes
 
-Speed: 173ms for a 128.000 bytes picture.
+Speed: 139ms for a 128.000 bytes picture.
 
 ## [unlzsa1](unlzsa1.js)
 
@@ -43,7 +45,7 @@ https://github.com/emmanuel-marty/lzsa
 
 Unpacker size: 182
 
-Speed: 182ms for a 128.000 bytes picture.
+Speed: 146ms for a 128.000 bytes picture.
 
 Be sure to set `POS_OFFSET` 0.
 
@@ -57,4 +59,4 @@ Pack with `lzsa -f 1 -p [input] [output]`
 
 Unpacker size: 168
 
-Speed: 170ms for a 128.000 bytes picture.
+Speed: 137ms for a 128.000 bytes picture.

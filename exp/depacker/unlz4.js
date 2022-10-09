@@ -15,18 +15,17 @@
 ;;; r13       : end of packed data
 
 depack_lz4::
-
-	loadb	(R20),R0	; first token
 	move	R20,R13
 	move	r20,r12
 	add	R0,R13		; packed buffer end
 	sat8	r12		; r12 = $ff
 
+	loadb	(R20),R0
 .dpklz4_tokenLoop:
 	move	pc,r11
 	addqt	#1,R20
 	move	R0,R1
-	shrq	#4,R1		; literal length
+	shrq	#4,R1
 	jr	eq,.skip1
 	shlq	#28,r0		; remove high nibble
 	cmpq	#15,R1

@@ -18,17 +18,17 @@ untp::
 	addq	#4,r20
 	add	r0,r11
 .loop
-	cmp	r21,r11
 	loadb	(r20),r0	;flags: bit = 0 => literal
-	jump	eq,(r30)
 	addqt	#1,r20
-	moveq	#8+1,r1
+	cmp	r21,r11
+	moveq	#8,r1
+	jump	mi,(r30)
 	shlq	#24,r0
 .normal
 	subq	#1,r1
 	move	pc,r10
 	loadb	(r20),r2
-	jr	eq,.loop
+	jr	mi,.loop
 	add	r0,r0
 	jr	cs,.copy
 	addqt	#1,r20		; literal byte
@@ -37,8 +37,8 @@ untp::
 	jr	.normal
 	addqt	#1,r21
 .copy
-	loadb	(r20),r4
 	moveq	#15,r3
+	loadb	(r20),r4
 	addqt	#1,r20
 	and	r2,r3
 	shrq	#4,r2
