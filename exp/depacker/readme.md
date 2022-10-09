@@ -21,7 +21,7 @@ https://github.com/lz4/lz4
 
 Pack with: `lz4.exe -9 -l --no-frame-crc [input file] [output file] `
 
-Unpacker size: 100 bytes
+Unpacker size: 98 bytes
 
 Speed: 134ms for a 128.000 bytes picture.
 
