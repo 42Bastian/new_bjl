@@ -5,8 +5,9 @@ COPY_RAW::	EQU 0
 TP::		EQU 0
 TP_fast::	EQU 0
 LZ4::		EQU 0
-LZ4_fast::	EQU 1
+LZ4_fast::	EQU 0
 LZSA1::		EQU 0
+LZSA1_fast::	EQU 1
 LZSA1A::	EQU 0
 
 	include <js/macro/help.mac>
@@ -54,7 +55,7 @@ copy_raw::
 	movei	#depack_lz4,r1
  ENDIF
 
- IF LZSA1 = 1
+ IF LZSA1 + LZSA1_fast > 0
 	load	(r15+4),r21
 	movei	#unlzsa1,r1
  ENDIF
@@ -101,6 +102,14 @@ _unlzsa1_e:
 
 unlzsa1_size	equ _unlzsa1_e - _unlzsa1
 	echo "UNLZSA1 size %Dunlzsa1_size"
+ ENDIF
+ IF LZSA1_fast = 1
+_unlzsa1:
+	include "unlzsa1_fast.js"
+_unlzsa1_e:
+
+unlzsa1_size	equ _unlzsa1_e - _unlzsa1
+	echo "UNLZSA1-fast size %Dunlzsa1_size"
  ENDIF
  IF LZSA1A = 1
 _unlzsa1a:

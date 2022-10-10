@@ -155,7 +155,7 @@ StartGPU:
 	move.l	#packed+8,8(a0)
 	move.l	#packed_e-packed-8,12(a0)
  ENDIF
- IF LZSA1 = 1 | LZSA1A = 1
+ IF LZSA1 = 1 | LZSA1A = 1 | LZSA1_fast
 	move.l	#packed+3,8(a0)
  ENDIF
  IF TP = 1 | TP_fast = 1
@@ -322,8 +322,11 @@ Hallo:	dc.b "Jaguar Depacker test:"
 	dc.b "-fast"
  ENDIF
  ENDIF
- IF LZSA1 = 1
+ IF LZSA1 = 1 | LZSA1_fast
 	dc.b "LZSA1"
+ IF LZSA1_fast = 1
+	dc.b "-fast"
+ ENDIF
  IF POS_OFFSET = 1
 	dc.b " POS"
  ENDIF
@@ -348,7 +351,7 @@ packed:
  IF LZ4 = 1 | LZ4_fast = 1
 	incbin	"voyager.cry.lz4"
  ENDIF
- IF LZSA1 = 1
+ IF LZSA1 = 1 | LZSA1_fast = 1
  IF POS_OFFSET = 1
 	incbin	"voyager.cry.lzsa1"
  ELSE

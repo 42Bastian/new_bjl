@@ -78,3 +78,11 @@ Pack with `lzsa -f 1 -p [input] [output]`
 Unpacker size: 168
 
 Speed: 137ms for a 128.000 bytes picture.
+
+## [unlzsa1_fast](unlzsa1_fast.js)
+
+Fast version.
+
+Unpacker size: 196
+
+Speed: 118ms for a 128.000 bytes picture.
