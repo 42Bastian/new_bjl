@@ -147,18 +147,18 @@ InitGPU:
 StartGPU:
 	lea	$F03FF0,a0
 	move.l	screen(a6),4(a0)
- IF ^^defined copy_raw
+ IF COPY_RAW = 1
 	move.l	#packed,8(a0)
 	move.l	#packed_e-packed,12(a0)
  ENDIF
- IF ^^defined depack_lz4
+ IF LZ4 = 1 | LZ4_fast = 1
 	move.l	#packed+8,8(a0)
 	move.l	#packed_e-packed-8,12(a0)
  ENDIF
- IF ^^defined unlzsa1 | ^^defined unlzsa1a
+ IF LZSA1 = 1 | LZSA1A = 1
 	move.l	#packed+3,8(a0)
  ENDIF
- IF ^^defined untp
+ IF TP = 1 | TP_fast = 1
 	move.l	#packed+4,8(a0)
  ENDIF
 	moveq	#0,d0
@@ -316,19 +316,28 @@ mc_wbl1:
 * text-data
 	;;    0123456789012345678901234567890123456789
 Hallo:	dc.b "Jaguar Depacker test:"
- IF ^^defined depack_lz4
+ IF LZ4 = 1 | LZ4_fast = 1
 	dc.b "LZ4"
+ IF LZ4_fast = 1
+	dc.b "-fast"
  ENDIF
- IF ^^defined unlzsa1
+ ENDIF
+ IF LZSA1 = 1
 	dc.b "LZSA1"
+ IF POS_OFFSET = 1
+	dc.b " POS"
  ENDIF
- IF ^^defined unlzsa1a
+ ENDIF
+ IF LZSA1A = 1
 	dc.b "LZSA1A"
  ENDIF
- IF ^^defined untp
+ IF TP = 1 | TP_fast = 1
 	dc.b "TP"
+ IF TP_fast = 1
+	dc.b "-fast"
  ENDIF
- IF ^^defined copy_raw
+ ENDIF
+ IF COPY_RAW = 1
 	dc.b "unpacked"
  ENDIF
 	dc.b 0
@@ -336,23 +345,23 @@ Hallo:	dc.b "Jaguar Depacker test:"
 	.dphrase
 	;; pack with "lz4 -9 -l --no-frame-crc"
 packed:
- IF ^^defined depack_lz4
+ IF LZ4 = 1 | LZ4_fast = 1
 	incbin	"voyager.cry.lz4"
  ENDIF
- IF ^^defined unlzsa1
+ IF LZSA1 = 1
  IF POS_OFFSET = 1
 	incbin	"voyager.cry.lzsa1"
  ELSE
 	incbin	"voyager.cry.lzsa1_org"
  ENDIF
  ENDIF
- IF ^^defined unlzsa1a
+ IF LZSA1A = 1
 	incbin	"voyager.cry.lzsa1a"
  ENDIF
- IF ^^defined untp
+ IF TP = 1 | TP_fast = 1
 	incbin	"voyager.pck"
  ENDIF
- IF ^^defined copy_raw
+ IF COPY_RAW = 1
 	incbin	"voyager.cry"
  ENDIF
 packed_e:

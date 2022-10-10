@@ -25,6 +25,14 @@ Unpacker size: 98 bytes
 
 Speed: 134ms for a 128.000 bytes picture.
 
+## [unlz4_fast](unlz4_fast.js)
+
+Speed optimized version.
+
+Unpacker size: 124 bytes
+
+Speed: 115ms for a 128.000 bytes picture.
+
 ## [untp](untp.js)
 
 TurboPacker
@@ -34,6 +42,16 @@ https://github.com/42Bastian/tp
 Unpacker size: 72 bytes
 
 Speed: 139ms for a 128.000 bytes picture.
+
+## [untp_fast](untp_fast.js)
+
+TurboPacker (speed optimized)
+
+https://github.com/42Bastian/tp
+
+Unpacker size: 104 bytes
+
+Speed: 122ms for a 128.000 bytes picture.
 
 ## [unlzsa1](unlzsa1.js)
 
