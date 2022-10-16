@@ -348,6 +348,15 @@ Hallo:	dc.b "Jaguar Depacker test:"
 	dc.b "-fast"
  ENDIF
  ENDIF
+ IF ZX0 = 1 | ZX0_fast = 1
+	dc.b "ZX0"
+ IF ZX0_fast = 1
+	dc.b "-fast"
+ ENDIF
+ ENDIF
+ IF N0 = 1
+	dc.b "N0"
+ ENDIF
  IF COPY_RAW = 1
 	dc.b "unpacked"
  ENDIF
