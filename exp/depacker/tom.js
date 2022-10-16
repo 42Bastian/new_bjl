@@ -7,8 +7,10 @@ TP_fast::	EQU 0
 LZ4::		EQU 0
 LZ4_fast::	EQU 0
 LZSA1::		EQU 0
-LZSA1_fast::	EQU 1
+LZSA1_fast::	EQU 0
 LZSA1A::	EQU 0
+SHR::		EQU 0
+ZX0::		EQU 1
 
 	include <js/macro/help.mac>
 
@@ -70,11 +72,17 @@ copy_raw::
 	movei	#untp,r1
  ENDIF
 
+ IF ZX0 = 1
+	load	(r15+4),r21
+	movei	#unzx0,r1
+ ENDIF
+
  IF COPY_RAW = 0
 	move	pc,r30
 	jump	(r1)
 	addq	#6,r30
  ENDIF
+	movei	#loop,r19
 	jump	(r19)
 	nop
 ;;; ----------------------------------------
@@ -133,4 +141,19 @@ _untp_e:
 untp_size	equ _untp_e - _untp
 	echo "UNTP_fast size %Duntp_size"
  ENDIF
-	align	8
+
+ IF SHR = 1
+_unshr:
+	include "unshr.js"
+_unshr_e:
+unshr_size	equ _unshr_e - _unshr
+	echo "UNSHR_fast size %Dunshr_size"
+ ENDIF
+ IF ZX0 = 1
+_unzx0:
+	include "unzx0.js"
+_unzx0_e:
+unzx0_size	equ _unzx0_e - _unzx0
+	echo "UNZX0 size %Dunzx0_size"
+ ENDIF
+ align	8

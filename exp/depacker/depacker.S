@@ -155,18 +155,23 @@ StartGPU:
 	move.l	#packed+8,8(a0)
 	move.l	#packed_e-packed-8,12(a0)
  ENDIF
- IF LZSA1 = 1 | LZSA1A = 1 | LZSA1_fast
+ IF LZSA1 = 1 | LZSA1A = 1 | LZSA1_fast = 1
 	move.l	#packed+3,8(a0)
  ENDIF
  IF TP = 1 | TP_fast = 1
 	move.l	#packed+4,8(a0)
  ENDIF
+ IF ZX0 = 1
+	move.l	#packed,8(a0)
+ ENDIF
+ IF SHR = 1
+	move.l	#packed,8(a0)
+ ENDIF
 	moveq	#0,d0
 	move.l	d0,(a0)
-	move.l	d7,d6
 waitGPU:
 	stop	#$2000
-	cmp.l	d7,d6
+	tst.l	(a0)
 	beq.s	waitGPU
 	rts
 
@@ -363,6 +368,12 @@ packed:
  ENDIF
  IF TP = 1 | TP_fast = 1
 	incbin	"voyager.pck"
+ ENDIF
+ IF SHR = 1
+	incbin	"voyager.cry.shr"
+ ENDIF
+ IF ZX0 = 1
+	incbin	"voyager.cry.zx0"
  ENDIF
  IF COPY_RAW = 1
 	incbin	"voyager.cry"

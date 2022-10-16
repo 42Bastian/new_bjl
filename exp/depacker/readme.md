@@ -86,3 +86,15 @@ Fast version.
 Unpacker size: 196
 
 Speed: 118ms for a 128.000 bytes picture.
+
+## [unzx0](unzx0.js) (WIP)
+
+ZX0 depacker, classic format.
+
+Packer: https://github.com/einar-saukas/ZX0
+
+Pack with `zx0 -c [input] [output]`
+
+Unpacker size: 210
+
+Speed: 268ms for a 128.000 bytes picture.
