@@ -98,3 +98,9 @@ Pack with `zx0 -c [input] [output]`
 Unpacker size: 168 bytes
 
 Speed: 248ms for a 128.000 bytes picture.
+
+## [unzx0_fast](unzx0_fast.js)
+
+Unpacker size: 216 bytes
+
+Speed: 203ms for a 128.000 bytes picture.

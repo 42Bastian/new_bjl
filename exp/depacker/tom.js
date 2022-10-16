@@ -10,7 +10,8 @@ LZSA1::		EQU 0
 LZSA1_fast::	EQU 0
 LZSA1A::	EQU 0
 SHR::		EQU 0
-ZX0::		EQU 1
+ZX0::		EQU 0
+ZX0_fast::	EQU 1
 
 	include <js/macro/help.mac>
 
@@ -72,7 +73,7 @@ copy_raw::
 	movei	#untp,r1
  ENDIF
 
- IF ZX0 = 1
+ IF ZX0 + ZX0_fast > 0
 	load	(r15+4),r21
 	movei	#unzx0,r1
  ENDIF
@@ -155,5 +156,12 @@ _unzx0:
 _unzx0_e:
 unzx0_size	equ _unzx0_e - _unzx0
 	echo "UNZX0 size %Dunzx0_size"
+ ENDIF
+ IF ZX0_fast = 1
+_unzx0:
+	include "unzx0_fast.js"
+_unzx0_e:
+unzx0_size	equ _unzx0_e - _unzx0
+	echo "UNZX0_fast size %Dunzx0_size"
  ENDIF
  align	8
