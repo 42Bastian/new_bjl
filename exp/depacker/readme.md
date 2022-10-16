@@ -61,7 +61,7 @@ LZSA Format 1 depacker (stream format)
 
 https://github.com/emmanuel-marty/lzsa
 
-Unpacker size: 182
+Unpacker size: 182 bytes
 
 Speed: 146ms for a 128.000 bytes picture.
 
@@ -75,7 +75,7 @@ https://github.com/42Bastian/lzsa_jaguar
 
 Pack with `lzsa -f 1 -p [input] [output]`
 
-Unpacker size: 168
+Unpacker size: 168 bytes
 
 Speed: 137ms for a 128.000 bytes picture.
 
@@ -83,11 +83,11 @@ Speed: 137ms for a 128.000 bytes picture.
 
 Fast version.
 
-Unpacker size: 196
+Unpacker size: 196 bytes
 
 Speed: 118ms for a 128.000 bytes picture.
 
-## [unzx0](unzx0.js) (WIP)
+## [unzx0](unzx0.js)
 
 ZX0 depacker, classic format.
 
@@ -95,6 +95,6 @@ Packer: https://github.com/einar-saukas/ZX0
 
 Pack with `zx0 -c [input] [output]`
 
-Unpacker size: 210
+Unpacker size: 168 bytes
 
-Speed: 268ms for a 128.000 bytes picture.
+Speed: 248ms for a 128.000 bytes picture.

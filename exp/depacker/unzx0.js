@@ -6,57 +6,47 @@
 ;;; r30 : return address
 ;;;
 ;;; Register usage (destroyed!)
-;;; r0-r4,r10,r11,r20,r21
+;;; r0-r13,r20,r21
 ;;;
-;;; R1-r4     : temp register
-;;; r10       : jump destination
-;;; r11       : end of packed data
+;;; pack with classic (V1) format.
 
+DST		REG 21
+SRC		REG 20
 
+LR_save		REG 13
+LR2		REG 12
+BC		REG 11
+STOR		REG 10
+GETBIT		REG 9
+ELIAS		REG 8
+LITERALS	REG 7
 
-LR_save	REG 29
-LR2	REG 28
-BC	REG 27
-STOR	REG 26
-GETBIT	REG 25
-ELIAS	REG 24
-ELIAS_PRE REG 23
-MAIN	REG 22
-DST	REG 21
-SRC	REG 20
-MWO	REG 19
-VALUE	REG 18
-OFFSET	REG 17
-_256	REG 16
-NO_OFF	reg 14
-MATCH	reg 13
+OFFSET		REG 6
+NEW_OFF		reg 5
+COPY_MATCH	reg 4
+_256		REG 3
+VALUE		REG 2
+tmp1		REG 1
+tmp0		REG 0
 
 unzx0::
 	move	LR,LR_save
 	movei	#.getbit,GETBIT
 	movei	#.elias,ELIAS
-	movei	#.elias_pre,ELIAS_PRE
-	movei	#.no_off,NO_OFF
-	movei	#.match,MATCH
+	movei	#.copy_match,COPY_MATCH
+	movei	#.new_off,NEW_OFF
 	moveq	#1,_256
 	moveq	#0,BC
 	shlq	#8,_256
 	moveq	#1,OFFSET
-	move	pc,MAIN
-	addq	#6,MAIN
-	jr	.skip
-.main
-	moveq	#0,MWO
-	BL	(GETBIT)
-	addc	MWO,MWO
 
-	cmpq	#0,MWO
-	jump	ne,(MATCH)
-.skip
 	moveq	#1,VALUE
-	BL	(ELIAS)
-	cmpq	#0,VALUE
-	jr	eq,.nolit
+.literals
+	move	pc,LITERALS
+
+	move	pc,LR2
+	jump	(ELIAS)
+	addq	#6,LR2
 .copylit
 	loadb	(SRC),r0
 	addqt	#1,SRC
@@ -64,46 +54,56 @@ unzx0::
 	storeb	r0,(DST)
 	jr	ne,.copylit
 	addqt	#1,DST
-.nolit
-	BL	(GETBIT)
-	addc	MWO,MWO
 
+	BL	(GETBIT)
+	jump	cs,(NEW_OFF)
 	moveq	#1,VALUE
-.match
-	BL	(ELIAS)		; offset high or match length
-	cmpq	#0,MWO
-	jump	eq,(NO_OFF)
-	cmp	_256,VALUE
-	move	VALUE,OFFSET
-	jump	eq,(LR_save)
-	subq	#1,OFFSET
-	loadb	(SRC),VALUE
-	shlq	#7,OFFSET
-	movei	#255,r1
-	addqt	#1,SRC
-	sub	VALUE,r1
-	shrq	#1,r1
-	or	r1,OFFSET
-	shrq	#1,VALUE
-	addqt	#1,OFFSET
-	moveq	#1,VALUE
-	BL	cc,(ELIAS_PRE)
-	addqt	#1,VALUE
-.no_off
+	;; last offset
+	jump	(ELIAS)
+	move	COPY_MATCH,LR2
+.copy_match
 	move	DST,r1
 	sub	OFFSET,r1
-	cmpq	#0,VALUE
-	jump	eq,(MAIN)
-.copy_match
+.copy_match_loop
 	loadb	(r1),r0
 	addqt	#1,r1
 	subq	#1,VALUE
 	storeb	r0,(DST)
-	jr	ne,.copy_match
+	jr	ne,.copy_match_loop
 	addq	#1,DST
 
-	jump	(MAIN)
-	nop
+	BL	(GETBIT)
+	jump	cc,(LITERALS)
+	moveq	#1,VALUE
+.new_off:
+	move	pc,LR2
+	jump	(ELIAS)
+	addq	#6,LR2
+	cmp	_256,VALUE
+	move	VALUE,OFFSET
+	jump	eq,(LR_save)
+	loadb	(SRC),VALUE
+	shlq	#7,OFFSET
+	addqt	#1,SRC
+	move	VALUE,r1
+	shrq	#1,VALUE
+	sub	VALUE,OFFSET
+	shrq	#1,r1
+	moveq	#1,VALUE
+	move	PC,LR2
+	jr	cc,.elias_pre
+	addq	#6,LR2
+	jump	(COPY_MATCH)
+	addqt	#1,VALUE
+
+.elias
+	BL	(GETBIT)
+	jump	cs,(LR2)
+//->	nop			; ATARI says: NOP needed (next is move pc,lr)
+.elias_pre
+	BL	(GETBIT)
+	jump	(ELIAS)
+	addc	VALUE,VALUE
 
 .getbit
 	subq	#1,BC
@@ -112,18 +112,5 @@ unzx0::
 	loadb	(SRC),STOR
 	moveq	#8,BC
 	addqt	#1,SRC
-	jr	.getbit
+	jump	(GETBIT)
 	shlq	#24,STOR
-.elias
-	move	LR,LR2
-.eliasloop
-	BL	(GETBIT)
-	jump	cs,(LR2)
-	nop
-.elias_pre0
-	BL	(GETBIT)
-	jr	.eliasloop
-	addc	VALUE,VALUE
-.elias_pre
-	jr	.elias_pre0
-	move	LR,LR2
