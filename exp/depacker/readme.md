@@ -104,3 +104,13 @@ Speed: 248ms for a 128.000 bytes picture.
 Unpacker size: 216 bytes
 
 Speed: 203ms for a 128.000 bytes picture.
+
+## [unn0](unn0.js)
+
+Packer: https://github.com/HansWessels/gup
+
+Packed with `gup a -n0 [archive] [infile]` then header (96 bytes) stripped.
+
+Unpacker size: 162 bytes
+
+Speed: 168ms for a 128.000 bytes picture.

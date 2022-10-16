@@ -164,6 +164,9 @@ StartGPU:
  IF ZX0 = 1 | ZX0_fast
 	move.l	#packed,8(a0)
  ENDIF
+ IF N0 = 1
+	move.l	#packed,8(a0)
+ ENDIF
  IF SHR = 1
 	move.l	#packed,8(a0)
  ENDIF
@@ -375,6 +378,9 @@ packed:
  IF ZX0 = 1 | ZX0_fast
 //->	incbin	"unlz4.js.zx0"
 	incbin	"voyager.cry.zx0"
+ ENDIF
+ IF N0 = 1
+	incbin	"voyager.cry.n0"
  ENDIF
  IF COPY_RAW = 1
 	incbin	"voyager.cry"

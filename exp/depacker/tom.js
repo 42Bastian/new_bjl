@@ -11,7 +11,8 @@ LZSA1_fast::	EQU 0
 LZSA1A::	EQU 0
 SHR::		EQU 0
 ZX0::		EQU 0
-ZX0_fast::	EQU 1
+ZX0_fast::	EQU 0
+N0::		EQU 1
 
 	include <js/macro/help.mac>
 
@@ -76,6 +77,11 @@ copy_raw::
  IF ZX0 + ZX0_fast > 0
 	load	(r15+4),r21
 	movei	#unzx0,r1
+ ENDIF
+
+ IF N0 > 0
+	load	(r15+4),r21
+	movei	#unn0,r1
  ENDIF
 
  IF COPY_RAW = 0
@@ -163,5 +169,12 @@ _unzx0:
 _unzx0_e:
 unzx0_size	equ _unzx0_e - _unzx0
 	echo "UNZX0_fast size %Dunzx0_size"
+ ENDIF
+ IF N0 = 1
+_unn0:
+	include "unn0.js"
+_unn0_e:
+unn0_size	equ _unn0_e - _unn0
+	echo "UNN0 size %Dunn0_size"
  ENDIF
  align	8

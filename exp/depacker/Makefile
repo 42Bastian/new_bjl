@@ -31,7 +31,7 @@ vjd vjd_rom vj_rom vj: _68KFLAGS+= -DDEBUG
 ALL: $(DEMO).cof $(DEMO).j64
 
 tom.o: unlz4.js untp.js unlzsa1.js unlzsa1a.js untp_fast.js unlz4_fast.js\
-	unlzsa1_fast.js unzx0.js unzx0_fast.js
+	unlzsa1_fast.js unzx0.js unzx0_fast.js unn0.js
 
 
 $(DEMO).o : tom.o
