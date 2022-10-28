@@ -11,7 +11,6 @@ __PC		reg 27
 max_xy		reg 26
 screen_ptr	reg 24
 delta		reg 21
-screen		reg 20
 
 XLOOP		reg 18
 YLOOP		reg 17
