@@ -41,8 +41,7 @@ $(DEMO).rom: $(DEMO).o
 
 .ONESHELL:
 $(DEMO).j64: $(DEMO).rom
-	@cat $(BJL_ROOT)/bin/Univ.bin $< >$@
-	cat $< >> $@
+	@cat $(BJL_ROOT)/bin/fastbt2.bin $< > $@
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
 	truncate -s 1M $@
 
