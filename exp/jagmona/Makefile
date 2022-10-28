@@ -41,10 +41,10 @@ $(DEMO).rom: $(DEMO).o
 
 .ONESHELL:
 $(DEMO).j64: $(DEMO).rom
-	@cat $(BJL_ROOT)/bin/Univ.bin $< >$(DEMO).xj64
-	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $(DEMO).xj64
-	dd if=$(DEMO).xj64 of=$(DEMO).j64 bs=1M count=1
-	rm $(DEMO).xj64
+	@cat $(BJL_ROOT)/bin/Univ.bin $< >$@
+	cat $< >> $@
+	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
+	truncate -s 1M $@
 
 .PHONY: vjd
 vjd: $(DEMO).cof
