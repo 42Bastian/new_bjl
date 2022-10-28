@@ -1,6 +1,6 @@
 ;;*****************
 ;;; JagMona - A port of Mona from Ilmenit
-;;; Size: 304 bytes
+;;; Size: 320 bytes
 
 	.68000
 
@@ -12,7 +12,7 @@ ScreenMode	EQU RGB16|VIDEN|PWIDTH4|BGEN|CSYNC
 
 VID_MODE	EQU PAL
 
-screen		EQU $400
+screen		EQU $140000
 
 stacktop	equ $4000	; ROM sets SP to this address
 
@@ -36,21 +36,20 @@ start:
 	lea	my_irq(pc),a0
 	move.l	a0,$0100.w
 	move.l	#$1f01<<16,a6
-	bsr.s	irq_init
+	move.l	a6,$E0(a5)
 ;;; --------------------
 ;;; Init OP
 ;;; --------------------
- IF ^^defined SKUNK
-	move.w	#$2000,sr	; not needed after BIOS
+ IF ^^defined SKUNK = 1 | ^^defined DEBUG = 1
+	move.w	#$2000,sr
  ENDIF
+	bsr.s	CopyOBL
  IF ^^defined DEBUG
 	moveq	#1,d0
 	move.l	d0,$20(a5)
  ELSE
 	clr.l	$20(a5)	 ; OPL = $0
  ENDIF
-
-main:
 	lea	brush(pc),a1
 	move.l	#$7ec80000,d7	; seed
 	moveq.l	#64,d6
@@ -61,44 +60,47 @@ loop0:
 	move.w	d6,d2
 	subq.w	#1,d6
 finish:
-	beq.s	finish
+	bmi.s	finish
 	lsl.w	#5,d2
+
+	moveq	#3,d3
+	and.w	d6,d3
 loop:
 	addx.l	d7,d7
 	bcc.s	noc
-	moveq	#-1,d4
 	eor.l	#$4c11db7,d7
 	move.b	d7,d5
-	bmi.s	noc
-	moveq	#1,d4
 noc:
+	moveq	#-1,d4
+	tst.b	d5
+	bmi.s	min
+	moveq	#1,d4
+min:
 	btst	#1,d5
 	beq.s	_y
 	add.w	d4,d0
 	bra.s	cont
 _y:
-	add.w	d4,d1
+	add.b	d4,d1
 cont:
-	moveq	#$7f,d3
-	and.w	d3,d0
-	and.w	d3,d1
-	move.w	d0,a0
-	move.w	d1,d3
-	lsl.w	#7,d3
-	add.w	d3,a0
-	moveq	#3,d3
-	and.w	d6,d3
-	move.b	d3,screen(a0)
+	and.w	#$7f,d0
+	and.w	#$7f,d1
+	move.b	d1,d4
+	lea	screen,a0
+	lsl.w	#7,d4
+	add.w	d0,d4
+	move.b	d3,0(a0,d4.w)
 	subq.w	#1,d2
 	bne.s	loop
 	bra.s	loop0
 
 ;;****************
 ;;      IRQ      *
-irq_init:
-	move.w	sr,-(sp)	// prepare rte
 my_irq:
-
+	move.l	a6,$E0(a5)
+	bsr.s	CopyOBL
+	rte
+	;; fall thru
 CopyOBL:
 	lea	OBL0(pc),a3
  IF ^^defined DEBUG
@@ -106,14 +108,12 @@ CopyOBL:
  ELSE
 	suba.l	a4,a4
  ENDIF
+.co0:	move.l	(a3)+,(a4)+
 	move.l	(a3)+,(a4)+
 	move.l	(a3)+,(a4)+
 	move.l	(a3)+,(a4)+
-	move.l	(a3)+,(a4)+
-	move.w	#4,6(a4)	;add STOP object
-
-	move.l	a6,$e0(a5)
-	rte
+	move.l	#4,4(a4)
+	rts
 
 brush:
 	dc.w $030A, $37BE, $2F9B, $072B, $0E3C, $F59B, $8A91, $1B0B
@@ -131,12 +131,15 @@ OBL0:
  ELSE
 	.org	$0
  ENDIF
+
  IF ^^defined SKUNK
 xpos	equ 9+(320-128)/2
  ELSE
-xpos	equ (320-128)/2
+xpos	equ 0+(320-128)/2
  ENDIF
-	bitmap screen-10*128, xpos, 41+(200-96)/2, 128/8, 128/8,96+10, 3, 0, NOTRANS, 0 ,1
+ypos 	equ 41+(200-96)/2
+
+	bitmap screen, xpos, ypos, 128/8, 128/8, 96, 3, 0, NOTRANS, 0 ,1
 	.68000
 OBL0_end:
 
