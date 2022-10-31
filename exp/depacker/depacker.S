@@ -170,6 +170,9 @@ StartGPU:
  IF SHR = 1
 	move.l	#packed,8(a0)
  ENDIF
+ IF UPKR = 1
+	move.l	#packed,8(a0)
+ ENDIF
 	moveq	#0,d0
 	move.l	d0,(a0)
 waitGPU:
@@ -357,6 +360,9 @@ Hallo:	dc.b "Jaguar Depacker test:"
  IF N0 = 1
 	dc.b "N0"
  ENDIF
+ IF UPKR = 1
+	dc.b "UPKR"
+ ENDIF
  IF COPY_RAW = 1
 	dc.b "unpacked"
  ENDIF
@@ -390,6 +396,10 @@ packed:
  ENDIF
  IF N0 = 1
 	incbin	"voyager.cry.n0"
+ ENDIF
+ IF UPKR = 1
+//->	incbin "unupkr.js.upk"
+	incbin	"voyager.cry.upk"
  ENDIF
  IF COPY_RAW = 1
 	incbin	"voyager.cry"

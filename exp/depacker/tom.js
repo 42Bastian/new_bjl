@@ -12,7 +12,8 @@ LZSA1A::	EQU 0
 SHR::		EQU 0
 ZX0::		EQU 0
 ZX0_fast::	EQU 0
-N0::		EQU 1
+N0::		EQU 0
+UPKR::		EQU 1
 
 	include <js/macro/help.mac>
 
@@ -22,10 +23,10 @@ screen	equ $f03ff4
 	run $f03000
 
 GPUstart::
-	movei	#Flag,r15
 	move	pc,r19
 	addq	#4,r19
 loop:
+	movei	#Flag,r15
 	moveq	#3,r0
 	movei	#$f02114,r1
 	store	r0,(r1)		; wakeup 68k
@@ -82,6 +83,10 @@ copy_raw::
  IF N0 > 0
 	load	(r15+4),r21
 	movei	#unn0,r1
+ ENDIF
+ IF UPKR > 0
+	load	(r15+4),r21
+	movei	#unupkr,r1
  ENDIF
 
  IF COPY_RAW = 0
@@ -176,5 +181,12 @@ _unn0:
 _unn0_e:
 unn0_size	equ _unn0_e - _unn0
 	echo "UNN0 size %Dunn0_size"
+ ENDIF
+ IF UPKR = 1
+_unupkr:
+	include "unupkr.js"
+_unupkr_e:
+unupkr_size	equ _unupkr_e - _unupkr
+	echo "UNUPKR size %Dunupkr_size"
  ENDIF
  align	8
