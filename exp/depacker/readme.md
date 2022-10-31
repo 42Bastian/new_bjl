@@ -17,13 +17,13 @@ The number shown is the time to depack the picture.
 
 | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast | lzsa -p | fast lzsa -p | lzsa | n0  | upkr |
 | :-: | :-:      | :-: | :-:      | :-: | :-:     | :-:     | :-:          |  :-: | :-: |  :-: |
-| 98  | 124      | 168 | 216      | 72  | 104     | 168     | 195          | 182  | 162 | 292  |
+| 98  | 124      | 168 | 228      | 72  | 104     | 168     | 195          | 182  | 162 | 292  |
 
 * depack time (ms)
 
 | Raw      | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast  | lzsa -p | fast lzsa -p | lzsa | n0  | upkr |
 | :-:      | :-: | :-:      | :-: | :-:      | :-: | :-:      | :-:     |  :-:         | :-:  | :-: | :-:  |
-| 114/14(*)| 134 | 115      | 248 | 203      | 139 | 122      | 137     | 118          |146   | 168 | 1533 |
+| 114/14(*)| 134 | 115      | 248 | 185      | 139 | 122      | 137     | 118          |146   | 168 | 1533 |
 
 (*) Byte/Phrase wise
 
@@ -55,15 +55,15 @@ https://github.com/42Bastian/tp
 ### Original packer
 
   https://github.com/emmanuel-marty/lzsa
-  
+
   Be sure to set `POS_OFFSET` 0.
 
 ### Extended version
-  
+
   https://github.com/42Bastian/lzsa_jaguar
 
  Adds option `-p` to write positive offsets.
- 
+
  Pack with `lzsa -f 1 -p [input] [output]`
 
 

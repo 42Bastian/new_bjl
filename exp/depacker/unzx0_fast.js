@@ -13,18 +13,17 @@
 DST		REG 21
 SRC		REG 20
 
-LR_save		REG 13
-LR2		REG 12
-BC		REG 11
-STOR		REG 10
-GETBIT		REG 9
-ELIAS		REG 8
-LITERALS	REG 7
-
-OFFSET		REG 6
-NEW_OFF		reg 5
-COPY_MATCH	reg 4
-_256		REG 3
+BYTE_PRELOAD	REG 13
+LR_save		REG 12
+LR2		REG 11
+BC		REG 10
+STOR		REG 9
+GETBIT		REG 8
+ELIAS		REG 7
+LITERALS	REG 6
+OFFSET		REG 5
+NEW_OFF		reg 4
+COPY_MATCH	reg 3
 VALUE		REG 2
 tmp1		REG 1
 tmp0		REG 0
@@ -35,11 +34,10 @@ unzx0::
 	movei	#.elias,ELIAS
 	movei	#.copy_match,COPY_MATCH
 	movei	#.new_off,NEW_OFF
-	moveq	#1,_256
 	moveq	#0,BC
-	shlq	#8,_256
 	moveq	#1,OFFSET
-
+	loadb	(SRC),BYTE_PRELOAD
+	addq	#1,SRC
 	moveq	#1,VALUE
 .literals
 	move	pc,LITERALS
@@ -48,11 +46,12 @@ unzx0::
 	jump	(ELIAS)
 	addq	#6,LR2
 .copylit
-	loadb	(SRC),r0
+	move	BYTE_PRELOAD,r0
+	loadb	(SRC),BYTE_PRELOAD
 	addqt	#1,SRC
 	subq	#1,VALUE
 	storeb	r0,(DST)
-	jr	ne,.copylit
+	jump	ne,(LR2)
 	addqt	#1,DST
 
 	BL	(GETBIT)
@@ -64,9 +63,9 @@ unzx0::
 .copy_match
 	move	DST,r1
 	sub	OFFSET,r1
-	btst	#0,r1
-	jr	ne,.copy_match_loop
 	btst	#0,DST
+	jr	ne,.copy_match_loop
+	btst	#0,r1
 	jr	ne,.copy_match_loop
 	nop
 .copy_match_loop2
@@ -96,10 +95,14 @@ unzx0::
 	move	pc,LR2
 	jump	(ELIAS)
 	addq	#6,LR2
-	cmp	_256,VALUE
+
 	move	VALUE,OFFSET
+	shlq	#24,VALUE
 	jump	eq,(LR_save)
-	loadb	(SRC),VALUE
+	nop
+	move	BYTE_PRELOAD,VALUE
+	loadb	(SRC),BYTE_PRELOAD
+
 	shlq	#7,OFFSET
 	addqt	#1,SRC
 	move	VALUE,r1
@@ -119,31 +122,36 @@ unzx0::
 	subq	#1,BC
 	jr	pl,.elias_bit
 	add	STOR,STOR
-	loadb	(SRC),STOR
-	moveq	#8,BC
-	addqt	#1,SRC
-	jr	.elias
+
+	moveq	#7,BC
+	move	BYTE_PRELOAD,STOR
+	loadb	(SRC),BYTE_PRELOAD
 	shlq	#24,STOR
+	addqt	#1,SRC
+	add	STOR,STOR
 .elias_bit
 	jump	cs,(LR2)
 	nop
-
 .elias_pre
 	subq	#1,BC
 	jr	pl,.elias0
 	add	STOR,STOR
-	loadb	(SRC),STOR
-	moveq	#8,BC
+
+	move	BYTE_PRELOAD,STOR
+	loadb	(SRC),BYTE_PRELOAD
+	shlq	#24,STOR
 	addqt	#1,SRC
 	jr	.elias_pre
-	shlq	#24,STOR
+	moveq	#8,BC
 
 .getbit
 	subq	#1,BC
 	jump	pl,(LR)
 	add	STOR,STOR
-	loadb	(SRC),STOR
-	moveq	#8,BC
+
+	move	BYTE_PRELOAD,STOR
+	loadb	(SRC),BYTE_PRELOAD
+	shlq	#24,STOR
 	addqt	#1,SRC
 	jump	(GETBIT)
-	shlq	#24,STOR
+	moveq	#8,BC
