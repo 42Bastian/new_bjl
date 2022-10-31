@@ -7,8 +7,6 @@ https://brainbox78.artstation.com/
 
 The number shown is the time to depack the picture.
 
-Copying the 128.000bytes byte wise takes 114ms, phrase wise 14ms
-
 * File sizes (in bytes)
 
 | Original | lz4 -12 | zx0 -c | Turbopacker | lzsa -f1 -p | n0  | upkr |
@@ -26,6 +24,8 @@ Copying the 128.000bytes byte wise takes 114ms, phrase wise 14ms
 | Raw      | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast  | lzsa -p | fast lzsa -p | lzsa | n0  | upkr |
 | :-:      | :-: | :-:      | :-: | :-:      | :-: | :-:      | :-:     |  :-:         | :-:  | :-: | :-:  |
 | 114/14(*)| 134 | 115      | 248 | 203      | 139 | 122      | 137     | 118          |146   | 168 | 1533 |
+
+(*) Byte/Phrase wise
 
 ## LZ4
 
@@ -52,14 +52,19 @@ https://github.com/42Bastian/tp
 
 ## LZSA Format 1
 
- - Original packer
+### Original packer
+
   https://github.com/emmanuel-marty/lzsa
+  
   Be sure to set `POS_OFFSET` 0.
 
-  - Extended version
+### Extended version
+  
   https://github.com/42Bastian/lzsa_jaguar
-   Adds option `-p` to write positive offsets.
-  Pack with `lzsa -f 1 -p [input] [output]`
+
+ Adds option `-p` to write positive offsets.
+ 
+ Pack with `lzsa -f 1 -p [input] [output]`
 
 
  - [unlzsa1](unlzsa1.js)
