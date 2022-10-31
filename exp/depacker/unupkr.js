@@ -153,10 +153,17 @@ getlength:
 
 .newbyte:
 	move	ndata,r2
-	loadb	(SRC),ndata
 	shlq	#8,state
-	addq	#1,SRC
+	loadb	(SRC),ndata
 	or	r2,state
+	addq	#1,SRC
+	move	state,r2
+	shrq	#12,r2
+	jr	ne,.done
+	moveq	#0,r2
+	jr	.newbyte
+//->	move	state,r0
+
 getbit
 	move	PROBS,r1
 	move	state,r2
@@ -165,13 +172,14 @@ getbit
 	loadb	(r1),prob
 	jr	eq,.newbyte
 	moveq	#0,r2
-
+.done
 	move	state,r0
 	bset	#8,r2
 	shlq	#24,r0
 	shrq	#8,state
 	shrq	#24,r0
 	cmp	prob,r0
+
 	jr	cs,.one
 	nop
 	sub	prob,r2		; 256-prob
