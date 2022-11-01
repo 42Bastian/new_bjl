@@ -6,7 +6,7 @@
 ;;; r30 : return address
 ;;;
 ;;; Register usage (destroyed!)
-;;; r0-r13,r20,r21
+;;; r0-r17,r20,r21
 ;;;
 
 DST		REG 21
@@ -27,10 +27,12 @@ offset		REG 99
 prob		reg 99
 byte		REG 99
 ndata		reg 99
-PROBS		reg 3
+PROBS		reg 99
 tmp2		reg 2
 tmp1		REG 1
 tmp0		REG 0
+
+	REGMAP
 
 upkr_probs	equ $200
 
@@ -51,14 +53,32 @@ unupkr::
 	addq	#1,SRC
 	moveq	#0,offset
 	moveq	#0,state
-	moveq	#0,prev_was_match
-
-	movei	#.literal,LITERAL
 	movei	#getlength,GETLENGTH
 	movei	#getbit,GETBIT
+.looppc	move	PC,LOOP
+	addq	#.loop-.looppc,LOOP
+	move	pc,LITERAL
+	jr	.start
+	addq	#6,LITERAL
+
+.literal
+	moveq	#1,byte
+	move	pc,LR
+	jr	.into
+	addq	#6,LR		; LR = .getbit
+.getbit
+	addc	byte,byte
+.into
+	btst	#8,byte
+	jump	eq,(GETBIT)
+	move	byte,index
+
+	storeb	byte,(DST)
+	addq	#1,DST
+.start
+	moveq	#0,prev_was_match
 
 .loop
-	move	pc,LOOP
 	moveq	#0,index
 	BL	(GETBIT)
 	jump	cc,(LITERAL)
@@ -109,27 +129,7 @@ unupkr::
 	addq	#1,DST
 
 	jump	(LOOP)
-	nop
-
-	regmap
-
-.literal
-	moveq	#1,byte
-	move	pc,LR
-	jr	.into
-	addq	#6,LR		; LR = .getbiut
-.getbit
-	addc	byte,byte
-.into
-	btst	#8,byte
-	jump	eq,(GETBIT)
-	move	byte,index
-
-	storeb	byte,(DST)
-	addq	#1,DST
-
-	jump	(LOOP)
-	moveq	#0,prev_was_match
+//->	nop
 
 getlength:
 	move	LR,LR_save2
@@ -167,8 +167,8 @@ getlength:
 	move	state,r2
 	jr	.newbyte
 getbit
-	move	PROBS,r1
 	move	state,r2
+	move	PROBS,r1
 	add	index,r1		; r1 = &probs[index]
 	shrq	#12,r2
 	loadb	(r1),prob
