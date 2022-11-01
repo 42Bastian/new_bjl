@@ -12,7 +12,7 @@
 DST		REG 21
 SRC		REG 20
 
-	REGTOP 17
+	REGTOP 16
 LR_save		REG 99
 LR_save2	REG 99
 GETBIT		REG 99
@@ -26,7 +26,6 @@ prev_was_match	REG 99
 offset		REG 99
 prob		reg 99
 byte		REG 99
-ndata		reg 99
 PROBS		reg 99
 tmp2		reg 2
 tmp1		REG 1
@@ -40,17 +39,16 @@ SIZEOF_PROBS	EQU 1+255+1+2*32+2*32
 
 unupkr::
 	move	LR,LR_save
-	movei	#$80808080,tmp0
+	moveq	#0,tmp0
 	movei	#upkr_probs,PROBS
+	bset	#7,tmp0
 	movei	#SIZEOF_PROBS,tmp2
 	move	PROBS,tmp1
-.init	store	tmp0,(tmp1)
-	subq	#4,tmp2
+.init	storeb	tmp0,(tmp1)
+	subq	#1,tmp2
 	jr	pl,.init
-	addq	#4,tmp1
+	addq	#1,tmp1
 
-	loadb	(SRC),ndata
-	addq	#1,SRC
 	moveq	#0,offset
 	moveq	#0,state
 	movei	#getlength,GETLENGTH
@@ -94,32 +92,15 @@ unupkr::
 	addq	#1,r0		; r0 = 257
 	BL	(GETLENGTH)
 	subq	#1,r0
-	move	r0,offset
 	jump	eq,(LR_save)
-	nop
+	move	r0,offset
+
 .oldoff
 	movei	#257+64,r0
 	BL	(GETLENGTH)
 
-	move	DST,r2
 	move	DST,r1
-	or	offset,r2
-	btst	#0,r2
-	moveq	#1,prev_was_match
-	jr	ne,.cpymatch1
 	sub	offset,r1
-.cpymatch2
-	loadw	(r1),r2
-	addqt	#2,r1
-	subq	#2,r0
-	storew	r2,(DST)
-	jump	eq,(LOOP)
-	addqt	#2,DST
-	jr	pl,.cpymatch2
-	nop
-	jump	(LOOP)
-	subq	#1,DST
-
 .cpymatch1
 	loadb	(r1),r2
 	subq	#1,r0
@@ -129,7 +110,7 @@ unupkr::
 	addq	#1,DST
 
 	jump	(LOOP)
-//->	nop
+	moveq	#1,prev_was_match
 
 getlength:
 	move	LR,LR_save2
@@ -156,16 +137,10 @@ getlength:
 	or	byte,r0
 
 .newbyte:
-	move	ndata,r2
+	loadb	(SRC),r2
 	shlq	#8,state
-	loadb	(SRC),ndata
-	or	r2,state
 	addq	#1,SRC
-	move	state,r2
-	shrq	#12,r2
-	jr	ne,.done
-	move	state,r2
-	jr	.newbyte
+	or	r2,state
 getbit
 	move	state,r2
 	move	PROBS,r1
@@ -174,7 +149,6 @@ getbit
 	loadb	(r1),prob
 	jr	eq,.newbyte
 	move	state,r2
-.done
 	move	state,r0
 	shlq	#24,r2
 	shrq	#8,r0		; sh
@@ -192,10 +166,8 @@ getbit
 	sub	r0,state
 	shrq	#4,r2
 	moveq	#0,r0
+	jr	.ret
 	sub	r2,prob
-	shrq	#1,r0		; C = 0, r0 = 0
-	jump	(LR)
-	storeb	prob,(r1)
 
 .one
 	;; state = (state >> 8)*prob+(state & 0xff)
@@ -208,6 +180,7 @@ getbit
 	add	r2,prob
 
 	moveq	#3,r0
+.ret
 	storeb	prob,(r1)
 	jump	(LR)
 	shrq	#1,r0		; C = 0, r0 = 1
