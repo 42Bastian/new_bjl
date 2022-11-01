@@ -39,8 +39,9 @@ SIZEOF_PROBS	EQU 1+255+1+2*32+2*32
 unupkr::
 	move	LR,LR_save
 	movei	#$80808080,tmp0
-	movei	#upkr_probs,tmp1
+	movei	#upkr_probs,PROBS
 	movei	#SIZEOF_PROBS,tmp2
+	move	PROBS,tmp1
 .init	store	tmp0,(tmp1)
 	subq	#4,tmp2
 	jr	pl,.init
@@ -51,21 +52,22 @@ unupkr::
 	moveq	#0,offset
 	moveq	#0,state
 	moveq	#0,prev_was_match
+
 	movei	#.literal,LITERAL
 	movei	#getlength,GETLENGTH
 	movei	#getbit,GETBIT
-	movei	#upkr_probs,PROBS
+
 .loop
 	move	pc,LOOP
 	moveq	#0,index
 	BL	(GETBIT)
 	jump	cc,(LITERAL)
-	moveq	#0,r0
+	addq	#14,LR
 	cmpq	#1,prev_was_match
 	jr	eq,.newoff
-	bset	#8,r0
+	shlq	#8,r0
+	jump	(GETBIT)
 	move	r0,index
-	BL	(GETBIT)
 	jr	cc,.oldoff
 	shlq	#8,r0
 .newoff
@@ -79,27 +81,24 @@ unupkr::
 	movei	#257+64,r0
 	BL	(GETLENGTH)
 
+	move	DST,r2
 	move	DST,r1
+	or	offset,r2
+	btst	#0,r2
+	moveq	#1,prev_was_match
+	jr	ne,.cpymatch1
 	sub	offset,r1
-
-	btst	#0,r1
-	jr	ne,.cpymatch1
-	btst	#0,DST
-	jr	ne,.cpymatch1
-	nop
 .cpymatch2
 	loadw	(r1),r2
 	addqt	#2,r1
-	storew	r2,(DST)
 	subq	#2,r0
-	addqt	#2,DST
+	storew	r2,(DST)
 	jump	eq,(LOOP)
-	moveq	#1,prev_was_match
+	addqt	#2,DST
 	jr	pl,.cpymatch2
 	nop
-	subq	#1,DST
 	jump	(LOOP)
-	moveq	#1,prev_was_match
+	subq	#1,DST
 
 .cpymatch1
 	loadb	(r1),r2
@@ -110,19 +109,20 @@ unupkr::
 	addq	#1,DST
 
 	jump	(LOOP)
-	moveq	#1,prev_was_match
+	nop
 
 	regmap
 
 .literal
 	moveq	#1,byte
-	move	byte,index
+	move	pc,LR
+	jr	.into
+	addq	#6,LR		; LR = .getbiut
 .getbit
-	BL	(GETBIT)
 	addc	byte,byte
-
+.into
 	btst	#8,byte
-	jr	eq,.getbit
+	jump	eq,(GETBIT)
 	move	byte,index
 
 	storeb	byte,(DST)
@@ -136,16 +136,19 @@ getlength:
 	moveq	#0,byte
 	move	r0,index
 	moveq	#0,bit_pos
+	move	pc,LR
+	jump	(GETBIT)
+	addq	#6,LR
 .gl
-	BL	(GETBIT)
 	jr	cc,.exit
-	addq	#1,index
-	BL	(GETBIT)
+	addq	#8,LR		; => return to "sh ..."
+	jump	(GETBIT)
+	nop
 	sh	bit_pos,r0
 	subq	#1,bit_pos	; sh < 0 => shift left!
 	or	r0,byte
-	jr	.gl
-	addq	#1,index
+	jump	(GETBIT)
+	subq	#8,LR
 .exit
 	moveq	#1,r0
 	sh	bit_pos,r0
@@ -173,11 +176,11 @@ getbit
 	move	state,r2
 .done
 	move	state,r0
-
 	shlq	#24,r2
 	shrq	#8,r0		; sh
 	shrq	#24,r2		; sl
 	cmp	prob,r2
+	addqt	#1,index
 	jr	cs,.one
 	mult	prob,r0
 
