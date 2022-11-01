@@ -72,8 +72,9 @@ unupkr::
 	addq	#1,r0		; r0 = 257
 	BL	(GETLENGTH)
 	subq	#1,r0
-	jump	eq,(LR_save)
 	move	r0,offset
+	jump	eq,(LR_save)
+	nop
 .oldoff
 	movei	#257+64,r0
 	BL	(GETLENGTH)
@@ -118,7 +119,7 @@ unupkr::
 	move	byte,index
 .getbit
 	BL	(GETBIT)
-	addc	byte ,byte
+	addc	byte,byte
 
 	btst	#8,byte
 	jr	eq,.getbit
@@ -141,7 +142,7 @@ getlength:
 	addq	#1,index
 	BL	(GETBIT)
 	sh	bit_pos,r0
-	subq	#1,bit_pos
+	subq	#1,bit_pos	; sh < 0 => shift left!
 	or	r0,byte
 	jr	.gl
 	addq	#1,index
@@ -160,10 +161,8 @@ getlength:
 	move	state,r2
 	shrq	#12,r2
 	jr	ne,.done
-	moveq	#0,r2
+	move	state,r2
 	jr	.newbyte
-//->	move	state,r0
-
 getbit
 	move	PROBS,r1
 	move	state,r2
@@ -171,38 +170,37 @@ getbit
 	shrq	#12,r2
 	loadb	(r1),prob
 	jr	eq,.newbyte
-	moveq	#0,r2
+	move	state,r2
 .done
 	move	state,r0
-	bset	#8,r2
-	shlq	#24,r0
-	shrq	#8,state
-	shrq	#24,r0
-	cmp	prob,r0
 
+	shlq	#24,r2
+	shrq	#8,r0		; sh
+	shrq	#24,r2		; sl
+	cmp	prob,r2
 	jr	cs,.one
-	nop
-	sub	prob,r2		; 256-prob
-	mult	state,r2	; (256-prob)*(state>>8)
-	add	r0,r2		; (256-prob)*(state>>8)+(state & 0xff)
-	sub	prob,r2		; (256-prob)*(state>>8)+(state & 0xff)-prob
-	move	r2,state
+	mult	prob,r0
 
-	moveq	#8,r2
-	add	prob,r2
-	shrq	#4,r2		; (prob+8)>>4
-	sub	r2,prob		; prob - (prob+8)>>4
-
-	moveq	#0,r0
-	storeb	prob,(r1)
-	jump	(LR)
-	shrq	#1,r0		; C = 0, r0 = 0
-.one
-	mult	prob,state	; prob*(state>>8)
-	add	r0,state	; prob*(state>>8)+(state & 0xff)
-
-	sub	prob,r2		; 256-prob
+	;; state -= ((state >> 8) + 1)*prob
+	;; prob -= (prob+8)>>4
+	move	prob,r2
+	add	prob,r0
 	addq	#8,r2
+	sub	r0,state
+	shrq	#4,r2
+	moveq	#0,r0
+	sub	r2,prob
+	shrq	#1,r0		; C = 0, r0 = 0
+	jump	(LR)
+	storeb	prob,(r1)
+
+.one
+	;; state = (state >> 8)*prob+(state & 0xff)
+	;; prob += (256 + 8 - prob) >> 4
+	move	r2,state
+	movei	#256+8,r2
+	add	r0,state
+	sub	prob,r2		; 256-prob+8
 	shrq	#4,r2
 	add	r2,prob
 
