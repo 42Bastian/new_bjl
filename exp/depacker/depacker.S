@@ -1,5 +1,7 @@
 	.68000
 
+ASTEROIDS	= 0
+
 	.include "68k_inc/jaguar.inc"
 	.include "68k_inc/blit_eq.inc"
 	.include "68k_mac/help.mac"
@@ -161,7 +163,7 @@ StartGPU:
  IF TP = 1 | TP_fast = 1
 	move.l	#packed+4,8(a0)
  ENDIF
- IF ZX0 = 1 | ZX0_fast
+ IF ZX0 = 1 | ZX0_fast = 1
 	move.l	#packed,8(a0)
  ENDIF
  IF N0 = 1
@@ -170,7 +172,10 @@ StartGPU:
  IF SHR = 1
 	move.l	#packed,8(a0)
  ENDIF
- IF UPKR = 1
+ IF UPKR = 1 | UPKR_fast = 1
+	move.l	#packed,8(a0)
+ ENDIF
+ IF EXO = 1
 	move.l	#packed,8(a0)
  ENDIF
 	moveq	#0,d0
@@ -360,8 +365,14 @@ Hallo:	dc.b "Jaguar Depacker test:"
  IF N0 = 1
 	dc.b "N0"
  ENDIF
- IF UPKR = 1
+ IF EXO = 1
+	dc.b "EXO"
+ ENDIF
+ IF UPKR = 1 | UPKR_fast = 1
 	dc.b "UPKR"
+ IF UPKR_fast = 1
+	dc.b " fast"
+ ENDIF
  ENDIF
  IF COPY_RAW = 1
 	dc.b "unpacked"
@@ -372,40 +383,54 @@ Hallo:	dc.b "Jaguar Depacker test:"
 	;; pack with "lz4 -9 -l --no-frame-crc"
 packed:
  IF LZ4 = 1 | LZ4_fast = 1
-	incbin	"voyager.cry.lz4"
+	incbin	"packed_data/voyager.cry.lz4"
  ENDIF
  IF LZSA1 = 1 | LZSA1_fast = 1
  IF POS_OFFSET = 1
-	incbin	"voyager.cry.lzsa1"
+	incbin	"packed_data/voyager.cry.lzsa1"
  ELSE
-	incbin	"voyager.cry.lzsa1_org"
+	incbin	"packed_data/voyager.cry.lzsa1_org"
  ENDIF
  ENDIF
  IF LZSA1A = 1
-	incbin	"voyager.cry.lzsa1a"
+	incbin	"packed_data/voyager.cry.lzsa1a"
  ENDIF
  IF TP = 1 | TP_fast = 1
-	incbin	"voyager.pck"
+	incbin	"packed_data/voyager.pck"
  ENDIF
  IF SHR = 1
-	incbin	"voyager.cry.shr"
+	incbin	"packed_data/voyager.cry.shr"
  ENDIF
  IF ZX0 = 1 | ZX0_fast
-//->	incbin	"unlz4.js.zx0"
-	incbin	"voyager.cry.zx0"
+	incbin	"packed_data/voyager.cry.zx0"
  ENDIF
  IF N0 = 1
-	incbin	"voyager.cry.n0"
+	incbin	"packed_data/voyager.cry.n0"
  ENDIF
- IF UPKR = 1
-//->	incbin "unupkr.js.upk"
-	incbin	"voyager.cry.upk"
+ IF UPKR = 1 | UPKR_fast = 1
+ IF ASTEROIDS = 1
+	incbin	"packed_data/voyager_asteroids.cry.upk"
+ ELSE
+	incbin	"packed_data/voyager.cry.upk"
  ENDIF
+ ENDIF
+ IF EXO = 1
+ IF ASTEROIDS = 1
+	incbin	"packed_data/voyager_asteroids.cry.exo"
+ ELSE
+	incbin	"packed_data/voyager.cry.exo"
+ ENDIF
+ ENDIF
+
+
  IF COPY_RAW = 1
 	incbin	"voyager.cry"
  ENDIF
 packed_e:
+
+	print "packed ",$4000+packed
 	.phrase
+
 *****************
 * Objekte
 

@@ -95,3 +95,4 @@ Packed with `gup a -n0 [archive] [infile]` then header (96 bytes) stripped.
 Packer: https://github.com/exoticorn/upkr
 
  - [unupkr.js](unupkr.js)
+ - [unupkr.js fast](unupkr_fast.js)
