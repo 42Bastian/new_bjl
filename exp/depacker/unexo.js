@@ -3,17 +3,19 @@
 ; input:
 ;;; R20 : packed buffer
 ;;; R21 : output buffer
-
+;;; Register usage: r0..r13
+;;;
 ;;; pack with : exomizer raw -c -P7
 
-
+ IFND exo_base
 exo_base	EQU $200
 exo_bits	EQU exo_base+52*2
+ ENDIF
 
 dst		reg 21
 src		reg 20
 
-	REGTOP	16
+	REGTOP	13
 LR_save		REG 99
 bitbuf		REG 99
 value		REG 99
@@ -22,7 +24,8 @@ bits		REG 99
 index		REG 99
 LOOP		REG 99
 READBITS	REG 99
-tmp2		REG 2
+READ1BIT	REG 99
+preload		REG 99
 tmp1		REG 1
 tmp0		REG 0
 
@@ -31,12 +34,15 @@ decrunch::
 
 	loadb	(src),bitbuf
 	addqt	#1,src
+	loadb	(src),preload
+	addqt	#1,src
 	movei	#exo_read_bits,READBITS
+	movei	#exo_read1bit,READ1BIT
 	shlq	#24,bitbuf
 	movei	#exo_base,base
 	movei	#exo_bits,bits
 
-b1	REG 99
+tmp2	REG 99
 b2	REG 99
 
 	;; init tables
@@ -50,18 +56,20 @@ b2	REG 99
 	storew	b2,(base)
 	addqt	#2,base
 	moveq	#3,r0
-	BL	(READBITS)
-	move	value,b1
-	moveq	#1,r0
-	BL	(READBITS)
-	shlq	#3,value
+	move	PC,LR
+	jump	(READBITS)
+	addqt	#6,LR
+	jump	(READ1BIT)
+	addqt	#4,LR
+	jr	cc,.init2
 	moveq	#1,r1
-	or	value,b1
-	storeb	b1,(bits)
-	neg	b1
-	sh	b1,r1
+	bset	#3,value
+.init2
+	storeb	value,(bits)
+	neg	value
 	subq	#1,index
 	jr	eq,.init9
+	sh	value,r1
 	add	r1,b2
 	subq	#1,tmp2
 	jump	ne,(LOOP)
@@ -71,7 +79,9 @@ b2	REG 99
 	jump	(LOOP)
 	moveq	#16,tmp2
 .init9
-	UNREG b1,b2
+	UNREG tmp2,b2
+
+	;; main loop
 offset		REG 99
 length		REG 99
 
@@ -81,22 +91,23 @@ length		REG 99
 	subq	#26,bits
 	sub	r0,base
 	move	PC,LOOP
-	addq	#12,LOOP
+	addq	#16,LOOP	; = .loop
 
 	;; literal
 .literal
-	loadb	(src),r0
+	storeb	preload,(dst)
+	loadb	(src),preload
 	addqt	#1,src
-	storeb	r0,(dst)
 	addqt	#1,dst
+	jump	(READ1BIT)
+	move	LOOP,LR
 .loop
-	moveq	#1,r0
-	BL	(READBITS)
 	jr	cs,.literal
 	moveq	#0,index
+	addqt	#10,LR
 .getindex
-	moveq	#1,r0
-	BL	(READBITS)
+	jump	(READ1BIT)
+	nop
 	jr	cc,.getindex
 	addq	#1,index
 
@@ -107,69 +118,79 @@ length		REG 99
 	move	index,r1
 	add	bits,index
 	shlq	#1,r1
-	add	base,r1
 	loadb	(index),r0
+	add	base,r1
 	loadw	(r1),length
 
 	cmpq	#0,r0
 	moveq	#0,value
 	BL	ne,(READBITS)
-	add	value,length
-
+	add	value,length	; <= LR
+	addq	#28,LR		; LR => .default_cont
 
 	cmpq	#2,length
+	moveq	#16,index
 	jr	eq,.case2
-	moveq	#4,r0
+	moveq	#4,r0		; number of bits
 
 	cmpq	#1,length
-	jr	eq,.case1
-	moveq	#2,r0		; length == 1
-
-	jr	.default
-	moveq	#4,r0
+	jump	ne,(READBITS)	; length < 1 || length > 2
+	nop
 .case1
-	BL	(READBITS)
-	jr	.default_cont
-	addq	#32,value
+	moveq	#2,r0		; length == 1 => 2 bits only
+	jump	(READBITS)
+	addq	#32,index	; index = 48
 .case2
-	BL	(READBITS)	; length == 2
-	jr	.default_cont
-	addq	#16,value
-.default			; length == 0 || length > 2
-	BL	(READBITS)
+	jump	(READBITS)
+	addq	#16,index
+
 .default_cont
-	addq	#16,value
-	move	value,r0
-	shlq	#1,value
+	add	value,index
+	move	index,r0
+	shlq	#1,index
 	add	bits,r0
-	add	base,value
+	add	base,index
 	loadb	(r0),r0
-	loadw	(value),offset
-	cmpq	#0,r0
 	moveq	#0,value
-	BL	ne,(READBITS)
+	cmpq	#0,r0
+	loadw	(index),offset
+	jump	ne,(READBITS)
+	addqt	#22,LR
 	add	value,offset
 
 	neg	offset
 	add	dst,offset
-.match
+.match1
 	loadb	(offset),r0
 	addqt	#1,offset
 	subq	#1,length
 	storeb	r0,(dst)
-	jr	ne,.match
+	jr	ne,.match1
 	addq	#1,dst
 
-	jump	(LOOP)
+	jump	(READ1BIT)
+	move	LOOP,LR
+
+exo_read1bit
+	shlq	#1,bitbuf
+	jump	ne,(LR)
 	nop
+	move	preload,bitbuf
+	loadb	(src),preload
+	shlq	#24,bitbuf
+	addqt	#1,src
+	bset	#23,bitbuf
+	jump	(LR)
+	shlq	#1,bitbuf
 
 .rbnew
-	loadb	(src),bitbuf
-	addqt	#1,src
-	shrq	#1,value
+	move	preload,bitbuf
+	loadb	(src),preload
 	shlq	#24,bitbuf
-	jr	.rbloop
+	addqt	#1,src
 	bset	#23,bitbuf
+	jr	.rbloop
+	shrq	#1,value
 
 exo_read_bits:
 	move	r0,r1
@@ -185,16 +206,13 @@ exo_read_bits:
 	subq	#1,r0
 	jr	ne,.rbloop
 	btst	#3,r1
-
-	move	value,r0
 	jump	eq,(LR)
-	shrq	#1,r0
-.byte
-	loadb	(src),r0
-	addqt	#1,src
+	nop
 	shlq	#8,value
-	or	r0,value
+.byte
+	or	preload,value
+	loadb	(src),preload
 	jump	(LR)
-	shrq	#1,r0
+	addqt	#1,src
 
 	regmap
