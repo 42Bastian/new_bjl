@@ -13,7 +13,9 @@ SHR::		EQU 0
 ZX0::		EQU 0
 ZX0_fast::	EQU 0
 N0::		EQU 0
-UPKR::		EQU 1
+UPKR::		EQU 0
+UPKR_fast::	EQU 0
+EXO::		EQU 1
 
 	include <js/macro/help.mac>
 
@@ -84,9 +86,14 @@ copy_raw::
 	load	(r15+4),r21
 	movei	#unn0,r1
  ENDIF
- IF UPKR > 0
+ IF UPKR + UPKR_fast > 0
 	load	(r15+4),r21
 	movei	#unupkr,r1
+ ENDIF
+
+ IF EXO > 0
+	load	(r15+4),r21
+	movei	#decrunch,r1
  ENDIF
 
  IF COPY_RAW = 0
@@ -189,4 +196,20 @@ _unupkr_e:
 unupkr_size	equ _unupkr_e - _unupkr
 	echo "UNUPKR size %Dunupkr_size"
  ENDIF
- align	8
+ IF UPKR_fast = 1
+_unupkr:
+	include "unupkr_fast.js"
+_unupkr_e:
+unupkr_size	equ _unupkr_e - _unupkr
+	echo "UNUPKR size %Dunupkr_size"
+ ENDIF
+
+ IF EXO = 1
+_unexo:
+	include "unexo.js"
+_unexo_e:
+unexo_size	equ _unexo_e - _unexo
+	echo "UNEXO size %Dunexo_size"
+ ENDIF
+
+align	8

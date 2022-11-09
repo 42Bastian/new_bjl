@@ -9,21 +9,21 @@ The number shown is the time to depack the picture.
 
 * File sizes (in bytes)
 
-| Original | lz4 -12 | zx0 -c | Turbopacker | lzsa -f1 -p | n0  | upkr |
-| :-:      | :-:     | :-:    | :-:         | :-:         | :-: | :-: |
-| 128000   | 62972   | 53521  | 63920       | 60143       | 57524 | 45248 |
+| Original | lz4 -12 | zx0 -c | Turbopacker | lzsa -f1 -p | n0  | upkr | Exomizer |
+| :-:      | :-:     | :-:    | :-:         | :-:         | :-: | :-: | :-: |
+| 128000   | 62972   | 53521  | 63920       | 60143       | 57524 | 45248 | 49207 |
 
 * Unpacker size (in bytes)
 
-| lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast|
-| :-: | :-:      | :-: | :-:      | :-: | :-:     | :-:     | :-:          |  :-: | :-: | :-:  | :-:      |
-| 98  | 124      | 168 | 228      | 72  | 104     | 168     | 195          | 182  | 162 | 266  | 318      |
+| lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast| Exomizer |
+| :-: | :-:      | :-: | :-:      | :-: | :-:     | :-:     | :-:          |  :-: | :-: | :-:  | :-:      | :-:      |
+| 98  | 124      | 168 | 228      | 72  | 104     | 168     | 195          | 182  | 162 | 266  | 318      | 304 |
 
 * depack time (ms)
 
-| Raw      | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast  | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast |
-| :-:      | :-: | :-:      | :-: | :-:      | :-: | :-:      | :-:     |  :-:         | :-:  | :-: | :-:  | :-:       |
-| 114/14(*)| 134 | 115      | 248 | 185      | 139 | 122      | 137     | 118          |146   | 168 | 1287 | 1209      |
+| Raw      | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast  | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast |Exomizer |
+| :-:      | :-: | :-:      | :-: | :-:      | :-: | :-:      | :-:     |  :-:         | :-:  | :-: | :-:  | :-:       |:-:      |
+| 114/14(*)| 134 | 115      | 248 | 185      | 139 | 122      | 137     | 118          |146   | 168 | 1287 | 1209      |400 |
 
 (*) Byte/Phrase wise
 
@@ -96,3 +96,11 @@ Packer: https://github.com/exoticorn/upkr
 
  - [unupkr.js](unupkr.js)
  - [unupkr.js fast](unupkr_fast.js)
+
+## Exomizer
+
+Packer: https://bitbucket.org/magli143/exomizer/src/master/
+
+Pack with `exomize raw -c -P7`
+
+ - [unexo.js](unexo.js)
