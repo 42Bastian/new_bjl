@@ -160,16 +160,32 @@ length		REG 99
 
 	neg	offset
 	add	dst,offset
+	move	dst,r0
+	or	offset,r0
+	btst	#0,r0
+	jr	eq,.match2a
 .match1
 	loadb	(offset),r0
 	addqt	#1,offset
 	subq	#1,length
 	storeb	r0,(dst)
 	jr	ne,.match1
-	addq	#1,dst
+	addqt	#1,dst
 
 	jump	(READ1BIT)
+.match2a
 	move	LOOP,LR
+.match2
+	loadw	(offset),r0
+	subq	#2,length
+	storew	r0,(dst)
+	jump	eq,(READ1BIT)
+	addqt	#2,dst
+	jr	pl,.match2
+	addqt	#2,offset
+
+	jump	(READ1BIT)
+	subq	#1,dst
 
 exo_read1bit
 	shlq	#1,bitbuf
