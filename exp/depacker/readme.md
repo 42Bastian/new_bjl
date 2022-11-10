@@ -17,13 +17,13 @@ The number shown is the time to depack the picture.
 
 | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast| Exomizer |
 | :-: | :-:      | :-: | :-:      | :-: | :-:     | :-:     | :-:          |  :-: | :-: | :-:  | :-:      | :-:      |
-| 98  | 124      | 168 | 228      | 72  | 104     | 168     | 195          | 182  | 162 | 266  | 318      | 302 |
+| 98  | 140      | 168 | 228      | 72  | 104     | 168     | 195          | 182  | 162 | 266  | 318      | 302 |
 
 * depack time (ms)
 
 | Raw      | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast  | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast |Exomizer |
 | :-:      | :-: | :-:      | :-: | :-:      | :-: | :-:      | :-:     |  :-:         | :-:  | :-: | :-:  | :-:       |:-:      |
-| 114/14(*)| 134 | 115      | 248 | 185      | 139 | 122      | 137     | 118          |146   | 168 | 1287 | 1209      |323 |
+| 114/14(*)| 134 | 105      | 248 | 185      | 139 | 122      | 137     | 118          |146   | 168 | 1287 | 1209      |323 |
 
 (*) Byte/Phrase wise
 

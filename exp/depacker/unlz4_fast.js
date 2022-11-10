@@ -29,19 +29,20 @@ depack_lz4::
 	jr	eq,.skip1
 	cmpq	#15,R0
 .dpklz4_readLen1:
-	jr	ne,.dpklz4_litcopy
 	loadb	(R20),R2
+	jr	ne,.dpklz4_litcopy
 	addqt	#1,R20
 	add	R2,R0
 	jr	.dpklz4_readLen1:
 	cmp	R12,R2		; r2 = $ff ?
 
-.dpklz4_litcopy:
+.dpklz4_litcopy1:
 	addqt	#1,R20
+.dpklz4_litcopy:
 	subq	#1,R0
 	storeb	R2,(R21)
 	addqt	#1,R21
-	jr	ne,.dpklz4_litcopy
+	jr	ne,.dpklz4_litcopy1
 .skip1
 	loadb	(R20),R2
 
@@ -55,11 +56,11 @@ depack_lz4::
 	add	R2,R0
 	neg	r0
 	cmpq	#15,r1
+	addqt	#4,r1		; minimum match count: 4
 	jr	ne,.dpklz4_copy
-	addqt	#4,r1
-
+	add	r21,r0		; source = dest - offset
 .dpklz4_readLoop2:
-	loadb	(R20),R2
+	loadb	(r20),r2
 	add	R2,R1
 	cmp	R12,R2		; r2 = $ff ?
 	jr	eq,.dpklz4_readLoop2
@@ -67,10 +68,30 @@ depack_lz4::
 
 .dpklz4_copy:
 	move	r0,r2
-	or	r21,r2
+	xor	r21,r2
 	btst	#0,r2
+	loadb	(R0),R2
+	jr	eq,.copyloop2a
+	btst	#0,r0
+
+.copyloop1:
+	addq	#1,R0
+	subq	#1,R1
+	storeb	R2,(R21)
+	addqt	#1,R21
 	jr	ne,.copyloop1
-	add	r21,r0		; source = dest - offset
+	loadb	(R0),R2
+
+	jump	(R11)
+	nop
+
+.copyloop2a
+	jr	eq,.copyloop2
+	nop
+	addqt	#1,r0
+	subq	#1,r1
+	storeb	r2,(r21)
+	addq	#1,r21
 .copyloop2
 	loadw	(r0),r2
 	subq	#2,r1
@@ -82,14 +103,3 @@ depack_lz4::
 
 	jump	(r11)
 	subq	#1,r21		; compensate last write
-
-.copyloop1:
-	loadb	(R0),R2
-	addq	#1,R0
-	subq	#1,R1
-	storeb	R2,(R21)
-	jr	ne,.copyloop1
-	addqt	#1,R21
-
-	jump	(R11)
-	nop
