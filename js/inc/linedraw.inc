@@ -14,6 +14,7 @@
 ;;; r6 - y1
 
 draw::
+draw::
 
 dx	reg 13
 dy	reg 12
@@ -27,58 +28,33 @@ y1	reg 6
 x1	reg 5
 y0	reg 4
 x0	reg 3
-color	reg 2!
+color	reg 2!			; tmp2 re-used
 
 	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDINC,tmp0
 	movefa	currScreen.a,tmp1
 	store	tmp0,(blitter+_BLIT_A1_FLAGS)
 	store	tmp1,(blitter)	;_BLIT_A1_BASE
 
-	movei	#.noslope,tmp0
-	moveq	#0,dir_x
-	moveq	#1,step_y
 	move	y1,dy
-	moveq	#1,a1inc
-
 	move	x1,dx
 	sub	y0,dy
-	moveq	#0,m
-	jr	ne,.no_hori
 	sub	x0,dx
-
-	jump	pl,(tmp0)	; y-inc = 0, x-inc = 1
-	move	dx,cnt
-
-	subq	#2,a1inc
-	jump	(tmp0)
-	shrq	#16,a1inc	; y-inc = 0, x-inc = -1
-
-.no_hori
-	jr	ne,.no_vert
-	moveq	#1,tmp1
-
-	shlq	#16,a1inc	; y-inc = 1, x-inc = 0
-	jump	(tmp0)
-	move	dy,cnt
-
-.no_vert
 	moveq	#1,dir_x
 	jr	pl,.noswap0
-	abs	dx
+	moveq	#1,step_y
 
 	move	x1,x0
 	move	y1,y0
 	neg	step_y
 .noswap0
-	addqt	#1,dy
 	abs	dy
 	jr	cc,.pos
-	addqt	#1,dx
+	abs	dx
 	neg	step_y
 .pos
 	cmp	dy,dx
 	move	dx,cnt
-	jr	ne,.sw
+	jr	ne,.not_diag
 	move	dy,m
 
 	;; dx == dy
@@ -86,9 +62,9 @@ color	reg 2!
 	move	step_y,a1inc
 	moveq	#0,dir_x
 	shlq	#16,a1inc
-	jr	.noslope
+	jr	.diagonal
 	addqt	#1,a1inc
-.sw
+.not_diag
 	jr	cc,.no_swap
 	shlq	#16,m
 
@@ -98,28 +74,25 @@ color	reg 2!
 	subq	#2,dir_x
 .no_swap
 	div	cnt,m
-.noslope
-	move	y0,tmp1
-	abs	cnt
-	shlq	#16,tmp1
-	or	x0,tmp1
+.diagonal
+	shlq	#16,y0
+	movei	#$80008000,tmp1		; start in the middle
+	or	x0,y0
 
 	WAITBLITTER
 
-	store	tmp2,(blitter+_BLIT_PATD)
-	store	tmp2,(blitter+_BLIT_PATD+4) ;VJ
-	moveq	#0,tmp2
+	store	color,(blitter+_BLIT_PATD)
+//->	store	color,(blitter+_BLIT_PATD+4) ;VJ
 
 	cmpq	#0,dir_x
-	store	tmp1,(blitter+_BLIT_A1_PIXEL)
+	store	y0,(blitter+_BLIT_A1_PIXEL)
 	jr	eq,.cont
-	store	tmp2,(blitter+_BLIT_A1_FPIXEL)
+	store	tmp1,(blitter+_BLIT_A1_FPIXEL)
 	jr	mi,.xstep
 	nop
-
+	moveq	#1,a1inc
 	imult	step_y,m
 	shlq	#16,step_y
-	moveq	#1,a1inc
 	jr	pl,.cont
 	shlq	#16,m
 
@@ -130,13 +103,13 @@ color	reg 2!
 	move	step_y,a1inc
 .cont
 	bset	#16,cnt
-
 	store	a1inc,(blitter+_BLIT_A1_INC)
+	addq	#1,cnt
+	moveq	#0,tmp1
 	store	m,(blitter+_BLIT_A1_FINC)
-	movei	#B_PATDSEL|B_CLIP_A1*0|B_UPDA1|B_UPDA1F,tmp1
+	bset	#16,tmp1	; B_PATDSEL
 	store	cnt,(blitter+_BLIT_COUNT)
 	store	tmp1,(blitter+_BLIT_CMD)
-//->	WAITBLITTER
 
 	jump	(LR)
 	nop
