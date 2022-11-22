@@ -37,3 +37,7 @@ Mandelbrot set calculation using GPU and DSP in parallel (in 256 bytes).
 ## depacker
 
 Various depacker
+
+## draw_test
+
+Test program for the Blitter line drawing function.

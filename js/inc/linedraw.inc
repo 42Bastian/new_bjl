@@ -7,33 +7,26 @@
 ;;; ----------------------------------------
 ;;; draw
 ;;;
-;;; r2 - color
-;;; r3 - x0
 ;;; r4 - y0
-;;; r5 - x1
-;;; r6 - y1
-
+;;; r3 - x0
+;;; r2 - color
+;;; r1 - y1
+;;; r0 - x1
 draw::
-draw::
 
-dx	reg 13
-dy	reg 12
-m	reg 11
-cnt	reg 10
-dir_x	reg 9
-step_y	reg 8
-a1inc	reg 7
+dx	reg 10
+dy	reg 9
+m	reg 8
+cnt	reg 7
+dir_x	reg 6
+step_y	reg 5
+a1inc	reg 4
 ;;; -- parameter
-y1	reg 6
-x1	reg 5
-y0	reg 4
+y0	reg 4!
 x0	reg 3
-color	reg 2!			; tmp2 re-used
-
-	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDINC,tmp0
-	movefa	currScreen.a,tmp1
-	store	tmp0,(blitter+_BLIT_A1_FLAGS)
-	store	tmp1,(blitter)	;_BLIT_A1_BASE
+color	reg 2!
+y1	reg 1!
+x1	reg 0!
 
 	move	y1,dy
 	move	x1,dx
@@ -83,6 +76,11 @@ color	reg 2!			; tmp2 re-used
 	store	color,(blitter+_BLIT_PATD)
 	store	color,(blitter+_BLIT_PATD+4) ;VJ
 
+	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDINC,tmp0
+	movefa	currScreen.a,color
+	store	tmp0,(blitter+_BLIT_A1_FLAGS)
+	store	color,(blitter)	;_BLIT_A1_BASE
+
 	cmpq	#0,dir_x
 	store	y0,(blitter+_BLIT_A1_PIXEL)
 	jr	eq,.cont_dia
@@ -112,6 +110,8 @@ color	reg 2!			; tmp2 re-used
 	store	tmp1,(blitter+_BLIT_CMD)
 
 	UNREG	dx,dy,m,cnt,dir_x,step_y,a1inc
+	UNREG	x0,y0,x1,y1,color
+
 draw_e::
 draw_size	equ draw_e-draw
 	echo "DRAW: %ddraw_size"
