@@ -59,11 +59,10 @@ color	reg 2!			; tmp2 re-used
 
 	;; dx == dy
 	moveq	#0,m
-	move	step_y,a1inc
 	moveq	#0,dir_x
-	shlq	#16,a1inc
+	shlq	#16,step_y
 	jr	.diagonal
-	addqt	#1,a1inc
+	addqt	#1,step_y	; => becomes A1_INC
 .not_diag
 	jr	cc,.no_swap
 	shlq	#16,m
@@ -71,28 +70,27 @@ color	reg 2!			; tmp2 re-used
 	shlq	#16,dx
 	move	dy,cnt
 	move	dx,m
-	subq	#2,dir_x
+	subq	#2,dir_x	; swap x_inc 1 => y_inc 1
 .no_swap
 	div	cnt,m
 .diagonal
 	shlq	#16,y0
-	movei	#$80008000,tmp1		; start in the middle
+	movei	#$80008000,tmp1	; start in the middle of the 1st pixel
 	or	x0,y0
 
 	WAITBLITTER
 
 	store	color,(blitter+_BLIT_PATD)
-//->	store	color,(blitter+_BLIT_PATD+4) ;VJ
+	store	color,(blitter+_BLIT_PATD+4) ;VJ
 
 	cmpq	#0,dir_x
 	store	y0,(blitter+_BLIT_A1_PIXEL)
-	jr	eq,.cont
+	jr	eq,.cont_dia
 	store	tmp1,(blitter+_BLIT_A1_FPIXEL)
 	jr	mi,.xstep
-	nop
 	moveq	#1,a1inc
-	imult	step_y,m
-	shlq	#16,step_y
+	imult	step_y,m	; set sign
+	shlq	#16,step_y	; test sign
 	jr	pl,.cont
 	shlq	#16,m
 
@@ -100,18 +98,20 @@ color	reg 2!			; tmp2 re-used
 	or	step_y,a1inc
 .xstep
 	shlq	#16,step_y
+.cont_dia
 	move	step_y,a1inc
 .cont
 	bset	#16,cnt
 	store	a1inc,(blitter+_BLIT_A1_INC)
 	addq	#1,cnt
-	moveq	#0,tmp1
 	store	m,(blitter+_BLIT_A1_FINC)
-	bset	#16,tmp1	; B_PATDSEL
+	moveq	#0,tmp1
 	store	cnt,(blitter+_BLIT_COUNT)
+	bset	#16,tmp1	; B_PATDSEL
+	jump	(LR)
 	store	tmp1,(blitter+_BLIT_CMD)
 
-	jump	(LR)
-	nop
-
 	UNREG	dx,dy,m,cnt,dir_x,step_y,a1inc
+draw_e::
+draw_size	equ draw_e-draw
+	echo "DRAW: %ddraw_size"
