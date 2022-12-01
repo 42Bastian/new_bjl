@@ -15,11 +15,10 @@ FONT_BY_ROW EQU 1
 *****************
 PrintDEZ::
 	move.l	d0,-(sp)
-	and.l	#$000FFFF,d0
+	and.l	#$0000FFFF,d0
 	divu	#100,d0
 	bsr.s	PrintDEZ2
-	muls	#-100,d0
-	add.l	(sp),d0
+	swap	d0
 	bsr.s	PrintDEZ2
 	move.l  (sp)+,d0
 	rts
@@ -28,10 +27,9 @@ PrintDEZ2::
 	and.l	#$FF,d0
 	divu	#10,d0
 	move.l	d0,d1
-	muls	#-10,d1
-	add.l	(sp),d1
+	swap	d1
 	lsl.b	#4,d0
-	or.l	d1,d0
+	or.b	d1,d0
 	bsr.s   PrintHEXb
 	movem.l	(sp)+,d0/d1
 	rts
@@ -40,7 +38,7 @@ PrintHEXl::
 	move.l  d0,-(sp)
 	swap    d0
 	bsr.s   PrintHEX
-	move.l  (sp),d0
+	move.l	(sp),d0
 	bsr.s   PrintHEX
 	move.w	#$100,d0
 	bsr.s   PrintHEX1
@@ -55,24 +53,31 @@ PrintHEXb:
 	and.w	#$ff,d0
 PrintHEX1:
 	movem.l d0/a0-a1,-(sp)
-	and.w   #$1FF,d0
-	mulu	#5,d0
-	lea	font(pc,d0.w),a0
 	move.l  TextScreen(a6),a1
 	move.w  Cursor+2(a6),d0
-	mulu    #max_x_txt/8*5,d0
+	mulu    #max_x_txt/8*6,d0
 	add.w   Cursor(a6),d0
 	adda.w  d0,a1
+
 	addq.w  #1,Cursor(a6)
 	cmpi.w  #(max_x_txt>>3),Cursor(a6)
 	bne.s   ok_pc
 	clr.w   Cursor(a6)
 	addq.w  #1,Cursor+2(a6)
-	cmpi.w  #max_y_txt>>8,Cursor+2(a6)
-	bne.s   ok_pc
+	cmpi.w  #max_y_txt/6,Cursor+2(a6)
+	blt.s   ok_pc
 	clr.w   Cursor+2(a6)
 ok_pc::
- IF ^^defined FONT_BY_ROW
+	move.l	(sp),d0
+	and.w   #$1FF,d0
+ IF FONT_BY_ROW = 1
+	mulu	#5,d0
+ ELSE
+	btst	#8,d0
+	bne.s	_space
+ ENDIF
+	lea	font(pc,d0.w),a0
+ IF FONT_BY_ROW = 1
 	move.b  (a0)+,(a1)
 	move.b  (a0)+,(max_x_txt>>3)(a1)
 	move.b  (a0)+,2*(max_x_txt>>3)(a1)
@@ -85,8 +90,20 @@ ok_pc::
 	move.b  $300(a0),3*(max_x_txt>>3)(a1)
 	move.b  $400(a0),4*(max_x_txt>>3)(a1)
  ENDIF
+phexit:
 	movem.l (sp)+,d0/a0-a1
 	rts
+
+ IF FONT_BY_ROW = 0
+_space:
+	clr.b	(a1)
+	clr.b	(max_x_txt>>3)(a1)
+	clr.b	2*(max_x_txt>>3)(a1)
+	clr.b	3*(max_x_txt>>3)(a1)
+	clr.b	4*(max_x_txt>>3)(a1)
+	bra.s	phexit
+ ENDIF
+
 
 InitHexScreen::
 	add.w d0,d0
@@ -101,7 +118,7 @@ InitHexScreen::
 	move.l d1,Cursor(a6)
 	rts
 font:
- IF ^^defined FONT_BY_ROW
+ IF FONT_BY_ROW = 1
 	.incbin "font/hexfont_8x5.bin"
  ELSE
 	.incbin "font/hexfont_8x5_column.bin"
