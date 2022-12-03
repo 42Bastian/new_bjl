@@ -53,6 +53,15 @@ PrintHEXb:
 	and.w	#$ff,d0
 PrintHEX1:
 	movem.l d0/a0-a1,-(sp)
+
+	cmpi.w  #(max_x_txt>>3),Cursor(a6)
+	blo.s   ok_ph1
+	clr.w   Cursor(a6)
+	addq.w  #1,Cursor+2(a6)
+	cmpi.w  #max_y_txt/6,Cursor+2(a6)
+	bls.s   ok_ph1
+	clr.w   Cursor+2(a6)
+ok_ph1:
 	move.l  TextScreen(a6),a1
 	move.w  Cursor+2(a6),d0
 	mulu    #max_x_txt/8*6,d0
@@ -60,14 +69,7 @@ PrintHEX1:
 	adda.w  d0,a1
 
 	addq.w  #1,Cursor(a6)
-	cmpi.w  #(max_x_txt>>3),Cursor(a6)
-	bne.s   ok_pc
-	clr.w   Cursor(a6)
-	addq.w  #1,Cursor+2(a6)
-	cmpi.w  #max_y_txt/6,Cursor+2(a6)
-	blt.s   ok_pc
-	clr.w   Cursor+2(a6)
-ok_pc::
+
 	move.l	(sp),d0
 	and.w   #$1FF,d0
  IF FONT_BY_ROW = 1
