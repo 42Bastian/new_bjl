@@ -45,7 +45,11 @@ x1	reg 0!
 	abs	dx
 	neg	step_y
 .pos
+	cmpq	#0,dy
+	jr	ne,.yno0
 	cmp	dy,dx
+	moveq	#0,step_y
+.yno0
 	move	dx,cnt
 	jr	ne,.not_diag
 	move	dy,m
