@@ -41,3 +41,8 @@ Various depacker
 ## draw_test
 
 Test program for the Blitter line drawing function.
+
+## gpu_template
+
+A template for GPU/DSP only demos.
+`lsp_v15.S` by Ericde45 (see https://github.com/ericde45/LSP_Jaguar)
