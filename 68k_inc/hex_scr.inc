@@ -15,11 +15,17 @@ FONT_BY_ROW EQU 1
 *****************
 PrintDEZ::
 	move.l	d0,-(sp)
+	tst.l	d0
+	bpl.s	pd1
+	not.l	tsInvert(a6)		; print negative numbers inverted
+	neg.l	d0
+pd1:
 	and.l	#$0000FFFF,d0
 	divu	#100,d0
 	bsr.s	PrintDEZ2
 	swap	d0
 	bsr.s	PrintDEZ2
+	clr.l	tsInvert(a6)
 	move.l  (sp)+,d0
 	rts
 PrintDEZ2::
@@ -92,6 +98,17 @@ ok_ph1:
 	move.b  $300(a0),3*(max_x_txt>>3)(a1)
 	move.b  $400(a0),4*(max_x_txt>>3)(a1)
  ENDIF
+phexit0:
+	clr.b	5*(max_x_txt>>3)(a1)
+	tst.l	tsInvert(a6)
+	beq.s	phexit
+	not.b	(a1)
+	not.b	(max_x_txt>>3)(a1)
+	not.b	2*(max_x_txt>>3)(a1)
+	not.b	3*(max_x_txt>>3)(a1)
+	not.b	4*(max_x_txt>>3)(a1)
+	not.b	5*(max_x_txt>>3)(a1)
+
 phexit:
 	movem.l (sp)+,d0/a0-a1
 	rts
@@ -103,7 +120,7 @@ _space:
 	clr.b	2*(max_x_txt>>3)(a1)
 	clr.b	3*(max_x_txt>>3)(a1)
 	clr.b	4*(max_x_txt>>3)(a1)
-	bra.s	phexit
+	bra.s	phexit0
  ENDIF
 
 
