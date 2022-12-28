@@ -30,7 +30,7 @@ SP_start	set SP_start-$80
 ENDIF
 
 		MACRO STOP_GPU
-		movei $f02114,r0
+		movei #$f02114,r0
 		load (r0),r1
 		bclr #0,r1
 .\sgwait	store r1,(r0)
@@ -39,7 +39,7 @@ ENDIF
 		ENDM
 
 		MACRO STOP_DSP
-		movei $f1a114,r0
+		movei #$f1a114,r0
 		load (r0),r1
 		bclr #0,r1
 .\sdwait	store r1,(r0)
@@ -185,9 +185,9 @@ DEBUG2		reg 28
 DEBUG3		reg 27
 DEBUG4		reg 26
 DEBUG5		reg 25
-		movei debug_rout,r0
+		movei #debug_rout,r0
 		moveta r0,DEBUG0
-		movei $f02100,r0
+		movei #$f02100,r0
 		load (r0),r1
 		bclr #14,r1
 		store r1,(r0)
@@ -202,17 +202,17 @@ DEBUG5		reg 25
 		MACRO DEBUG_ROUT
 IFND debug_rout
 		org $f03f80-100
-debug_rout	movei $f02100,r0
+debug_rout	movei #$f02100,r0
 		moveta r1,DEBUG2
 		load (r0),r1
 		bset #14,r1
 		store r1,(r0)			; 2. Bank einschalten
 		moveta DEBUG1,r0
 		moveta DEBUG2,r1		; und die benutzten Reg. zurÅck
-		movei $f03f80-4,DEBUG0
-		movei .\_addq,DEBUG1
+		movei #$f03f80-4,DEBUG0
+		movei #.\_addq,DEBUG1
 		moveq #31,DEBUG2
-		movei $089E9419,DEBUG3		; movefa R0,R25
+		movei #$089E9419,DEBUG3		; movefa R0,R25
 		store DEBUG3,(DEBUG1)		; selbst mumifizieren
 .\dloop		addq #32,DEBUG3			; R0 <- R1
 		nop
@@ -224,7 +224,7 @@ debug_rout	movei $f02100,r0
 		jr nn,.\dloop
 		nop
 
-		movei $f02100,DEBUG0
+		movei #$f02100,DEBUG0
 		load (DEBUG0),DEBUG1
 		bclr #14,DEBUG1
 		store DEBUG1,(DEBUG0)
