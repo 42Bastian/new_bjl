@@ -51,6 +51,22 @@ upload: $(DEMO).cof
 	@jcp -q $< 0x4000
 #	tcpuploader $< 192.168.178.222
 
+.PHONY: jaggd
+jaggd: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/jaggd_cof.app --args Z:$(PWD)/$<
+else
+	jaggd.exe -rd -stub -ux $<,a:0x4000,x:0x4000
+endif
+
+.PHONY: jaggd_rom
+jaggd_rom: $(DEMO).rom
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/jaggd_rom.app --args Z:$(PWD)/$<
+else
+	jaggd.exe -rd -stub -ux $<,a:0x802000,x:0x802000
+endif
+
 bpe: $(DEMO).cof
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
 	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
