@@ -86,11 +86,35 @@ upload: $(DEMO).cof
 
 .PHONY: jaggd
 jaggd: $(DEMO).cof
-	jaggd.exe -rd -stub -ux $<,a:\$$4000,x:\$$4000
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/jaggd_cof.app --args Z:$(PWD)/$<
+else
+	jaggd.exe -rd -stub -ux $<,a:0x4000,x:0x4000
+endif
 
 .PHONY: jaggd_rom
 jaggd_rom: $(DEMO).rom
-	jaggd.exe -rd -stub -ux $<,a:\$$802000,x:\$$802000
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/jaggd_rom.app --args Z:$(PWD)/$<
+else
+	jaggd.exe -rd -stub -ux $<,a:0x802000,x:0x802000
+endif
+
+bpe: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+else
+	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+endif
+	true
+
+bpe_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+else
+	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+	true
+endif
 
 .ONESHELL:
 .PHONY: clean
