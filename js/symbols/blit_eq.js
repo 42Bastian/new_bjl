@@ -1,4 +1,4 @@
-*
+* -*-asm-*-
 * Blitter-EQU base on an ATARI-File
 *
 ;Blitter Command-Register
