@@ -66,7 +66,6 @@ apfel0:
 	lea	vars,a6
 	move.l	#$2000,sp
 
-
 	lea	(a6),a0
 	move.w #(Stack-OBL)>>2-1,d0
 clear_loop:
@@ -191,17 +190,17 @@ wait0:
 wait01:
 	bsr	PrintXY
 wait:
-	move.l $f02114,d0
-	or.l $f1a114,d0
+	move.l	$f02114,d0
+	or.l	$f1a114,d0
 	btst	#0,d0
 	beq.s	notime
 	move.w	#$FFFF,d0
 	sub.w	$F10038,d0
 	ext.l	d0
-	add.l d0,d0
-	addq.l #5,d0
+	add.l	d0,d0
+	addq.l	#5,d0
 	divu	#10,d0
-	bsr	  PrintTime
+	bsr	PrintTime
 notime:
 	bsr GetKey
 	beq.s wait

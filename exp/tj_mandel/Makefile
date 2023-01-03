@@ -1,5 +1,6 @@
-# makefile for tj_mandl.prg
 #
+DEMO=mandel
+
 OS:=$(shell uname -s)
 
 TJASS= lyxass
@@ -9,10 +10,10 @@ RLN= rln
 _68KFLAGS=-4 -i$(BJL_ROOT)
 TJFLAG= -sh -w
 
-ALL: mandel.cof mandel.rom mandel.j64
+ALL: $(DEMO).cof $(DEMO).rom $(DEMO).j64
 #
-mandel.o : mandel.S tom.o jerry.o
-	$(RMAC) $(_68KFLAGS) mandel.S
+$(DEMO).o : $(DEMO).S tom.o jerry.o
+	$(RMAC) $(_68KFLAGS) $(DEMO).S
 
 tom.o : tom.js
 	$(TJASS) $(TJFLAG) $<
@@ -20,20 +21,20 @@ tom.o : tom.js
 jerry.o : jerry.js
 	$(TJASS) $(TJFLAG) $<
 
-mandel.cof: mandel.o
-	$(RLN) -z -e -a 4000 x x -o $@ $<
+$(DEMO).cof: $(DEMO).o
+	$(RLN) -z -e -a 3999 x x -o $@ $<
 
-mandel.abs: mandel.o
+$(DEMO).abs: $(DEMO).o
 	$(RLN) -z -b -a 4000 x x -o $@ $<
 
-mandel.rom: mandel.o
+$(DEMO).rom: $(DEMO).o
 	$(RLN) -z -n -a 802000 x x -o $@ $<
 
-mandel.j64: mandel.rom
-	cat $(BJL_ROOT)/bin/Univ.bin $< >mandel.xj64
-	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> mandel.xj64
-	dd if=mandel.xj64 of=mandel.j64 bs=1M count=1
-	rm mandel.xj64
+$(DEMO).j64: $(DEMO).rom
+	@cat $(BJL_ROOT)/bin/Univ.bin $< >$@
+	cat $< >> $@
+	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
+	truncate -s 1M $@
 
 .PHONY: reset
 reset:
@@ -41,14 +42,30 @@ reset:
 	wait
 
 .PHONY: flash
-flash: mandel.j64
+flash: $(DEMO).j64
 	jcp -ef $<
 
 .PHONY: upload
 .ONESHELL:
-upload: mandel.cof
+upload: $(DEMO).cof
 	@jcp -q $< 0x4000
 #	tcpuploader $< 192.168.178.222
+
+bpe: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+else
+	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+endif
+	true
+
+bpe_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+else
+	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+	true
+endif
 
 .ONESHELL:
 .PHONY: clean
