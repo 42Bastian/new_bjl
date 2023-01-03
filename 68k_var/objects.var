@@ -12,9 +12,10 @@ OBJ_GPU		EQU 2
 OBJ_BRANCH	EQU 3
 OBJ_STOP	EQU 4
 
-OBJ_SKIP	EQU 9
-OBJ_ILLEGAL	EQU 10
+OBJ_SKIP	EQU -1
+OBJ_EOF		EQU $affe
 
+OBJ_BRANCH_OPFLAG	EQU 3
 ;;**************************************
 ;; BitMap oder Scaled BitMap - Objekte *
 ;;**************************************
@@ -85,9 +86,7 @@ y_\data:
 	dc.w \y
 	dc.w \height,\link
 	dc.b \bits,\pitch
-dw_\data EQU (\dwidth<<\bits)>>6
-iw_\data EQU (\iwidth<<\bits)>>6
-	dc.w dw_\data, iw_\data
+	dc.w \dwidth, \iwidth
 	dc.b \cindex,\flags
 	dc.w \firstpx
 	endm
@@ -101,8 +100,7 @@ y_\data:
 	dc.w \y
 	dc.w \height,\link
 	dc.b \bits,\pitch
-dw_\data EQU (\dwidth<<\bits)>>6
-iw_\data EQU (\iwidth<<\bits)>>6
+	dc.w \dwidth, \iwidth
 	dc.w dw_\data, iw_\data
 	dc.b \cindex,\flags
 	dc.w \firstpx
@@ -127,19 +125,21 @@ iw_\data EQU (\iwidth<<\bits)>>6
 	else
 	if \cc = "="
 	dc.w 0
+        else
+	dc.w \cc
 	endif
 	endif
 	endif
 	dc.w \dest,NEXT_OBJ
 	endm
 
-	macro STOP_OBJ  data1, data2
+	macro STOP_OBJ data1, data2
 	dc.w OBJ_STOP, obj_st_len
 	dc.w 0
 	dc.l \data1, \data2
 	endm
 
-	macro END_OF_LIST
-	dc.w OBJ_ILLEGAL, 0
+	macro EOL_OBJ
+	dc.w OBJ_EOF,0
 	endm
  ENDIF
