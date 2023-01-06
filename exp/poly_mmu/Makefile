@@ -44,52 +44,7 @@ $(DEMO).j64: $(DEMO).rom
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
 	truncate -s 1M $@
 
-.PHONY: vjd
-vjd: $(DEMO).cof
-	virtualjaguar -D $<
-
-.PHONY: vj
-vj: $(DEMO).cof
-	virtualjaguar $<
-
-.PHONY: vj_rom
-vjd_rom: $(DEMO).j64
-ifdef BIOS
-	virtualjaguar -b -D $<
-else
-	virtualjaguar -D $<
-endif
-
-
-.PHONY: vj_rom
-vj_rom: $(DEMO).j64
-ifdef BIOS
-	virtualjaguar -b $<
-else
-	virtualjaguar $<
-endif
-
-.PHONY: reset
-reset:
-	jcp -r
-	wait
-
-.PHONY: flash
-flash: $(DEMO).j64
-	jcp -ef $<
-
-.PHONY: upload
-.ONESHELL:
-upload: $(DEMO).cof
-	@jcp -q $< 0x4000
-
-.PHONY: jaggd
-jaggd: $(DEMO).cof
-	jaggd.exe -rd -stub -ux $<,a:\$$4000,x:\$$4000
-
-.PHONY: jaggd_rom
-jaggd_rom: $(DEMO).rom
-	jaggd.exe -rd -stub -ux $<,a:\$$802000,x:\$$802000
+include ../Rules.launch
 
 .ONESHELL:
 .PHONY: clean

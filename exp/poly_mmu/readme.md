@@ -1,0 +1,1 @@
+Note: ROM version do not work!

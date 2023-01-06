@@ -1,0 +1,110 @@
+# -*makefile-*-
+
+#
+# SKUNK
+#
+.PHONY: reset
+reset:
+	jcp -r
+	wait
+
+.PHONY: flash
+flash: $(DEMO).j64
+	jcp -ef $<
+
+.PHONY: upload
+.ONESHELL:
+upload: $(DEMO).cof
+	@jcp -q $< 0x4000
+
+#
+# JagGD
+#
+
+.PHONY: jaggd
+jaggd: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "jaggd.exe -rd -stub -ux  Z:$(PWD)/$<,a:0x4000,x:0x4000"
+else
+	jaggd.exe -rd -stub -ux $<,a:0x4000,x:0x4000
+endif
+
+.PHONY: jaggd_rom
+jaggd_rom: $(DEMO).rom
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "jaggd.exe -rd -stub -ux  Z:$(PWD)/$<,a:0x802000,x:0x802000"
+else
+	jaggd.exe -rd -stub -ux $<,a:0x802000,x:0x802000
+endif
+
+#
+# VirtualJaguar
+#
+
+.PHONY: vjd
+vjd: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "vj.lnk -D Z:$(PWD)/$<"
+else
+	virtualjaguar -D $<
+endif
+
+.PHONY: vj
+vj: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "vj.lnk Z:$(PWD)/$<"
+else
+	virtualjaguar $< &
+endif
+
+.PHONY: vj_rom
+vjd_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+ifeq ($(BIOS),1)
+	@open ~/bin/launcher.app --args "vj.lnk -D -b Z:$(PWD)/$<"
+else
+	@open ~/bin/launcher.app --args "vj.lnk -D  Z:$(PWD)/$<"
+endif
+else
+ifeq ($(BIOS),1)
+	virtualjaguar -D -b $< &
+else
+	virtualjaguar -D  $< &
+endif
+endif
+
+.PHONY: vj_rom
+vj_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+ifeq ($(BIOS),1)
+	@open ~/bin/launcher.app --args "vj.lnk -b Z:$(PWD)/$<"
+else
+	@open ~/bin/launcher.app --args "vj.lnk Z:$(PWD)/$<"
+endif
+else
+ifeq ($(BIOS),1)
+	virtualjaguar -b $< &
+else
+	virtualjaguar $< &
+endif
+endif
+
+#
+# BigPEmu
+#
+
+bpe: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+else
+	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+endif
+	true
+
+bpe_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+else
+	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+	true
+endif

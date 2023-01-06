@@ -45,76 +45,7 @@ $(DEMO).j64: $(DEMO).rom
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
 	truncate -s 1M $@
 
-.PHONY: vjd
-vjd: $(DEMO).cof
-	virtualjaguar -D $<
-
-.PHONY: vj
-vj: $(DEMO).cof
-	virtualjaguar $<
-
-.PHONY: vj_rom
-vjd_rom: $(DEMO).j64
-ifdef BIOS
-	virtualjaguar -b -D $<
-else
-	virtualjaguar -D $<
-endif
-
-
-.PHONY: vj_rom
-vj_rom: $(DEMO).j64
-ifdef BIOS
-	virtualjaguar -b $<
-else
-	virtualjaguar $<
-endif
-
-.PHONY: reset
-reset:
-	jcp -r
-	wait
-
-.PHONY: flash
-flash: $(DEMO).j64
-	jcp -ef $<
-
-.PHONY: upload
-.ONESHELL:
-upload: $(DEMO).cof
-	@jcp -q $< 0x4000
-
-.PHONY: jaggd
-jaggd: $(DEMO).cof
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/jaggd_cof.app --args Z:$(PWD)/$<
-else
-	jaggd.exe -rd -stub -ux $<,a:0x4000,x:0x4000
-endif
-
-.PHONY: jaggd_rom
-jaggd_rom: $(DEMO).rom
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/jaggd_rom.app --args Z:$(PWD)/$<
-else
-	jaggd.exe -rd -stub -ux $<,a:0x802000,x:0x802000
-endif
-
-bpe: $(DEMO).cof
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
-else
-	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
-endif
-	true
-
-bpe_rom: $(DEMO).j64
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
-else
-	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
-	true
-endif
+include ../Rules.launch
 
 .ONESHELL:
 .PHONY: clean
