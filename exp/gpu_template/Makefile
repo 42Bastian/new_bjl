@@ -21,10 +21,6 @@ ifdef SKUNK
 _68KFLAGS+= -DSKUNK
 endif
 
-jaggd vj upload: _68KFLAGS+= -DSKUNK
-
-#vjd vjd_rom vj_rom vj: _68KFLAGS+= -DDEBUG
-
 %.o	: %.js
 	$(TJASS) $(TJFLAGS) $<
 
