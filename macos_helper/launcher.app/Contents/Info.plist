@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+<string>de</string>
+<string>ja</string>
+<string>en</string>
+<string>zh_CN</string>
+<string>es</string>
+<string>pt_BR</string>
+<string>it</string>
+<string>cs</string>
+<string>ko</string>
+<string>pl</string>
+<string>zh_TW</string>
+<string>ru</string>
+<string>fr</string>
+</array>
+	<key>CFBundleExecutable</key>
+	<string>WinAppHelper</string>
+	<key>CFBundleName</key>
+	<string>BPE.exe</string>
+	<key>CFBundleGetInfoString</key>
+	<string>18.0, C:\fun\bpe_devmode.exe</string>
+	<key>CFBundleIconFile</key>
+	<string>WinAppHelper.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.parallels.winapp.d6f3a0c5d72bf66a87ca92404b0db61a.4bd0f50ffec54c23833d09ebfc425e2e</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>Windows 11</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>18.53328.0</string>
+	<key>LSBackgroundOnly</key>
+	<true/>
+	<key>LSUIElement</key>
+	<string>1</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>LSHasLocalizedDisplayName</key>
+	<true/>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.7.0</string>
+	<key>NSPrincipalClass</key>
+	<string>CStubApplication</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>*</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>****</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeMIMETypes</key>
+			<array>
+				<string>*/*</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
