@@ -6,7 +6,6 @@ TJASS= lyxass
 RMAC= rmac
 RLN= rln
 
-
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
 TJFLAGS= -sh -w -d
 
@@ -26,7 +25,7 @@ vjd_rom vj_rom vj: _68KFLAGS+= -DDEBUG
 	$(TJASS) $(TJFLAGS) $<
 
 ALL: $(DEMO).cof $(DEMO).rom $(DEMO).j64
-#
+
 $(DEMO).o : $(DEMO).S
 	$(RMAC) $(_68KFLAGS) $(DEMO).S
 
@@ -37,39 +36,14 @@ $(DEMO).abs: $(DEMO).o
 	$(RLN) -z -b -a 4000 x x -o $@ $<
 
 $(DEMO).rom: $(DEMO).o
-	@$(RLN) -z -rw -n -a 802000 x x -o $@ $<
+	@$(RLN) -z -n -a 802000 x x -o $@ $<
 
 .ONESHELL:
 $(DEMO).j64: $(DEMO).rom
-	@cat $(BJL_ROOT)/bin/fastbt2.bin $< > $@
+	@cat $(BJL_ROOT)/bin/fastbt2.bin $< >$@
+	cat $< >> $@
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
 	truncate -s 1M $@
-
-.PHONY: vjd
-vjd: $(DEMO).cof
-	virtualjaguar -D $<
-
-.PHONY: vj
-vj: $(DEMO).cof
-	virtualjaguar $<
-
-.PHONY: vj_rom
-vjd_rom: $(DEMO).j64
-ifdef BIOS
-	virtualjaguar -b -D $<
-else
-	virtualjaguar -D $<
-endif
-
-
-.PHONY: vj_rom
-vj_rom: $(DEMO).j64
-ifdef BIOS
-	virtualjaguar -b $<
-else
-	virtualjaguar  $<
-endif
-
 .PHONY: reset
 reset:
 	jcp -r
@@ -87,7 +61,7 @@ upload: $(DEMO).cof
 .PHONY: jaggd
 jaggd: $(DEMO).cof
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/jaggd_cof.app --args Z:$(PWD)/$<
+	@open ~/bin/launcher.app --args "jaggd.exe -rd -stub -ux  Z:$(PWD)/$<,a:0x4000,x:0x4000"
 else
 	jaggd.exe -rd -stub -ux $<,a:0x4000,x:0x4000
 endif
@@ -95,14 +69,47 @@ endif
 .PHONY: jaggd_rom
 jaggd_rom: $(DEMO).rom
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/jaggd_rom.app --args Z:$(PWD)/$<
+	@open ~/bin/launcher.app --args "jaggd.exe -rd -stub -ux  Z:$(PWD)/$<,a:0x802000,x:0x802000"
 else
 	jaggd.exe -rd -stub -ux $<,a:0x802000,x:0x802000
 endif
 
+
+.PHONY: vjd
+vjd: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "vj.lnk -D Z:$(PWD)/$<"
+else
+	virtualjaguar -D $<
+endif
+
+.PHONY: vj
+vj: $(DEMO).cof
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "vj.lnk Z:$(PWD)/$<"
+else
+	virtualjaguar $< &
+endif
+
+.PHONY: vj_rom
+vjd_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "vj.lnk -D -b Z:$(PWD)/$<"
+else
+	virtualjaguar -D -b $< &
+endif
+
+.PHONY: vj_rom
+vj_rom: $(DEMO).j64
+ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
+	@open ~/bin/launcher.app --args "vj.lnk -b Z:$(PWD)/$<"
+else
+	virtualjaguar -b $< &
+endif
+
 bpe: $(DEMO).cof
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+	@open ~/bin/launcher.app --args "bpe.lnk Z:$(PWD)/$< -devmode"
 else
 	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
 endif
@@ -110,7 +117,7 @@ endif
 
 bpe_rom: $(DEMO).j64
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+	@open ~/bin/launcher.app --args "bpe.lnk Z:$(PWD)/$< -devmode"
 else
 	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
 	true
