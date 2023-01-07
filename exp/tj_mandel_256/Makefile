@@ -53,4 +53,4 @@ clean:
 	rm -f *.o
 	rm -f *.equ
 	rm -f *~
-	rm -f *.cof *.j64 *.rom *.abs
+	rm -f *.rom *.abs
