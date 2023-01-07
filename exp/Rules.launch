@@ -95,7 +95,7 @@ endif
 
 bpe: $(DEMO).cof
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+	@open ~/bin/launcher.app --args "bpe.lnk Z:$(PWD)/$< -devmode"
 else
 	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
 endif
@@ -103,7 +103,7 @@ endif
 
 bpe_rom: $(DEMO).j64
 ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/BigPEmu.exe.app --args Z:$(PWD)/$<
+	@open ~/bin/launcher.app --args "bpe.lnk Z:$(PWD)/$< -devmode"
 else
 	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
 	true
