@@ -1,4 +1,16 @@
-# -*makefile-*-
+# -*-makefile-*-
+
+BPE=/fun/jaguar/BigPEmu/BigPEmu.exe
+JAGGD=jaggd.exe
+VJ=/fun/jaguar/virtualjaguar_2.1.3/virtualjaguar.exe
+MACOS=@prlexec --vm "Windows 11" -r
+
+ifeq ($(findstring aarch64,$(MACHTYPE)),aarch64)
+override BPE:=$(MACOS) $(BPE)
+override JAGGD:=jaggd
+override VJ:=$(MACOS) $(VJ)
+endif
+
 
 #
 # SKUNK
@@ -23,19 +35,11 @@ upload: $(DEMO).cof
 
 .PHONY: jaggd
 jaggd: $(DEMO).cof
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/launcher.app --args "jaggd.exe -rd -stub -ux  Z:$(PWD)/$<,a:0x4000,x:0x4000"
-else
-	jaggd.exe -rd -stub -ux $<,a:0x4000,x:0x4000
-endif
+	$(JAGGD) -rd -ux $<,a:0x4000,x:0x4000
 
 .PHONY: jaggd_rom
 jaggd_rom: $(DEMO).rom
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/launcher.app --args "jaggd.exe -rd -stub -ux  Z:$(PWD)/$<,a:0x802000,x:0x802000"
-else
-	jaggd.exe -rd -stub -ux $<,a:0x802000,x:0x802000
-endif
+	$(JAGGD) -rd -ux $<,a:0x802000,x:0x802000
 
 #
 # VirtualJaguar
@@ -43,50 +47,26 @@ endif
 
 .PHONY: vjd
 vjd: $(DEMO).cof
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/launcher.app --args "vj.lnk -D Z:$(PWD)/$<"
-else
-	virtualjaguar -D $<
-endif
+	$(VJ) -D $<
 
 .PHONY: vj
 vj: $(DEMO).cof
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/launcher.app --args "vj.lnk Z:$(PWD)/$<"
-else
-	virtualjaguar $< &
-endif
+	$(VJ) $< &
 
 .PHONY: vj_rom
 vjd_rom: $(DEMO).j64
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
 ifeq ($(BIOS),1)
-	@open ~/bin/launcher.app --args "vj.lnk -D -b Z:$(PWD)/$<"
+	$(VJ) -D -b $< &
 else
-	@open ~/bin/launcher.app --args "vj.lnk -D  Z:$(PWD)/$<"
-endif
-else
-ifeq ($(BIOS),1)
-	virtualjaguar -D -b $< &
-else
-	virtualjaguar -D  $< &
-endif
+	$(VJ) -D  $< &
 endif
 
 .PHONY: vj_rom
 vj_rom: $(DEMO).j64
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
 ifeq ($(BIOS),1)
-	@open ~/bin/launcher.app --args "vj.lnk -b Z:$(PWD)/$<"
+	$(VJ) -b $< &
 else
-	@open ~/bin/launcher.app --args "vj.lnk Z:$(PWD)/$<"
-endif
-else
-ifeq ($(BIOS),1)
-	virtualjaguar -b $< &
-else
-	virtualjaguar $< &
-endif
+	$(VJ) $< &
 endif
 
 #
@@ -94,17 +74,9 @@ endif
 #
 
 bpe: $(DEMO).cof
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/launcher.app --args "bpe.lnk Z:$(PWD)/$< -devmode"
-else
-	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
-endif
+	$(BPE) $< -devmode &
 	true
 
 bpe_rom: $(DEMO).j64
-ifneq ($(findstring $(MACHTYPE),aarch64),aarch64)
-	@open ~/bin/launcher.app --args "bpe.lnk Z:$(PWD)/$< -devmode"
-else
-	/fun/jaguar/BigPEmu/BigPEmu.exe $< &
+	$(BPE) $< -devmode &
 	true
-endif
