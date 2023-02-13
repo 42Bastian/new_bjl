@@ -15,6 +15,7 @@ endif
 
 ifdef DEBUG
 _68KFLAGS+= -DDEBUG
+TJFLAGS+= -D DEBUG=1
 endif
 
 ifdef SKUNK

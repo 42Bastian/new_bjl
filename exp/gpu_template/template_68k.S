@@ -81,7 +81,7 @@ init_68k:
 	moveq	#8*9,d0
 	bsr	memcpy
 
- IF DEBUG = 1
+ IF ^^defined DEBUG
 	;; Setup Text screen
 	move.w	#254,d0
 	move.l	#$1000F7F0,d1
@@ -131,7 +131,7 @@ init_68k:
 
 	bsr	InitGPU
 
- IF DEBUG = 1
+ IF ^^defined DEBUG
  IF HEXSCREEN = 0
 	;; Initial text out
 	clr.l	Cursor(a6)
@@ -141,9 +141,7 @@ init_68k:
  ENDIF
 	.globl again
 again:
-  IF DEBUG = 0
-	stop	#$2700
- ELSE
+  IF ^^defined DEBUG
 	stop	#$2000		; wait for GPU interrupt
 
  IF HEXSCREEN = 0
@@ -169,9 +167,11 @@ again:
 //->pv:
 //->	bsr.s	printVal
 //->	dbra	d7,pv
+ ELSE
+	stop	#$2700
  ENDIF
 	bra.s	again
- IF DEBUG = 1
+ IF ^^defined DEBUG
 printVal:
 	move.l	(a4)+,d0
 	bsr	PrintDEZ
@@ -179,7 +179,7 @@ printVal:
 	rts
   ENDIF
 ******************
- IF DEBUG = 1
+ IF ^^defined DEBUG
  IF HEXSCREEN = 1
 	.include "68k_inc/hex_scr.inc"
  ELSE
@@ -385,7 +385,7 @@ obl0:
  ELSE
  bitmap screen0,9,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANS RELEASE,0,1
  ENDIF
- IF DEBUG = 1
+ IF ^^defined DEBUG
  bitmap	txt_screen, 9,y_start_pal,(max_x_txt/64),(max_x_txt/64),max_y_txt, 0,127, TRANS RELEASE,0,1
  ENDIF
  bitmap	logo_screen, 10,y_start_pal+max_y_txt+max_y_gr-9,1,1,9, 0,127,TRANS  RELEASE,0,1
@@ -408,7 +408,7 @@ obl1:
  ELSE
  bitmap screen1,9,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANSS RELEASE,0,1
  ENDIF
- IF DEBUG = 1
+ IF ^^defined DEBUG
  bitmap	txt_screen, 9,y_start_pal,(max_x_txt/64),(max_x_txt/64),max_y_txt, 0,127, TRANS RELEASE,0,1
  ENDIF
  bitmap	logo_screen, 10,y_start_pal+max_y_txt+max_y_gr-9,1,1,9, 0,127, TRANS RELEASE,0,1
@@ -432,7 +432,7 @@ obl0_60hz:
  ELSE
  bitmap screen0,11,y_start_ntsc+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANS RELEASE,0,1
  ENDIF
- IF DEBUG = 1
+ IF ^^defined DEBUG
  bitmap	txt_screen, 11,y_start_ntsc,(max_x_txt/64),(max_x_txt/64),max_y_txt, 0,127, TRANS RELEASE,0,1
  ENDIF
  bitmap	logo_screen, 12,y_start_ntsc+max_y_txt+max_y_gr-9,1,1,9, 0,127, TRANS RELEASE,0,1
@@ -455,7 +455,7 @@ obl1_60hz:
  ELSE
  bitmap screen1,11,y_start_ntsc+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANS RELEASE,0,1
  ENDIF
- IF DEBUG = 1
+ IF ^^defined DEBUG
  bitmap	txt_screen, 11,y_start_ntsc,(max_x_txt/64),(max_x_txt/64),max_y_txt, 0,127, TRANS RELEASE,0,1
  ENDIF
  bitmap	logo_screen, 12,y_start_ntsc+max_y_txt+max_y_gr-9,1,1,9, 0,127,TRANS  RELEASE,0,1

@@ -9,8 +9,7 @@
 
 	UNREG	SP,SP.a,LR,LR.a
 
-DEBUG::		EQU 0
-MOD::		EQU 0
+MOD::		EQU 1
 
 	;; return values
 _MS_PER_FRAME	equ 0
@@ -217,7 +216,7 @@ main::
 	addq	#6,r0
 	moveta	r0,LOOP.a
 loop:
- IF DEBUG = 1
+ IFD DEBUG
 	movefa	BG.a,r0
 	moveq	#0,r1
 	storew	r1,(r0)
@@ -234,7 +233,7 @@ waitStart:
 	movefa	pit.a,r0
 	loadw	(r0),r0
 	moveta	r0,time.a
- IF DEBUG = 1
+ IFD DEBUG
 	movefa	BG.a,r0
 	movei	#$88ff,r1
 	storew	r1,(r0)
