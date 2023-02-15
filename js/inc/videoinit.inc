@@ -25,4 +25,4 @@
 	storew	r2,(r4)		; VDE
 	shrq	#16,r1
 	addq	#$4e-$48,r4
-	storew	r2,(r4)
+	storew	r1,(r4)
