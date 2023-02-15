@@ -234,3 +234,18 @@ DSP_REMAIN	EQU REGSTART+$0001A11C	; DSP Division Remainder
 DSP_DIVCTRL	EQU REGSTART+$0001A11C	; DSP Divider control
 DSP_RAM	EQU 	REGSTART+$0001B000	; DSP Internal RAM
 DSP_ENDRAM	EQU DSP_RAM+(8*1024)	; 8K bytes
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;      VIDEO INITIALIZATION CONSTANTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+NTSC_WIDTH	EQU	1409		; Width of screen in pixel clocks
+NTSC_HMID	EQU	823		; Middle of screen in pixel clocks
+NTSC_HEIGHT	EQU	241		; Height of screen in scanlines
+NTSC_VMID	EQU	266		; Middle of screen in halflines
+
+PAL_WIDTH	EQU	1381		; Same as above for PAL...
+PAL_HMID	EQU	843
+PAL_HEIGHT	EQU	287
+PAL_VMID	EQU	322
