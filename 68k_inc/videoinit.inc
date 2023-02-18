@@ -17,12 +17,13 @@ VideoInit1:
  IF ^^defined a_vdb
         move.w  d0,a_vdb(a6)
  ENDIF
-	moveq   #-1,d0
-        move.w  d0,(a0)+                ; VDE
-        move.w  d1,$4e-$48(a0)          ; VI
+
+        move.w  d1,(a0)+                ; VDE
  IF ^^defined a_vde
         move.w  d1,a_vde(a6)
  ENDIF
+	moveq   #-1,d0
+        move.w  d0,$4e-$48(a0)          ; VI
         movem.l (sp)+,d0-d2/a0
         rts
 
