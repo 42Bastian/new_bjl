@@ -8,7 +8,7 @@
 	loadb	(r2),r2
 	movei	#$f00038,r3
 	btst	#4,r2
-;;->	jr	eq,.pal
+	jr	eq,.pal
 	nop
 	movei	#(NTSC_HMID-(NTSC_WIDTH>>1)+4)<<16|(-(NTSC_VMID-NTSC_HEIGHT) & $ffff),r0
 	movei	#(NTSC_VMID+NTSC_HEIGHT+3)<<16|(((NTSC_WIDTH>>1)-1)|$0400),r1 ; VDE|HDE
