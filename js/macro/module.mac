@@ -7,7 +7,7 @@
 ;;; Define a overlay module <name> with option <start> address.
 
 	MACRO MODULE ; NAME[,start]
-		ALIGN 8
+	ALIGN 8
 MODextern_\0::	EQU 1
 	IFVAR \1
 MODrun_\0::	EQU \1
@@ -23,10 +23,11 @@ MODstart_\0	EQU *
 	ENDM
 
 	MACRO ENDMODULE
-		ALIGN 8
+	ALIGN 8
 MODend_\0::
 MODlen_\0::	EQU MODend_\0-MODrun_\0
-		RUN MODstart_\0+MODend_\0-MODrun_\0
+
+	RUN MODstart_\0+MODend_\0-MODrun_\0
 	ENDM
 
 ;;; ----------------------------------------
@@ -36,12 +37,13 @@ MODlen_\0::	EQU MODend_\0-MODrun_\0
 	MACRO IMODULE ; NAME
 	ALIGN 8
 	dc.l	0
-	include "\0.equ"	; globale Label
-echo "MODULE \0 %HMODrun_\0 (%DMODlen_\0)"
+	include "\0.equ"	; globale Labels
 
-MODstart_\0	SET *
+.\loadaddr:
 	ibytes "\0.o"
-MODstart_\0	SET MODstart_\0+12	 ; Header-Offset
+MODstart_\0::	EQU .\loadaddr+12	 ; skip Header-Offset
+
+	echo "MODULE \0 :EXEC: %HMODrun_\0 LOAD:  %HMODstart_\0 SIZE: %DMODlen_\0"
 	ENDM
 
 ;;; ----------------------------------------
@@ -49,6 +51,28 @@ MODstart_\0	SET MODstart_\0+12	 ; Header-Offset
 ;;; Load a module from store address to run address
 
 	MACRO INITMODULE ; NAME
+	movei	#MODrun_\0+$8000,r0		; dest-adr
+	movei	#MODstart_\0,r1
+	ifd MODlen_\0
+	 if MODlen_\0>>2 <= 31
+	   moveq #(MODlen_\0)>>2,r2
+	 else
+	   movei #(MODlen_\0)>>2,r2
+	 endif
+	else
+	 movei #(MODlen_\0)>>2,r2
+	endif
+	load	(r1),r3	; first phrase
+.\loop_ilsub
+	addq	#4,r1	; src += 4
+	subq	#1,r2	; count -=1
+	store	r3,(r0)
+	addqt	#4,r0	; dst += 4
+	jr	nz,.\loop_ilsub
+	load	(r1),r3	; next phrase
+	ENDM
+
+	MACRO LOADMODULE ; NAME
 	movei	#MODrun_\0+$8000,r0		; dest-adr
 	movei	#MODstart_\0,r1
 	ifd MODlen_\0
@@ -82,6 +106,16 @@ MODstart_\0	SET MODstart_\0+12	 ; Header-Offset
 	FAIL
 	ENDIF
 	ENDM
+
+	MACRO MBL ; Name
+	IFVAR \0
+	movei #MODrun_\0,r0
+	BL (r0)
+	ELSE
+	FAIL
+	ENDIF
+	ENDM
+
 ****************
 	MACRO GLOBALREG ; name
 \0	REG FREE_REG
