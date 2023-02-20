@@ -34,7 +34,8 @@ MODlen_\0::	EQU MODend_\0-MODrun_\0
 ;;; include a binary module <name>
 
 	MACRO IMODULE ; NAME
-	ALIGN 4
+	ALIGN 8
+	dc.l	0
 	include "\0.equ"	; globale Label
 echo "MODULE \0 %HMODrun_\0 (%DMODlen_\0)"
 
