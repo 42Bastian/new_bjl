@@ -98,39 +98,114 @@ ENDIF
 		ENDIF
 		ENDM
 
-		MACRO POP
+		MACRO PUSHLR
+		subqt #4,SP
+		store LR,(SP)
 		IFVAR \0
-		  load (SP),\0
-		  addqt #4,SP
+		subqt #4,SP
+		store \0,(SP)
 		ENDIF
 		IFVAR \1
-		  load (SP),\1
-		  addqt #4,SP
+		subqt #4,SP
+		store \1,(SP)
 		ENDIF
 		IFVAR \2
-		  load (SP),\2
-		  addqt #4,SP
+		subqt #4,SP
+		store \2,(SP)
 		ENDIF
 		IFVAR \3
-		  load (SP),\3
-		  addqt #4,SP
+		subqt #4,SP
+		store \3,(SP)
 		ENDIF
 		IFVAR \4
-		  load (SP),\4
-		  addqt #4,SP
+		subqt #4,SP
+		store \4,(SP)
 		ENDIF
 		IFVAR \5
-		  load (SP),\5
+		subqt #4,SP
+		store \5,(SP)
+		ENDIF
+		IFVAR \6
+		subqt #4,SP
+		store \6,(SP)
+		ENDIF
+		IFVAR \7
+		subqt #4,SP
+		store \7,(SP)
+		ENDIF
+		ENDM
+
+		MACRO POP
+		IFVAR \7
+		  load (SP),\7
 		  addqt #4,SP
 		ENDIF
 		IFVAR \6
 		  load (SP),\6
 		  addqt #4,SP
 		ENDIF
+		IFVAR \5
+		  load (SP),\5
+		  addqt #4,SP
+		ENDIF
+		IFVAR \4
+		  load (SP),\4
+		  addqt #4,SP
+		ENDIF
+		IFVAR \3
+		  load (SP),\3
+		  addqt #4,SP
+		ENDIF
+		IFVAR \2
+		  load (SP),\2
+		  addqt #4,SP
+		ENDIF
+		IFVAR \1
+		  load (SP),\1
+		  addqt #4,SP
+		ENDIF
+		IFVAR \0
+		  load (SP),\0
+		  addqt #4,SP
+		ENDIF
+		ENDM
+
+		MACRO POPLR
 		IFVAR \7
 		  load (SP),\7
 		  addqt #4,SP
 		ENDIF
+		IFVAR \6
+		  load (SP),\6
+		  addqt #4,SP
+		ENDIF
+		IFVAR \5
+		  load (SP),\5
+		  addqt #4,SP
+		ENDIF
+		IFVAR \4
+		  load (SP),\4
+		  addqt #4,SP
+		ENDIF
+		IFVAR \3
+		  load (SP),\3
+		  addqt #4,SP
+		ENDIF
+		IFVAR \2
+		  load (SP),\2
+		  addqt #4,SP
+		ENDIF
+		IFVAR \1
+		  load (SP),\1
+		  addqt #4,SP
+		ENDIF
+		IFVAR \0
+		  load (SP),\0
+		  addqt #4,SP
+		ENDIF
+		load (SP),LR
+		jump (LR)
+		addqt #4,SP
 		ENDM
 
 		MACRO BL
@@ -247,6 +322,16 @@ RSADDR	set \0
 	ELSE
 RSADDR	set $1000
 	ENDIF
+	ENDM
+
+	MACRO RSB
+\0	EQU RSADDR
+RSADDR	SET RSADDR+(\1)*1
+	ENDM
+
+	MACRO RSW
+\0	EQU RSADDR
+RSADDR	SET RSADDR+(\1)*2
 	ENDM
 
 	MACRO RSL
