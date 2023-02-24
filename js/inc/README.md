@@ -2,31 +2,31 @@
 
 Debug output sub-routines using a hex-font
 
-## InitHexScreen
+- `InitHexScreen`
 
 Setup internal variables and clear screen buffer
 
-## PrintDEC
+- `PrintDEC`
 
 Print decimal value (6 digits)
 
-## PrintDEC_YX
+- `PrintDEC_YX`
 
 Same, but at x,y.
 
-## PrintDEC2
+- `PrintDEC2`
 
 Print decimal value (2 digits)
 
-## PrintDEC2_YX
+- `PrintDEC2_YX`
 
 Same, but at x,y.
 
-## PrintHEX
+- `PrintHEX`
 
 Print hex value (8 digits)
 
-## PrintHEX_YX
+- `PrintHEX_YX`
 
 Same, but at x,y.
 
