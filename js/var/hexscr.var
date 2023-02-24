@@ -1,0 +1,7 @@
+;-*-asm-*-
+;;; ----------------------------------------
+;;; variable definitions for hexscr.inc
+
+	RSL	TextScreen
+	RSL	font
+	RSL	Cursor

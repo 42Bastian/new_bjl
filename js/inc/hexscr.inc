@@ -1,0 +1,207 @@
+;-*-asm-*-
+;;; HEX font Debug Print
+;;; (c) 2023 42Bastian
+;;;
+
+;;; ----------------------------------------
+;;; Init local variables
+;;;
+;;; r0 - CLUT index
+;;; r1 - foreground:background color
+;;; r2 - framebuffer
+;;; r3 - font data
+
+InitHexScreen::
+	PUSHLR	r4
+	shlq	#1,r0
+	movei	#$f00400,r4
+	add	r0,r4
+	store	r1,(r4)
+	movei	#TextScreen,r4
+	store	r2,(r4)
+	addq	#4,r4
+	store	r3,(r4)
+	addq	#4,r4
+
+	movei	#((max_x_txt>>3)*max_y_txt)>>2,r1
+	moveq	#0,r0
+.clr
+	subq	#1,r1
+	store	r0,(r2)
+	jr	nz,.clr
+	addqt	#4,r2
+	store	r0,(r4)
+	POPLR	r4
+
+;;; ----------------------------------------
+;;; Print 6 digit decimal value
+;;; r0 - value
+PrintDEC::
+	movei	#TextScreen+8,r1
+	load	(r1),r1
+;;; ----------------------------------------
+;;; Print 6 digit decimal value
+;;; r0 - value
+;;; r1 - y:x position
+
+PrintDEC_YX::
+	PUSHLR	r4,r5,r6,r14
+	movei	#TextScreen,r14
+	shlq	#16,r0
+	movei	#__PrintDEC2,r5
+	jr	pl,.pl
+	store	r1,(r14+8)
+	neg	r0
+.pl
+	movei	#(65536+50)/100,r1
+	shrq	#16,r0
+	mult	r1,r0
+	move	r0,r6
+	shrq	#16,r0
+	shlq	#16,r6
+	BL	(r5)
+	shrq	#16,r6
+	movei	#99,r0
+	add	r0,r6
+	addq	#1,r0
+	mult	r6,r0
+	shrq	#16,r0
+	BL	(r5)
+	POPLR	r4,r5,r6,r14
+
+;;; ----------------------------------------
+;;; Print 2 digit decimal value
+;;; r0 - value
+PrintDEC2::
+	movei	#TextScreen+8,r1
+	load	(r1),r1
+
+;;; ----------------------------------------
+;;; r0 - value
+;;; r1 - y:x position
+
+PrintDEC2_YX::
+	PUSHLR	r4,r14
+	movei	#TextScreen,r14
+	cmpq	#0,r0
+	jr	pl,.pl
+	store	r1,(r14+8)
+	neg	r0
+.pl
+	movei	#__PrintDEC2,r1
+	BL	(r1)
+	POPLR	r4,r14
+
+;;; ----------------------------------------
+;;; Print 8 digit hex value
+;;; r0 - value
+
+PrintHEX::
+	movei	#TextScreen+8,r1
+	load	(r1),r1
+;;; ----------------------------------------
+;;; Print 8 digit hex value
+;;; r0 - value
+;;; r1 - y:x cursor
+PrintHEX_YX::
+	PUSHLR	r4,r5,r6,r7,r14
+	movei	#TextScreen,r14
+	store	r1,(r14+8)
+	movei	#__PrintHEX0,r5
+	moveq	#3,r6
+	move	r0,r7
+	move	pc,LR
+	addq	#10,LR
+.lh
+	rorq	#24,r7
+	jump	(r5)
+	move	r7,r0
+	subq	#1,r6
+	jr	pl,.lh
+	nop
+
+	POPLR	r4,r5,r6,r7,r14
+
+;;; ----------------------------------------
+;;; internal function
+__PrintDEC2::
+	shlq	#24,r0
+	movei	#(65536+5)/10,r1
+	shrq	#24,r0
+	moveq	#9,r2
+	mult	r1,r0
+	add	r0,r2
+	shrq	#16,r0
+	moveq	#10,r1
+	mult	r1,r2
+	shlq	#4,r0
+	shrq	#16,r2
+	or	r2,r0
+	;; fall thru
+;;; ----------------------------------------
+;;; internal function
+;;; Print R0
+__PrintHEX0::
+	bclr	#8,r0
+
+;;; ----------------------------------------
+;;; internal function
+;;; Print R0, if bit 8 is set, space
+;;;
+;;; r0-r4 destroyed
+__PrintHEX1
+	load	(r14+8),r3		; y:x
+	load	(r14),r2
+	move	r3,r1
+	shrq	#16,r3
+	shlq	#16,r1
+	shrq	#16,r1
+	add	r1,r2
+	addq	#1,r1
+	movei	#max_x_txt>>3,r4
+	shlq	#16,r1
+	cmp	r1,r4
+	jr	mi,.no_nl
+	or	r3,r1
+	moveq	#1,r1
+	add	r3,r1
+.no_nl
+	rorq	#16,r1
+	mult	r4,r3
+	store	r1,(r14+8)
+	moveq	#6,r1
+	mult	r1,r3
+	add	r3,r2
+
+	shlq	#23,r0
+	movei	#.space,r1
+	shrq	#23,r0
+	btst	#8,r0
+	moveq	#4,r3
+	jump	ne,(r1)
+	moveq	#0,r1
+
+	moveq	#5,r1
+
+	mult	r1,r0
+	load	(r14+4),r1
+	add	r0,r1
+.char
+	loadb	(r1),r0
+	addqt	#1,r1
+	subq	#1,r3
+	storeb	r0,(r2)
+	jr	ne,.char
+	add	r4,r2
+
+	loadb	(r1),r0
+	jump	(LR)
+	storeb	r0,(r2)
+
+.space:
+	subq	#1,r3
+	storeb	r1,(r2)
+	jr	ne,.space
+	add	r4,r2
+	jump	(LR)
+	storeb	r1,(r2)
