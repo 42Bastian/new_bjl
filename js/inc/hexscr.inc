@@ -17,7 +17,7 @@ InitHexScreen::
 	movei	#$f00400,r4
 	add	r0,r4
 	store	r1,(r4)
-	movei	#TextScreen,r4
+	movei	#HexScreen,r4
 	store	r2,(r4)
 	addq	#4,r4
 	store	r3,(r4)
@@ -36,15 +36,15 @@ InitHexScreen::
 ;;; ----------------------------------------
 ;;; Print 6 digit decimal value
 ;;; r0 - value
-PrintDEC::
-	movei	#TextScreen+8,r1
+hx_PrintDEC::
+	movei	#HexScreen+8,r1
 	load	(r1),r1
 ;;; ----------------------------------------
 ;;; Print 6 digit decimal value
 ;;; r0 - value
 ;;; r1 - y:x position
 
-PrintDEC_YX::
+hx_PrintDEC_YX::
 	PUSHLR	r4,r5,r6,r7,r14
 	abs	r0
 	moveq	#0,r5
@@ -55,7 +55,7 @@ PrintDEC_YX::
 	movei	#10000,r1
 	move	r0,r6
 	div	r1,r0
-	movei	#TextScreen,r14
+	movei	#HexScreen,r14
 	movei	#__PrintDEC2,r7
 	move	r0,r2
 	mult	r1,r2
@@ -75,24 +75,24 @@ PrintDEC_YX::
 ;;; ----------------------------------------
 ;;; Print 2 digit decimal value
 ;;; r0 - value
-PrintDEC2::
-	movei	#TextScreen+8,r1
+hx_PrintDEC2::
+	movei	#HexScreen+8,r1
 	load	(r1),r1
 
 ;;; ----------------------------------------
 ;;; r0 - value
 ;;; r1 - y:x position
 
-PrintDEC2_YX::
+hx_PrintDEC2_YX::
 	PUSHLR	r4,r5,r14
-	movei	#TextScreen,r14
+	movei	#HexScreen,r14
 	abs	r0
 	moveq	#0,r5
 	jr	cc,.pl
 	store	r1,(r14+8)
 	subq	#1,r5
 .pl
-	movei	#__PrintDEC2,r1
+	movei	#hx__PrintDEC2,r1
 	BL	(r1)
 	POPLR	r4,r5,r14
 
@@ -100,18 +100,18 @@ PrintDEC2_YX::
 ;;; Print 8 digit hex value
 ;;; r0 - value
 
-PrintHEX::
-	movei	#TextScreen+8,r1
+hx_PrintHEX::
+	movei	#HexScreen+8,r1
 	load	(r1),r1
 ;;; ----------------------------------------
 ;;; Print 8 digit hex value
 ;;; r0 - value
 ;;; r1 - y:x cursor
-PrintHEX_YX::
+hx_PrintHEX_YX::
 	PUSHLR	r4,r5,r6,r7,r8,r14
-	movei	#TextScreen,r14
+	movei	#HexScreen,r14
 	store	r1,(r14+8)
-	movei	#__PrintHEX0,r8
+	movei	#hx__PrintHEX0,r8
 	moveq	#3,r6
 	move	r0,r7
 	move	pc,LR
@@ -128,7 +128,7 @@ PrintHEX_YX::
 
 ;;; ----------------------------------------
 ;;; internal function
-__PrintDEC2::
+hx__PrintDEC2::
 	shlq	#24,r0
 	movei	#(65536+5)/10,r1
 	shrq	#24,r0
@@ -140,13 +140,13 @@ __PrintDEC2::
 	mult	r1,r2
 	shlq	#4,r0
 	shrq	#16,r2
-	jr	__PrintHEX1
+	jr	hx__PrintHEX1
 	or	r2,r0
 	;; fall thru
 ;;; ----------------------------------------
 ;;; internal function
 ;;; Print R0
-__PrintHEX0::
+hx__PrintHEX0::
 	bclr	#8,r0
 	moveq	#0,r5
 ;;; ----------------------------------------
@@ -154,7 +154,7 @@ __PrintHEX0::
 ;;; Print R0, if bit 8 is set, space
 ;;; R5 - xor mask
 ;;; r0-r4 destroyed
-__PrintHEX1
+hx__PrintHEX1
 	load	(r14+8),r3		; y:x
 	load	(r14),r2
 	move	r3,r1
@@ -163,17 +163,19 @@ __PrintHEX1
 	shrq	#16,r1
 	add	r1,r2
 	addq	#1,r1
-	movei	#max_x_txt>>3,r4
+	movei	#((max_x_txt>>3)-1)<<16,r4
 	shlq	#16,r1
 	cmp	r1,r4
-	jr	mi,.no_nl
+	jr	pl,.no_nl
 	or	r3,r1
 	moveq	#1,r1
 	add	r3,r1
 .no_nl
+	shrq	#16,r4
 	rorq	#16,r1
-	mult	r4,r3
+	addq	#1,r4
 	store	r1,(r14+8)
+	mult	r4,r3
 	moveq	#6,r1
 	mult	r1,r3
 	add	r3,r2

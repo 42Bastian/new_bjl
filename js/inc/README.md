@@ -2,33 +2,9 @@
 
 Debug output sub-routines using a hex-font
 
-- `InitHexScreen`
+# txtscr.inc
 
-Setup internal variables and clear screen buffer
-
-- `PrintDEC`
-
-Print decimal value (6 digits)
-
-- `PrintDEC_YX`
-
-Same, but at x,y.
-
-- `PrintDEC2`
-
-Print decimal value (2 digits)
-
-- `PrintDEC2_YX`
-
-Same, but at x,y.
-
-- `PrintHEX`
-
-Print hex value (8 digits)
-
-- `PrintHEX_YX`
-
-Same, but at x,y.
+Text output using 8x8 font.
 
 # videoinit.inc
 

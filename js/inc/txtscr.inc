@@ -1,5 +1,5 @@
 ;-*-asm-*-
-;;; HEX font Debug Print
+;;; Text routines using 8x8 font
 ;;; (c) 2023 42Bastian
 ;;;
 
@@ -35,16 +35,15 @@ InitTxtScreen::
 	POPLR	r4
 
 ;;; ----------------------------------------
-;;; Print 6 digit decimal value
+;;; Print  a zero terminated string
 ;;; r0 - ptr to zero terminated string
-;;;
 
 PrintString:
 	movei	#TextScreen+8,r1
 	load	(r1),r1
 ;;; ----------------------------------------
-;;; Print 6 digit decimal value
-;;; r0 - ptr to zero terminated string
+;;; Print a zero terminated string
+;;; r0 - ptr
 ;;; r1 - y,x pos
 
 PrintString_YX:
@@ -65,6 +64,7 @@ PrintString_YX:
 ;;; ----------------------------------------
 ;;; Print 6 digit decimal value
 ;;; r0 - value
+
 PrintDEC::
 	movei	#TextScreen+8,r1
 	load	(r1),r1
@@ -133,32 +133,52 @@ PrintDEC2_YX::
 ;;; Print 8 digit hex value
 ;;; r0 - value
 
-_PrintHEX::
+PrintHEX::
 	movei	#TextScreen+8,r1
 	load	(r1),r1
 ;;; ----------------------------------------
 ;;; Print 8 digit hex value
 ;;; r0 - value
 ;;; r1 - y:x cursor
-_PrintHEX_YX::
+PrintHEX_YX::
 	PUSHLR	r4,r5,r6,r7,r14
 	movei	#TextScreen,r14
+	movei	#__PrintDigit,r5
 	store	r1,(r14+8)
-//->	movei	#__PrintHEX0,r5
-	moveq	#3,r6
+	moveq	#7,r6
 	move	r0,r7
-	move	pc,LR
-	addq	#10,LR
+.pc	move	pc,LR
+	addq	#.ret-.pc,LR
 .lh
-	rorq	#24,r7
+	shrq	#28,r0
+	cmpq	#10,r0
+	jump	mi,(r5)
+	shlq	#4,r7
 	jump	(r5)
-	move	r7,r0
+	addq	#7,r0
+.ret
 	subq	#1,r6
 	jr	pl,.lh
-	nop
+	move	r7,r0
 
 	POPLR	r4,r5,r6,r7,r14
-
+;;; ----------------------------------------
+;;; Print single character
+;;; r0 - chararcter
+PrintChar::
+	movei	#TextScreen+8,r1
+	load	(r1),r1
+;;; ----------------------------------------
+;;; Print single character at y:x
+;;; r0 - value
+;;; r1 - y:x cursor
+PrintChar_YX::
+	PUSHLR	r4,r14
+	movei	#TextScreen,r14
+	movei	#__PrintChar,r4
+	store	r1,(r14+8)
+	BL	(r4)
+	POPLR	r4,r14
 ;;; ----------------------------------------
 ;;; internal function
 __PrintDEC2::
@@ -199,25 +219,26 @@ __PrintChar
 	shrq	#16,r1
 	add	r1,r2
 	addq	#1,r1
-	movei	#max_x_txt>>3,r4
 	shlq	#16,r1
+	movei	#((max_x_txt>>3)-1)<<16,r4
 	cmp	r1,r4
-	jr	mi,.no_nl
+	jr	pl,.no_nl
 	or	r3,r1
 	moveq	#1,r1
 	add	r3,r1
 .no_nl
 	rorq	#16,r1
-	mult	r4,r3
+	shrq	#16,r4
 	store	r1,(r14+8)
-	shlq	#3,r3
-	add	r3,r2
-
-	shlq	#24,r0
-	shrq	#24-3,r0
+	addq	#1,r4
 	load	(r14+4),r1
-	moveq	#7,r3
+	mult	r4,r3
+	shlq	#24,r0
+	shlq	#3,r3
+	shrq	#24-3,r0
+	add	r3,r2
 	add	r0,r1
+	moveq	#7,r3
 .char
 	loadb	(r1),r0
 	addqt	#1,r1

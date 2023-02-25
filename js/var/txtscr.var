@@ -1,0 +1,7 @@
+;-*-asm-*-
+;;; ----------------------------------------
+;;; variable definitions for txtscr.inc
+
+	RSL	TextScreen
+	RSL	TextFont
+	RSL	TextCursor

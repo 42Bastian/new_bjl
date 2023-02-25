@@ -2,6 +2,6 @@
 ;;; ----------------------------------------
 ;;; variable definitions for hexscr.inc
 
-	RSL	TextScreen
-	RSL	font
-	RSL	Cursor
+	RSL	HexScreen
+	RSL	HexFont
+	RSL	HexCursor
