@@ -3,10 +3,10 @@ IFND _GPU
 _GPU		 set 1
 ENDIF
 
-SP		reg 31		; Register reservieren
-SP.a		reg 31		; auch altenative
-LR	reg 30		; nochmal
-LR.a	reg 30
+SP		reg 31		; Stack pointer
+SP.a		reg 31		; also second bank
+LR		reg 30		; Link Register (return address)
+LR.a		reg 30		; also second bank
 
 ;>FREE_REG	  set 29
 ;>FREE_REG.a	  set 29
