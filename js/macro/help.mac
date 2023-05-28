@@ -359,3 +359,38 @@ RSADDR	SET RSADDR+(\1)*8
 RSADDR	SET RSADDR+8
 	ENDIF
 	ENDM
+
+		MACRO legacy_POP
+		IFVAR \0
+		  load (SP),\0
+		  addqt #4,SP
+		ENDIF
+		IFVAR \1
+		  load (SP),\1
+		  addqt #4,SP
+		ENDIF
+		IFVAR \2
+		  load (SP),\2
+		  addqt #4,SP
+		ENDIF
+		IFVAR \3
+		  load (SP),\3
+		  addqt #4,SP
+		ENDIF
+		IFVAR \4
+		  load (SP),\4
+		  addqt #4,SP
+		ENDIF
+		IFVAR \5
+		  load (SP),\5
+		  addqt #4,SP
+		ENDIF
+		IFVAR \6
+		  load (SP),\6
+		  addqt #4,SP
+		ENDIF
+		IFVAR \7
+		  load (SP),\7
+		  addqt #4,SP
+		ENDIF
+		ENDM
