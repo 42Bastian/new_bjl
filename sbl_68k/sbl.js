@@ -11,27 +11,26 @@ BLOCKS		SET (WANTED_SIZE/64)		; max. is 10
 start:
 ;; ----------------------------------------
 	;; stop DSP
+	movei	#$3721c,r2
+.wait
+	cmpq	#1,r0		; wait for first interrupt of BIOS
+	jr	nz,.wait
+	load	(r2),r0
+
 	movei	#DSP_CTRL,r1
 	store	r3,(r1)		; stop DSP
 
-	movei	#$3721c,r2
-.wait
-	cmpq	#1,r3		; wait for first interrupt of BIOS
-	jr	nz,.wait
-	load	(r2),r3
-
 	movei	#$f000e0,r0
-
-	movei	#$e00012,r0
-	loadb	(r0),r0		; $32 => K, $70 => M
-	shrq	#2,r0
+	movei	#$e00012,r1
+	loadb	(r1),r1		; $32 => K, $70 => M
+	shrq	#2,r1
 	movei	#$509c,r15
 	jr	cs,.k
 	store	r14,(r0)	; disable and ACK 68k interrupts
 	addq	#$50a4-$509c,r15
 .k
-	movei	#$4e722000,r4	; Wait for GPU (see stub.S)
-//->	movei	#$4e714e71,r4
+	movei	#$4e722000,r4	; Wait for GPU (see stub.S) (stop #$2000)
+//->	movei	#$4e714e71,r4	; or two NOP
 	movei	#$20380010,r5
 	movei	#$67f62040,r6
 	movei	#$4ed04e71,r7
@@ -57,7 +56,7 @@ start:
 	jr	pl,.copy
 	addq	#8,r0
 .no_copy
-	movei	#$f02114,r0
+	movei	#GPU_CTRL,r0
 	moveq	#$10,r1
 	moveq	#0,r3
 	store	r10,(r1)	; start 68k code
