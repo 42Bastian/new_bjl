@@ -16,9 +16,10 @@ screen		equ $100000
 	move	r21,r22
 	addqt	#1,r22		; r22 = $1000a1
 	movei	#$f00004,r25
-	movei	#loop,r29
-loop:
 	move	r23,r0		; r0 = 160*120
+	move	pc,r29
+	addq	#4,r29
+loop:
 	move	r20,r1		; r1 = x,y
 	move	r21,r2		; r2 = x,y+1
 	move	r22,r3		; r3 = x+1,y+1
@@ -51,4 +52,4 @@ fill:
 	addqt	#1,r1
 
 	jump	(r29)
-	nop
+	move	r23,r0		; r0 = 160*120
