@@ -8,6 +8,8 @@ TJASS= lyxass
 RMAC= rmac
 RLN= rln
 
+DEBUG?=1
+
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
 TJFLAGS= -sh -w -d
 
@@ -24,27 +26,30 @@ jaggd upload: _68KFLAGS+= -DSKUNK
 vj: _68KFLAGS+= -DDEBUG
 
 %.o	: %.js
-	$(TJASS) $(TJFLAGS) $<
+	@$(TJASS) $(TJFLAGS) $<
 
 ALL: $(DEMO).cof $(DEMO).rom $(DEMO).j64
 #
 $(DEMO).o : $(DEMO).S fire.o
-	$(RMAC) $(_68KFLAGS) $(DEMO).S
+	@$(RMAC) $(_68KFLAGS) $(DEMO).S
 
 $(DEMO).cof: $(DEMO).o
-	$(RLN) -z -e -a 4000 x x -o $@ $<
+	@echo $@
+	@$(RLN) -z -e -a 4000 x x -o $@ $<
 
 $(DEMO).abs: $(DEMO).o
+	@echo $@
 	$(RLN) -z -b -a 4000 x x -o $@ $<
 
 $(DEMO).rom: $(DEMO).o
-	$(RLN) -z -n -a 802000 x x -o $@ $<
+	@$(RLN) -z -n -a 6000 x x -o $@ $<
 
 $(DEMO).j64: $(DEMO).rom
-	@cat $(BJL_ROOT)/bin/fastbt2.bin $< >$@
+	@echo $@
+	@cat $(BJL_ROOT)/sbl_68k/sbl.XXX >$@
 	cat $< >> $@
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
-	truncate -s 1M $@
+	truncate -s 32K $@
 
 include ../Rules.launch
 

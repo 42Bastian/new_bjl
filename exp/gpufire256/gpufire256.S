@@ -64,6 +64,12 @@ vars		equ $2000
 ;---------------
 
 start:
+	;;----  SBL header ----
+	bra.w	start2
+	dc.l	start
+	dc.l	jag_end-start
+start2:
+	;; --------------------
 	lea	$f00000,a5
  IF ^^defined SKUNK
 	VideoInit		; SKUNK does not setup video!
