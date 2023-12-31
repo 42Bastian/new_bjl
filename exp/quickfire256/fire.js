@@ -26,10 +26,11 @@ screen	equ $100000
 	move	TOP,BTM
 	add	WIDTH,BTM	; BTM = $1000a0
 	movei	#$f00004,HBL
-	movei	#outerLoop,OUTER
-	movei	#innerLoop,INNER
-outerLoop:
+__pc	move	pc,INNER
+	addq	#innerLoop-__pc,INNER
 	move	SIZE,r0		; r0 = 160*120
+	move	pc,OUTER
+outerLoop:
 	move	TOP,_TOP	; r1 = x,y
 	move	BTM,_BTM	; r2 = x,y+1
 
@@ -69,4 +70,4 @@ fill:
 	addqt	#1,_TOP
 
 	jump	(OUTER)
-	nop
+	move	SIZE,r0		; r0 = 160*120

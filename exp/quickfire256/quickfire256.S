@@ -61,14 +61,6 @@ start:
 ;;; CLUT init
 ;;; --------------------
 	lea	$400(a5),a0
-//->	move.w	#$800,d0
-//->	moveq	#0,d2
-//->ci0:
-//->	move.w	d2,(a0)+
-//->	add.w	#$40,d2
-//->	cmp.w	#$40*4,d2
-//->	bne.s	ci0
-//->	moveq	#8,d2
 	moveq	#0,d2
 	moveq	#0,d0
 ci:	move.w	d0,(a0)+
@@ -105,8 +97,8 @@ copy_gpu:
 ;;; --------------------
 	bsr.s	CopyOBL
  IF ^^defined DEBUG
-	moveq	#1,d0
-	move.l	d0,$20(a5)
+	moveq	#1,d5
+	move.l	d5,$20(a5)
  ELSE
 	clr.l	$20(a5)	 ; OPL = $0
  ENDIF
