@@ -8,6 +8,7 @@ TJASS= lyxass
 RMAC= rmac
 RLN= rln
 
+# Default BPE build
 DEBUG?=1
 
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
@@ -49,7 +50,7 @@ $(DEMO).j64: $(DEMO).rom
 	@cat $(BJL_ROOT)/sbl_68k/sbl.XXX >$@
 	cat $< >> $@
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
-	truncate -s 32K $@
+	truncate -s 128K $@
 
 include ../Rules.launch
 

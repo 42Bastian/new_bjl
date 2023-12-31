@@ -6,6 +6,8 @@ TJASS= lyxass
 RMAC= rmac
 RLN= rln
 
+#Default for BPE
+DEBUG?=1
 
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
 TJFLAGS= -sh -w -d
@@ -44,7 +46,7 @@ $(DEMO).j64: $(DEMO).rom
 	@cat $(BJL_ROOT)/bin/fastbt2.bin $< >$@
 	cat $< >> $@
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >> $@
-	truncate -s 1M $@
+	truncate -s 128K $@
 
 include ../Rules.launch
 
