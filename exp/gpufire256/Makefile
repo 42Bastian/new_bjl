@@ -60,4 +60,4 @@ clean:
 	rm -f *.o
 	rm -f *.equ
 	rm -f *~
-	rm -f *.j64 *.abs
+	rm -f *.abs
