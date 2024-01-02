@@ -8,13 +8,12 @@ TJASS= lyxass
 RMAC= rmac
 RLN= rln
 
-# Default BPE build
-DEBUG?=1
+DEBUG?=0
 
 _68KFLAGS=-4 ~oall -i$(BJL_ROOT)
 TJFLAGS= -sh -w -d
 
-ifdef DEBUG
+ifeq ($(DEBUG),1)
 _68KFLAGS+= -DDEBUG
 endif
 

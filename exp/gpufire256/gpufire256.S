@@ -137,6 +137,7 @@ CopyOBL:
  IF ^^defined DEBUG
 	move.l	#$10000,a3
  ELSE
+	print "For BPE: Enable Run OP always"
 	clr.l	a3
  ENDIF
 .co0:	move.l	(a2)+,(a3)+
