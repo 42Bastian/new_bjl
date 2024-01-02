@@ -28,29 +28,29 @@ color	reg 2!
 y1	reg 1!
 x1	reg 0!
 
+
 	move	y1,dy
 	move	x1,dx
 	sub	y0,dy
-	sub	x0,dx
-	moveq	#1,dir_x
-	jr	pl,.noswap0
 	moveq	#1,step_y
+	jr	pl,.pos
+	sub	x0,dx
+	subqt	#2,step_y
+.pos
+	jr	pl,.noswap0
+	moveq	#1,dir_x
 
 	move	x1,x0
 	move	y1,y0
 	neg	step_y
-.noswap0
-	abs	dy
-	jr	cc,.pos
 	abs	dx
-	neg	step_y
-.pos
-	cmpq	#0,dy
+.noswap0
+	abs	dy		; ABS and test for zero
+	move	dx,cnt
 	jr	ne,.yno0
 	cmp	dy,dx
 	moveq	#0,step_y
 .yno0
-	move	dx,cnt
 	jr	ne,.not_diag
 	move	dy,m
 
@@ -78,7 +78,7 @@ x1	reg 0!
 	WAITBLITTER
 
 	store	color,(blitter+_BLIT_PATD)
-	store	color,(blitter+_BLIT_PATD+4) ;VJ
+//->	store	color,(blitter+_BLIT_PATD+4) ;VJ
 
 	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDINC,tmp0
 	movefa	currScreen.a,color
