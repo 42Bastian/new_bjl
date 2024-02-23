@@ -1,7 +1,7 @@
 ;-*-asm-*-
 
 	.include "68k_inc/jaguar.inc"
-
+	.list
 DSP_STACK_SIZE	equ	32	; long words
 DSP_USP			equ		(D_ENDRAM-(4*DSP_STACK_SIZE))
 DSP_ISP			equ		(DSP_USP-(4*DSP_STACK_SIZE))
@@ -375,7 +375,6 @@ DSP_LSP_Timer1_swCode:
 	add		R2,R2
 	load		(R14+2),R3	; R3=code table / m_codeTableAddr
 	add		R2,R3
-
 	loadw		(R3),R2			; R2 = code
 	cmpq		#0,R2
 	movei		#DSP_LSP_Timer1_noInst,R12
@@ -384,11 +383,10 @@ DSP_LSP_Timer1_swCode:
 	cmp		R4,R2
 	movei		#DSP_LSP_Timer1_r_rewind,R12
 	jump		eq,(R12)
+	load		(R14+4),R4	; R4=escape code set bpm / m_escCodeSetBpm
 	cmp		R4,R2
 	movei		#DSP_LSP_Timer1_r_chgbpm,R12
 	jump		eq,(R12)
-	load		(R14+4),R4	; R4=escape code set bpm / m_escCodeSetBpm
-
 ;--------------------------
 ; gestion des volumes
 ;--------------------------
