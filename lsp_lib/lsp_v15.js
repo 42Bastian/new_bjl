@@ -1,26 +1,24 @@
 ;-*-asm-*-
+	dsp
 
-	.include "68k_inc/jaguar.inc"
-	.list
+	include <68k_inc/jaguar.inc>
+
 DSP_STACK_SIZE	equ	32	; long words
-DSP_USP			equ		(D_ENDRAM-(4*DSP_STACK_SIZE))
-DSP_ISP			equ		(DSP_USP-(4*DSP_STACK_SIZE))
+DSP_USP		equ	(D_ENDRAM-(4*DSP_STACK_SIZE))
+DSP_ISP		equ	(DSP_USP-(4*DSP_STACK_SIZE))
 
-LSP_DSP_Audio_frequence .equ 20000
-nb_bits_virgule_offset  .equ   11  ; 11 ok DRAM/ 8 avec samples en ram DSP
-DSP_DEBUG               .equ    0
-I2S_during_Timer1       .equ    0  ; 0= I2S waits while timer 1 / 1=IMASK cleared while Timer 1
-LSP_avancer_module      .equ    1  ; 1=incremente position dans le module
+LSP_DSP_Audio_frequence EQU 32000
+nb_bits_virgule_offset  EQU   11  ; 11 ok DRAM/ 8 avec samples en ram DSP
+LSP_avancer_module      EQU    1  ; 1=incremente position dans le module
 
-channel_1        .equ        1
-channel_2        .equ        1
-channel_3        .equ        1
-channel_4        .equ        1
+channel_1        EQU        1	; left
+channel_2        EQU        1	; right
+channel_3        EQU        1	; right
+channel_4        EQU        1	; left
 
 silence	EQU $20
 
-	.dsp
-	.org	D_RAM
+	run	D_RAM
 DSP_base_memoire:
 	movei	#LSP_load,r0
 	jump	(r0)
@@ -28,30 +26,18 @@ DSP_base_memoire:
 
 	.align 16
 ; I2S interrupt
-	movei	#DSP_LSP_routine_interruption_I2S,r17
+	store	R18,(R26)		; write left channel
+	store	R19,(R27)		; write right channel
 	movei	#D_FLAGS,r30
-	jump	(r17)
+	jr	DSP_LSP_routine_interruption_I2S
 	load	(r30),r29	; read flags
 
+	.align	16
 ; Timer 1 interrupt
 	movei	#DSP_LSP_routine_interruption_Timer1,r12 ; 6 octets
 	movei	#D_FLAGS,r11				; 6 octets
 	jump	(r12)					; 2 octets
 	load	(r11),r13	; read flags
-
-	.long
-LSPVars:
-m_byteStream:		dc.l	0	;  0 :  byte stream		   0
-m_wordStream:		dc.l	0	;  4 :  word stream		   1
-m_codeTableAddr:	dc.l	0	;  8 :  code table addr		   2
-m_escCodeRewind:	dc.l	0	; 12 :  rewind special escape code 3
-m_escCodeSetBpm:	dc.l	0	; 16 :  set BPM escape code	   4
-m_lspInstruments:	dc.l	0	; 20 :  LSP instruments table addr 5
-m_relocDone:		dc.l	0	; 24 :  reloc done flag		   6
-m_currentBpm:		dc.l	0	; 28 :  current BPM		   7
-m_byteStreamLoop:	dc.l	0	; 32 :  byte stream loop point	   8
-m_wordStreamLoop:	dc.l	0	; 36 :  word stream loop point     9
-
 ; ----------------------------------
 ; DSP : routines en interruption I2S
 ; ----------------------------------
@@ -72,8 +58,6 @@ m_wordStreamLoop:	dc.l	0	; 36 :  word stream loop point     9
 ;	- version simple, lit un octet à chaque fois
 ;	- puis version plus compleque : lit 1 long, et utilise ses octets
 DSP_LSP_routine_interruption_I2S:
-	store	R18,(R26)		; write left channel
-	store	R19,(R27)		; write right channel
 
 ; version complexe avec stockage de 4 octets
 ; et tout en registres / alternatifs
@@ -85,10 +69,10 @@ DSP_LSP_routine_interruption_I2S:
 
 	move	R26,R17			; R17 = pointeur sample a virgule avant increment
 	movefa	R3,R23			; alt R3 = (LSP_DSP_PAULA_internal_length3)
-	add	R27,R26			; R26=adresse+increment , a virgule
+	add	R27,R26			; R26 = adresse+increment , a virgule
 	movefa	R0,R22			; alt R0 = mask $FFFFFFFC = 11111111 11111111 11111111 11111100
 	cmp	R23,R26
-	jr	mi,DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel3
+	jr	mi,fin_de_sample_channel3
 	shrq	#nb_bits_virgule_offset,R17	; ancien pointeur adresse sample partie entiere
 
 ; fin de sample => on recharge les infos des registres externes
@@ -99,7 +83,7 @@ DSP_LSP_routine_interruption_I2S:
 	moveta	R27,R3				; update alt R3 = (LSP_DSP_PAULA_internal_length3)
 	or	R23,R26				; on garde la virgule en cours
 
-DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel3:
+fin_de_sample_channel3:
 	moveta	R26,R1				; store internal sample pointeur, a virgule dans alt R1
 ; read sample datas
 	shrq	#nb_bits_virgule_offset,R26	; nouveau pointeur adresse sample partie entiere
@@ -109,14 +93,14 @@ DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel3:
 	not	R22				; => %11
 	and	R22,R27				; R27 = position octet à lire
 	cmp	R17,R26
-	jr	eq,DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word3
+	jr	eq,nouveau_long_word3
 	shlq	#3,R27				; numero d'octet à lire * 8
 
-; il faut rafraichir R21
+	; il faut rafraichir R21
 	load	(R26),R16			; lit 4 nouveaux octets de sample
-DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word3:
-	move	R16,R21				; 4 octets dispos dans registre de travail
+nouveau_long_word3:
 	neg	R27				; -0 -8 -16 -24
+	move	R16,R21				; 4 octets dispos dans registre de travail
 
 ; R27=numero d'octet à lire
 ; ch2
@@ -137,7 +121,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word3:
 	add	R27,R26				; R26=adresse+increment , a virgule
 	movefa	R0,R22				; mask
 	cmp	R23,R26
-	jr	mi,DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel2
+	jr	mi,fin_de_sample_channel2
 	shrq	#nb_bits_virgule_offset,R17	; ancien pointeur adresse sample partie entiere
 
 ; fin de sample => on recharge les infos des registres externes
@@ -148,7 +132,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word3:
 	moveta	R27,R8				; update alt R8 = (LSP_DSP_PAULA_internal_length2)
 	or	R23,R26				; on garde la virgule en cours
 
-DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel2:
+fin_de_sample_channel2:
 	moveta	R26,R6				; store internal sample pointeur, a virgule dans alt R6
 	shrq	#nb_bits_virgule_offset,R26	; nouveau pointeur adresse sample partie entiere
 	move	R26,R27				; R27 = nouveau pointeur sample
@@ -157,16 +141,15 @@ DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel2:
 	not	R22				; => %11
 	and	R22,R27				; R27 = position octet à lire
 	cmp	R17,R26
-	jr	eq,DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word2
+	jr	eq,nouveau_long_word2
 	shlq	#3,R27				; numero d'octet à lire * 8
 
 ; il faut rafraichir R20
 	load	(R26),R24			; lit 4 nouveaux octets de sample
 
-DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word2:
-	move	R24,R20				; 4 octets dispos dans registre de travail
-
+nouveau_long_word2:
 	neg	R27				; -0 -8 -16 -24
+	move	R24,R20				; 4 octets dispos dans registre de travail
 ; R27=numero d'octet à lire
 ; ch1
 	sh	R27,R20				; shift les 4 octets en stock vers la gauche, pour positionner l'octet à lire en haut
@@ -185,7 +168,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word2:
 	add	R27,R26				; R26=adresse+increment , a virgule
 	movefa	R0,R22
 	cmp	R23,R26
-	jr	mi,DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel1
+	jr	mi,fin_de_sample_channel1
 	shrq	#nb_bits_virgule_offset,R17	; ancien pointeur adresse sample partie entiere
 
 ; fin de sample => on recharge les infos des registres externes
@@ -196,7 +179,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word2:
 	moveta	R27,R13				; update alt R13 = (LSP_DSP_PAULA_internal_length1)
 	or	R23,R26				; on garde la virgule en cours
 
-DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel1:
+fin_de_sample_channel1:
 	moveta	R26,R11			; store internal sample pointeur, a virgule dans alt R11
 	shrq	#nb_bits_virgule_offset,R26	; nouveau pointeur adresse sample partie entiere
 	move	R26,R27			; R27 = nouveau pointeur sample
@@ -205,14 +188,14 @@ DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel1:
 	not	R22			; => %11
 	and	R22,R27			; R27 = position octet à lire
 	cmp	R17,R26
-	jr	eq,DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word1
+	jr	eq,nouveau_long_word1
 	shlq	#3,R27			; numero d'octet à lire * 8
 
 ; il faut rafraichir R19
 	load	(R26),R25		; lit 4 nouveaux octets de sample
-DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word1:
-	move	R25,R19			; 4 octets dispos dans registre de travail
+nouveau_long_word1:
 	neg	R27			; -0 -8 -16 -24
+	move	R25,R19			; 4 octets dispos dans registre de travail
 
 
 ; R27=numero d'octet à lire
@@ -234,7 +217,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word1:
 	add	R27,R26				; R26=adresse+increment , a virgule
 	movefa	R0,R22				; -FFFFFFC
 	cmp	R23,R26
-	jr	mi,DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel0
+	jr	mi,fin_de_sample_channel0
 	shrq	#nb_bits_virgule_offset,R17				; ancien pointeur adresse sample partie entiere
 
 ; fin de sample => on recharge les infos des registres externes
@@ -245,7 +228,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word1:
 	moveta	R27,R18				; update alt R18 = (LSP_DSP_PAULA_internal_length0)
 	or	R23,R26				; on garde la virgule en cours
 
-DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel0:
+fin_de_sample_channel0:
 	moveta	R26,R16	; store internal sample pointeur, a virgule dans alt R16
 
 	shrq	#nb_bits_virgule_offset,R26				; nouveau pointeur adresse sample partie entiere
@@ -255,15 +238,15 @@ DSP_LSP_routine_interruption_I2S_pas_fin_de_sample_channel0:
 	not	R22				; => %11
 	and	R22,R27				; R27 = position octet à lire
 	cmp	R17,R26
-	jr	eq,DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word0
+	jr	eq,nouveau_long_word0
 	shlq	#3,R27				; numero d'octet à lire * 8
 
 ; il faut rafraichir R18
 	load	(R26),R28			; lit 4 nouveaux octets de sample
 
-DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word0:
-	move	R28,R18				; 4 octets dispos dans registre de travail
+nouveau_long_word0:
 	neg	R27				; -0 -8 -16 -24
+	move	R28,R18				; 4 octets dispos dans registre de travail
 ; R27=numero d'octet à lire
 
 ; suite
@@ -308,7 +291,7 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word0:
 	addqt	#2,r17		; next instruction
 	bclr	#3,r29		; clear IMASK
 	addq	#4,r31		; pop from stack
-	jump	t,(r17)		; return
+	jump	(r17)		; return
 	store	r29,(r30)	; restore flags
 
 ;--------------------------------------------
@@ -321,11 +304,6 @@ DSP_LSP_routine_interruption_I2S_pas_nouveau_long_word0:
 ;		R0/R1/R2/R3/R4/R5/R6/R7/R8/R9/R10  R12/R13/R14
 
 DSP_LSP_routine_interruption_Timer1:
-	.if		I2S_during_Timer1=1
-	bclr	#3,r13		; clear IMASK
-	store	r13,(r11)	; restore flags
-	.endif
-
 ; gestion replay LSP
 	movei	#LSPVars,R14
 	load	(R14),R0		; R0 = byte stream
@@ -345,7 +323,7 @@ DSP_LSP_Timer1_cloop:
 
 	sub	r3,r2
 DSP_LSP_Timer1_swCode:
-	load	(R14+2),R3	; R3=code table / m_codeTableAddr
+	load	(R14+2*4),R3	; R3=code table / m_codeTableAddr
 	add	R6,R2
 	move	R2,R6
 	add	R2,R2
@@ -354,12 +332,12 @@ DSP_LSP_Timer1_swCode:
 	cmpq	#0,R2
 	movei	#DSP_LSP_Timer1_noInst,R12
 	jump	eq,(R12)
-	load	(R14+3),R4		; R4=escape code rewind / m_escCodeRewind
+	load	(R14+3*4),R4		; R4=escape code rewind / m_escCodeRewind
 
 	cmp	R4,R2
 	movei	#DSP_LSP_Timer1_r_rewind,R12
 	jump	eq,(R12)
-	load	(R14+4),R4		; R4=escape code set bpm / m_escCodeSetBpm
+	load	(R14+4*4),R4		; R4=escape code set bpm / m_escCodeSetBpm
 
 	cmp	R4,R2
 	movei	#DSP_LSP_Timer1_r_chgbpm,R12
@@ -444,7 +422,7 @@ DSP_LSP_Timer1_noPb:
 	store	R4,(R5)
 DSP_LSP_Timer1_noPa:
 
-	load	(R14+4),R5		; R5= instrument table  ( =+$10)  = a2   / m_lspInstruments-1 = 5-1
+	load	(R14+4*4),R5		; R5= instrument table  ( =+$10)  = a2   / m_lspInstruments-1 = 5-1
 ;--------------------------
 ; gestion des instruments
 ;--------------------------
@@ -810,24 +788,24 @@ DSP_LSP_Timer1_noInst:
 	addqt	#2,r12		; next instruction
 	bclr	#3,r13		; clear IMASK
 	addq	#4,r31		; pop from stack
-	jump	t,(r12)		; return
+	jump	(r12)		; return
 	store	r13,(r11)	; restore flags
 
 ;------------------------------------
 ;rewind
 DSP_LSP_Timer1_r_rewind:
-	load	(R14+8),R0		; bouclage : R0 = byte stream / m_byteStreamLoop = 8
+	load	(R14+8*4),R0		; bouclage : R0 = byte stream / m_byteStreamLoop = 8
 	movei	#DSP_LSP_Timer1_process,R12
-	load	(R14+9),R3		; m_wordStreamLoop=9
+	load	(R14+9*4),R3		; m_wordStreamLoop=9
 	jump	(R12)
-	store	R3,(R14+1)		; m_wordStream=1
+	store	R3,(R14+1*4)		; m_wordStream=1
 
 ;------------------------------------
 ; change bpm
 DSP_LSP_Timer1_r_chgbpm:
 	loadb	(R0),R8
 	movei	#DSP_LSP_Timer1_process,R12
-	store	R8,(R14+7)		; R3=nouveau bpm / m_currentBpm = 7
+	store	R8,(R14+7*4)		; R3=nouveau bpm / m_currentBpm = 7
 ;application nouveau bpm dans Timer 1
 	movei	#60*256,R10
 	div	R8,R10			; 60/bpm
@@ -1003,7 +981,19 @@ DSP_switch_ON:
 	jump	(R28)
 	store	R27,(R30)
 
-	.phrase
+	.long
+LSPVars:
+m_byteStream:		dc.l	0	;  0 :  byte stream		   0
+m_wordStream:		dc.l	0	;  4 :  word stream		   1
+m_codeTableAddr:	dc.l	0	;  8 :  code table addr		   2
+m_escCodeRewind:	dc.l	0	; 12 :  rewind special escape code 3
+m_escCodeSetBpm:	dc.l	0	; 16 :  set BPM escape code	   4
+m_lspInstruments:	dc.l	0	; 20 :  LSP instruments table addr 5
+m_relocDone:		dc.l	0	; 24 :  reloc done flag		   6
+m_currentBpm:		dc.l	0	; 28 :  current BPM		   7
+m_byteStreamLoop:	dc.l	0	; 32 :  byte stream loop point	   8
+m_wordStreamLoop:	dc.l	0	; 36 :  word stream loop point     9
+
 LSP_DSP_flag:		dc.l	0		; DSP replay flag 0=OFF / 1=ON
 LSP_DSP_oldflag:	dc.l	0
 
@@ -1033,12 +1023,10 @@ LSP_DSP_repeat_length2:		dc.l	(silence+4)<<nb_bits_virgule_offset
 LSP_DSP_PAULA_internal_increment3:	dc.l	$DEADDEAD		; internal register : increment linked to period 16:16
 LSP_DSP_repeat_pointeur3:	dc.l	silence<<nb_bits_virgule_offset
 LSP_DSP_repeat_length3:		dc.l	(silence+4)<<nb_bits_virgule_offset
-LSP_BPM_frequence_replay:		dc.l	25
-
-	.phrase
+LSP_BPM_frequence_replay:	dc.l	25
 
 LSP_load:
-	include "lsp_init.das"
+	include "lsp_init.js"
 	movei	#DSP_routine_init_DSP,r0
 	jump	(r0)
 	nop
@@ -1047,12 +1035,13 @@ LSP_load:
 ; FIN DE LA RAM DSP
 YM_DSP_fin:
 ;---------------------
-SOUND_DRIVER_SIZE .equ YM_DSP_fin-DSP_base_memoire
-    .print    "--- Sound driver code size (DSP): ", /u SOUND_DRIVER_SIZE, " bytes / 8192 ---"
-	.print "LSPVars ",/lx LSPVars
-	.print "LSP_BPM_frequence_replay ",/lx LSP_BPM_frequence_replay
-	.print "DSP_routine_init_DSP ",/lx DSP_routine_init_DSP
-
- if LSP_BPM_frequence_replay != $f1b6ec
-	print "!!!!!!!!!!!!"
- endif
+SOUND_DRIVER_SIZE EQU YM_DSP_fin-DSP_base_memoire
+	echo "LSP size: %DSOUND_DRIVER_SIZE"
+;;->    .print    "--- Sound driver code size (DSP): ", /u SOUND_DRIVER_SIZE, " bytes / 8192 ---"
+;;->	.print "LSPVars ",/lx LSPVars
+;;->	.print "LSP_BPM_frequence_replay ",/lx LSP_BPM_frequence_replay
+;;->	.print "DSP_routine_init_DSP ",/lx DSP_routine_init_DSP
+;;->
+;;-> if LSP_BPM_frequence_replay != $f1b6ec
+;;->	print "!!!!!!!!!!!!"
+;;-> endif

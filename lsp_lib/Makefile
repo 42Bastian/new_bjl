@@ -29,12 +29,10 @@ endif
 
 ALL: lsp_v15.lib
 
-lsp_v15.lib: lsp_init.das
+lsp_v15.lib: lsp_init.js
 
-%.lib : %.das
-	$(RMAC) $(_68KFLAGS) $< -o $@.o
-	$(RLN) -z  -n -a 0 x x -o $@ $@.o
-
+%.lib : %.js
+	$(TJASS) -d -o $@ $<
 
 .ONESHELL:
 .PHONY: clean
