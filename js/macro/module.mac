@@ -51,7 +51,7 @@ MODstart_\0::	EQU .\loadaddr+12	 ; skip Header-Offset
 ;;; Load a module from store address to run address
 
 	MACRO INITMODULE ; NAME
-	movei	#MODrun_\0+$8000,r0		; dest-adr
+	movei	#MODrun_\0,r0		; dest-adr
 	movei	#MODstart_\0,r1
 	ifd MODlen_\0
 	 if MODlen_\0>>2 <= 31
@@ -73,7 +73,7 @@ MODstart_\0::	EQU .\loadaddr+12	 ; skip Header-Offset
 	ENDM
 
 	MACRO LOADMODULE ; NAME
-	movei	#MODrun_\0+$8000,r0		; dest-adr
+	movei	#MODrun_\0,r0		; dest-adr
 	movei	#MODstart_\0,r1
 	ifd MODlen_\0
 	 if MODlen_\0>>2 <= 31
