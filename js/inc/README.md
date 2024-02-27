@@ -13,3 +13,7 @@ Video setup for PAL/NTSC. Inline function.
 # linedraw.inc
 
 Line drawing function using blitter.
+
+# minihex.inc
+
+A small (100 bytes) 4x6 hex print routine
