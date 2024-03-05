@@ -94,7 +94,7 @@ vj.j64: $(DEMO).XXX
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >>$@
 	truncate -s 128K $@
 
-include ../Rules.launch
+include Rules.launch
 
 .PHONY: clean
 clean:
