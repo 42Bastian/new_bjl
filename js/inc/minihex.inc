@@ -12,8 +12,12 @@
 ;;; Register use: r1-r6
 ;;;
 
-screen_width	equ 320
-
+ IFND minihex_screen_width
+minihex_screen_width	equ 320
+ ENDIF
+ IFND minihex_pixel_size
+minihex_pixel_size	equ 2
+ ENDIF
 	;;
 	align	4
 drawHex::
@@ -34,7 +38,7 @@ drawDigit::
 	move	txt_ptr,r4
 	shlq	#16,r1
 .even
-	addqt	#4*2,txt_ptr
+	addqt	#4*minihex_pixel_size,txt_ptr
 	shrq	#16,r1
 .ly
 	moveq	#3,r2
@@ -43,11 +47,17 @@ drawDigit::
 	jump	eq,(r6)
 	subc	r3,r3		; 0 or -1
 	subq	#1,r2
+ IF minihex_pixel_size = 2
 	storew	r3,(r4)
 	jr	ne,.lx
 	addqt	#2,r4
+ ELSE
+	storeb	r3,(r4)
+	jr	ne,.lx
+	addqt	#1,r4
+ ENDIF
 
-	movei	#screen_width*2-3*2,r2
+	movei	#(minihex_screen_width-3)*minihex_pixel_size,r2
 	moveq	#0,r3
 	storew	r3,(r4)
 	jr	.ly
