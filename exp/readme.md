@@ -2,6 +2,10 @@
 
 New and old examples.
 
+## gpu_check
+
+A small template to test GPU instructions or timeing of small sequences.
+
 ## fire256
 
 A byte size pure 68k fire.
