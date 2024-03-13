@@ -3,8 +3,8 @@
 
 ;;; Compiletime configuration
 READ_PAD        equ 1
-UPDATE_SONG_POS equ 1
-DISPLAY_TIME    equ 1
+UPDATE_SONG_POS equ 0
+DISPLAY_TIME    equ 0
 ;;; ----------------------------------------
 ;;; parameters
 DSP_song                        equ $f1d000-4
@@ -52,8 +52,10 @@ song_speed_multiplier   equ 1
 song_panningLeft        equ 2
 song_panningRight       equ 3
 song_rm_channels        equ 4
-song_length             equ 8
-song_header_size        equ 12
+song_restart_word	equ 8
+song_restart_bit	equ 12
+song_length             equ 16
+song_header_size        equ 20
 ;;; ----------------------------------------
 
 ; HIVELY_datas_channels
@@ -359,6 +361,8 @@ DSP_routine_init:
  load	(song_data_ptr),rm_mask
  addq   #4,song_data_ptr
 
+ addq	#8,song_data_ptr	; skip restart_word and bit
+
  load   (song_data_ptr),r0 ; length
  addq   #4,song_data_ptr
 
@@ -501,7 +505,6 @@ initPAL:
 
 ; init Timer 1 = 50 HZ
  movei  #3643*2,R13             ; valeur pour 50 Hz (original 3643)
- addq   #1,multiplier
  div    multiplier,R13          ; divise pour avoir la bonne vitesse de replay
  subq   #1,R13                  ; -1 pour parametrage du timer 1
 
@@ -620,12 +623,13 @@ no_pause:
  movei  #DSP_module_streaming_bits_end,DSP_decode_bits__tmp0
  load   (DSP_decode_bits__tmp0),DSP_decode_bits__tmp0
  cmp    DSP_decode_bits__tmp0,DSP_decode_bits__pointeur_lecture_bits
+ movei  #DSP_song,r14
  jr     cs,DSP_boucle_read_bits_per_channel__pas_fin_du_fichier
- nop
- movei  #DSP_song,DSP_decode_bits__pointeur_lecture_bits
- load   (DSP_decode_bits__pointeur_lecture_bits),DSP_decode_bits__pointeur_lecture_bits
- addq   #song_header_size,DSP_decode_bits__pointeur_lecture_bits
- moveq  #31,DSP_decode_bits__numero_bit_actuel
+ load	(r14),r14
+ load	(r14+song_restart_word/4),DSP_decode_bits__pointeur_lecture_bits
+ add	r14,DSP_decode_bits__pointeur_lecture_bits
+ load	(r14+song_restart_bit/4),DSP_decode_bits__numero_bit_actuel
+ addq	#song_header_size,DSP_decode_bits__pointeur_lecture_bits
 
 DSP_boucle_read_bits_per_channel__pas_fin_du_fichier:
  load   (DSP_decode_bits__pointeur_lecture_bits),DSP_decode_bits__valeur_en_cours_lu_du_stream
