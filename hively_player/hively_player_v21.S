@@ -1069,8 +1069,11 @@ pause_music:
  or     R4,R8    ; R8= BD xxxx 147* xxAp xxxx RLDU
  or     R10,R9
 
+ movei	#~$fcc00000,r0
  not    R8
  not    R9
+ and	r0,r8
+ and	r0,r9
  store  R8,(R14)
  store  R9,(R12)
 ;-------------------------------------------------------------------------------
