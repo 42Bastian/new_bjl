@@ -20,8 +20,8 @@ DSP_panning_table               equ $f1d000-16
 DSP_flag_replay_ON_OFF          .equ $f1d000-20
  .if READ_PAD = 1
 ; xxxxxxCx xxBx2580 147*oxAP 369#RLDU
-DSP_pad1                        .equ $f1d000-24 ; read by 68k/GPU
-DSP_pad2                        .equ $f1d000-28 ; read by 68k/GPU
+DSP_pad2                        .equ $f1d000-24 ; read by 68k/GPU
+DSP_pad1                        .equ $f1d000-28 ; read by 68k/GPU
  .endif
 DSP_frequence_de_replay_reelle_I2S .equ $f1d000-32 ; read by 68k/GPU
 DSP_stream_pos                  .equ $f1d000-36 ; read by 68k/GPU
@@ -549,21 +549,19 @@ DSP_decode_bits__tmp2                                .equr    R8
 DSP_decode_bits__tmp3                                .equr    R9
 DSP_decode_bits__adresse_pointeur_lecture_bits       .equr    R10
 DSP_decode_bits__pointeur_lecture_bits               .equr    R11
-DSP_decode_bits__adresse_numero_bit_actuel           .equr    R12
-DSP_decode_bits__numero_bit_actuel                   .equr    R13
+DSP_decode_bits_bitcount                             .equr    R12 ; do not re-use!
+;                                                    .equr    R13
 DSP_decode_bits__datas_channels_destination          .equr    R14
 DSP_decode_bits__datas_I2S_destination               .equr    R15
 DSP_decode_bits__table_panning_voies                 .equr    R19
-DSP_decode_bits__valeur_en_cours_lu_du_stream        .equr    R20
+DSP_decode_bits_bitbuffer                            .equr    R20 ; do not re-use!
 DSP_decode_bits__adresse_boucle_enreg_datas_channels .equr    R21
 DSP_decode_bits__increment_datas_I2S_destination     .equr    R22
 
 DSP_decode_bits__adresse_routine_lecture_bits        .equr    R27
 DSP_decode_bits__adresse_retour                      .equr    R28
 
- moveq  #31,DSP_decode_bits__numero_bit_actuel
- movei  #numero_bit_actuel_dans_streaming_bits,DSP_decode_bits__adresse_numero_bit_actuel
- store  DSP_decode_bits__numero_bit_actuel,(DSP_decode_bits__adresse_numero_bit_actuel)
+ moveq  #0,DSP_decode_bits_bitcount ; force loading first word
 
  moveq  #1,r21
 DSP_boucle_centrale:
@@ -613,11 +611,9 @@ no_pause:
  movei  #AHX_enregistrements_N_voies,DSP_decode_bits__datas_I2S_destination
  moveq  #AHX_enregistrements_N_voies__I2S_taille_totale,DSP_decode_bits__increment_datas_I2S_destination
  shlq   #2,DSP_decode_bits__increment_datas_I2S_destination
- movei  #DSP_AHX_decode_streaming_V3__read_bits_from_bits_streaming,DSP_decode_bits__adresse_routine_lecture_bits
+ movei  #DSP_AHX_decode_streaming_V4__read_bits_from_bits_streaming,DSP_decode_bits__adresse_routine_lecture_bits
  movei  #DSP_module_streaming_bits_cur,DSP_decode_bits__adresse_pointeur_lecture_bits
- movei  #numero_bit_actuel_dans_streaming_bits,DSP_decode_bits__adresse_numero_bit_actuel
  load   (DSP_decode_bits__adresse_pointeur_lecture_bits),DSP_decode_bits__pointeur_lecture_bits
- load   (DSP_decode_bits__adresse_numero_bit_actuel),DSP_decode_bits__numero_bit_actuel
 
 ; tester fin de stream = bouclage du stream
  movei  #DSP_module_streaming_bits_end,DSP_decode_bits__tmp0
@@ -626,14 +622,18 @@ no_pause:
  movei  #DSP_song,r14
  jr     cs,DSP_boucle_read_bits_per_channel__pas_fin_du_fichier
  load	(r14),r14
+;;; restart
  load	(r14+song_restart_word/4),DSP_decode_bits__pointeur_lecture_bits
  add	r14,DSP_decode_bits__pointeur_lecture_bits
- load	(r14+song_restart_bit/4),DSP_decode_bits__numero_bit_actuel
+ load	(r14+song_restart_bit/4),DSP_decode_bits_bitcount
  addq	#song_header_size,DSP_decode_bits__pointeur_lecture_bits
+ load   (DSP_decode_bits__pointeur_lecture_bits),DSP_decode_bits_bitbuffer
+ addq	#4,DSP_decode_bits__pointeur_lecture_bits
+ move	DSP_decode_bits_bitcount,DSP_decode_bits__compteur_voies
+ subq	#32,DSP_decode_bits__compteur_voies
+ sh	DSP_decode_bits__compteur_voies,DSP_decode_bits_bitbuffer ; remove "used" bits
 
 DSP_boucle_read_bits_per_channel__pas_fin_du_fichier:
- load   (DSP_decode_bits__pointeur_lecture_bits),DSP_decode_bits__valeur_en_cours_lu_du_stream
-
  movei  #DSP_NB_channels,DSP_decode_bits__compteur_voies
  load   (DSP_decode_bits__compteur_voies),DSP_decode_bits__compteur_voies
 
@@ -795,7 +795,6 @@ DSP_read_bits__pas_channel_off:
  add    DSP_decode_bits__increment_datas_I2S_destination,DSP_decode_bits__datas_I2S_destination
 
  store  DSP_decode_bits__pointeur_lecture_bits,(DSP_decode_bits__adresse_pointeur_lecture_bits)
- store  DSP_decode_bits__numero_bit_actuel,(DSP_decode_bits__adresse_numero_bit_actuel)
 
 ; FIN DE : decode stream AHX version bits
 ; ------------------------------
@@ -845,16 +844,15 @@ DSP_genere_wave__compteur_channels              .equr    R9    ;   NON
 
 DSP_genere_wave__volume                         .equr    R10    ;   NON
 DSP_genere_wave__wavelength                     .equr    R11    ;   NON
-DSP_genere_wave__decaleur_wavelength            .equr    R12    ;   -OUI-
+
 DSP_genere_wave__filterpos                      .equr    R13    ;   NON
 DSP_genere_wave__source_datas_channel           .equr    R14    ;   NON
 DSP_genere_wave__dest_record_I2S                .equr    R15    ;   NON
-DSP_genere_wave__audioperiod                    .equr    R16    ;   -OUI-
+DSP_genere_wave__decaleur_wavelength            .equr    R16    ;   -OUI-
 DSP_genere_wave__mask_pour_I2S                  .equr    R17    ;   NON
 DSP_genere_wave__waveform                       .equr    R18    ;   NON
 DSP_genere_wave__squarepos                      .equr    R19    ;   NON
 
-DSP_genere_wave__increment_pour_I2S             .equr    R20    ;   NON
 DSP_genere_wave__routines_a_executer            .equr    R21    ;  si necessaire
 DSP_genere_wave__tmp6                           .equr    R22    ;-------------
 DSP_genere_wave__tmp7                           .equr    R23    ;-------------
@@ -888,7 +886,8 @@ DSP_genere_wave__boucle:
  load   (DSP_genere_wave__source_datas_channel+DSP_index_vc_WaveLength),DSP_genere_wave__wavelength
  load   (DSP_genere_wave__source_datas_channel+DSP_index_vc_FilterPos),DSP_genere_wave__filterpos
  move   DSP_genere_wave__wavelength,DSP_genere_wave__decaleur_wavelength
- load   (DSP_genere_wave__source_datas_channel+DSP_index_vc_AudioPeriod),DSP_genere_wave__audioperiod
+
+ load   (DSP_genere_wave__source_datas_channel+DSP_index_vc_AudioPeriod),DSP_genere_wave__tmp0 ;DSP_genere_wave__audioperiod
  subq   #5,DSP_genere_wave__decaleur_wavelength
  moveq  #1,DSP_genere_wave__increment_pour_lire_les_octets
  addq   #2,DSP_genere_wave__wavelength   ; wavelength + 2
@@ -896,10 +895,13 @@ DSP_genere_wave__boucle:
  moveq  #1,DSP_genere_wave__wavelength_en_octets
  neg    DSP_genere_wave__wavelength
 
- move   DSP_genere_wave__ratio_amiga_jaguar,DSP_genere_wave__increment_pour_I2S
+ move   DSP_genere_wave__ratio_amiga_jaguar,DSP_genere_wave__tmp6
  sh     DSP_genere_wave__wavelength,DSP_genere_wave__wavelength_en_octets
+ div    DSP_genere_wave__tmp0,DSP_genere_wave__tmp6
+ or	DSP_genere_wave__tmp6,DSP_genere_wave__tmp6
  move   DSP_genere_wave__waveform,DSP_genere_wave__tmp0
- div    DSP_genere_wave__audioperiod,DSP_genere_wave__increment_pour_I2S
+
+ store  DSP_genere_wave__tmp6,(DSP_genere_wave__dest_record_I2S+index_AHX_enregistrements_N_voies__I2S_increment)
  movei  #buffer_temp_wave,DSP_genere_wave__tmp6                    ;dest pour triangle et sawtooth, variaiblisé pour gérer le RM
  shlq   #2,DSP_genere_wave__tmp0    ; waveform * 4
  move   DSP_genere_wave__wavelength_en_octets,DSP_genere_wave__mask_pour_I2S
@@ -932,7 +934,6 @@ AHX__main__adresse_retour_vers_main_suivant_voie:
 
 DSP_genere_wave__boucle__apres_RM:
  store  DSP_genere_wave__increment_RM_pour_I2S,(DSP_genere_wave__dest_record_I2S+index_AHX_enregistrements_N_voies__I2S_increment__RM)
- store  DSP_genere_wave__increment_pour_I2S,(DSP_genere_wave__dest_record_I2S+index_AHX_enregistrements_N_voies__I2S_increment)
  store  DSP_genere_wave__mask_pour_I2S,(DSP_genere_wave__dest_record_I2S+index_AHX_enregistrements_N_voies__I2S_mask_bouclage)
 
 DSP_genere_wave__boucle_recolle1:
@@ -956,9 +957,8 @@ pause_music:
 ;DSP_pad2
 ; lecture des 2 pads
 ; Pads : mask = xxxx xxCx xxBx 2580 147* oxAP 369# RLDU
-; dispos : R0 à R12
+; dispos : R0 à R11/r14
  movei  #DSP_pad1,R14
- movei  #DSP_pad2,R12
  movei  #JOYSTICK,R0
 
  movei  #%00001111000000000000000000000000,R2  ; mask port 1
@@ -1079,7 +1079,7 @@ pause_music:
  and	r0,r8
  and	r0,r9
  store  R8,(R14)
- store  R9,(R12)
+ store  R9,(R14+4)
 ;-------------------------------------------------------------------------------
 ;         FIN - Gestion du PAD
 ;-------------------------------------------------------------------------------
@@ -1365,21 +1365,22 @@ AHX__main__routine__filtre:
 reg__AHX_filter__filterpos_and_1F .equr  R1    ; OK
 reg__AHX_filter__source_low       .equr  R3    ; OK
 ; double volontaire
-reg__AHX_filter__R21              .equr  R3    ; OK
+reg__AHX_filter__R3               .equr  R3    ; OK
 reg__AHX_filter__source_mid       .equr  R4    ; OK
 
 reg__AHX_filter__R5               .equr  R5    ; OK
-reg__AHX_filter__R6               .equr  R22   ; OK
-reg__AHX_filter__R7               .equr  R23   ; OK
-reg__AHX_filter__R14              .equr  R30   ; OK
-reg__AHX_filter__R20              .equr  R12   ; OK
+reg__AHX_filter__R22              .equr  R22   ; OK
+reg__AHX_filter__R23              .equr  R23   ; OK
+reg__AHX_filter__R30              .equr  R30   ; OK
+reg__AHX_filter__R31              .equr  R31   ; OK
 reg__AHX_filter__freq             .equr  R16   ; OK
 
 AHX__main__filtre_in              .equr  R1    ; OK
 AHX__main__filtre_high            .equr  R2    ; OK
 AHX__main__filtre_fre             .equr  R5    ; OK
-AHX__main__filtre_mid             .equr  R26   ; OK
 AHX__main__filtre_low             .equr  R25   ; OK
+AHX__main__filtre_mid             .equr  R26   ; OK
+
 
 ;   remplacer R8 et R9 et R16
 
@@ -1402,15 +1403,14 @@ AHX__main__filtre_low             .equr  R25   ; OK
  subq   #1,reg__AHX_filter__filterpos_and_1F          ; filterpos : 0 a 30
  moveq  #(45*2)/9,reg__AHX_filter__R5
  movei  #((31*(6+6+$20+1))*2),reg__AHX_filter__source_mid
- move   reg__AHX_filter__filterpos_and_1F,reg__AHX_filter__R6
+ move   reg__AHX_filter__filterpos_and_1F,reg__AHX_filter__R22
+
  moveq  #9,reg__AHX_filter__freq
  mult   reg__AHX_filter__freq,reg__AHX_filter__R5
- mult   reg__AHX_filter__R5,reg__AHX_filter__R6           ; R6 = filterpos ( 0 a 30) * 45
+ mult   reg__AHX_filter__R5,reg__AHX_filter__R22           ; R6 = filterpos ( 0 a 30) * 45
  mult   reg__AHX_filter__filterpos_and_1F,reg__AHX_filter__freq   ; freq = filterpos * 9
- add    reg__AHX_filter__R6,reg__AHX_filter__source_low
+ add    reg__AHX_filter__R22,reg__AHX_filter__source_low
  addq   #25,reg__AHX_filter__freq     ; freq = 25+(9*filterpos)
-
- movei  #AHX_DSP_remplissage_buffer_filter__calcul_filtre,reg__AHX_filter__R20
 
  ; tester pvt_Waveform
  ; 0=triangle / 1=sawtooth / 2=square / 3=noise
@@ -1420,32 +1420,33 @@ AHX__main__filtre_low             .equr  R25   ; OK
  ; si = 3 : + (6+6+$20)*2
 
  cmpq   #1,DSP_genere_wave__waveform
- move   DSP_genere_wave__waveform,reg__AHX_filter__R6
+ move   DSP_genere_wave__waveform,reg__AHX_filter__R22
  jr     hi,AHX_DSP_remplissage_buffer_filter__pas_triangle_ni_sawtooth
- cmpq   #3,reg__AHX_filter__R6
+ cmpq   #3,reg__AHX_filter__R22
 
 ; triangle ou sawtooth
  ;movei  #pvt_Wavelength,reg__AHX_filter__R5
  ;add   AHX__main__pointeur_sur_enregistrement_voice,reg__AHX_filter__R5
- ;loadb  (reg__AHX_filter__R5),reg__AHX_filter__R7
- move   DSP_genere_wave__wavelength,reg__AHX_filter__R7
- add    reg__AHX_filter__R7,reg__AHX_filter__R7        ; wavelength*2
- cmpq   #0,reg__AHX_filter__R6
- jump   eq,(reg__AHX_filter__R20)   ; 0=triangle
- add    reg__AHX_filter__R7,reg__AHX_filter__source_low   ; source low OK
+ ;loadb  (reg__AHX_filter__R5),reg__AHX_filter__R23
+ move   DSP_genere_wave__wavelength,reg__AHX_filter__R23
+ add    reg__AHX_filter__R23,reg__AHX_filter__R23        ; wavelength*2
+ cmpq   #0,reg__AHX_filter__R22
+ jr	eq,AHX_DSP_remplissage_buffer_filter__calcul_filtre
+ add    reg__AHX_filter__R23,reg__AHX_filter__source_low   ; source low OK
 
 ; sawtooth : + (6*2) + pvt_Wavelength*2
- jump   (reg__AHX_filter__R20)
+ jr	AHX_DSP_remplissage_buffer_filter__calcul_filtre
  addqt  #(6*2),reg__AHX_filter__source_low
 
 AHX_DSP_remplissage_buffer_filter__pas_triangle_ni_sawtooth:
 ; square ou noise
-;;->  cmpq  #3,reg__AHX_filter__R6 ; done above
+;;->  cmpq  #3,reg__AHX_filter__R22 ; done above
  jr     ne,AHX_DSP_remplissage_buffer_filter__square
 ; noise : 45*(filterpos-1)+     (6+6+$20)*2
  moveq  #((6+6+$20)*2)/4,reg__AHX_filter__R5
  shlq   #2,reg__AHX_filter__R5
- jump   (reg__AHX_filter__R20)
+
+ jr	AHX_DSP_remplissage_buffer_filter__calcul_filtre
  add    reg__AHX_filter__R5,reg__AHX_filter__source_low
 
 AHX_DSP_remplissage_buffer_filter__square:
@@ -1459,18 +1460,19 @@ AHX_DSP_remplissage_buffer_filter__calcul_filtre:
 
 ; mid and low sources are reversed
  loadw  (reg__AHX_filter__source_low),AHX__main__filtre_mid
- movei  #$FF800000,reg__AHX_filter__R6
+ movei  #$FF800000,reg__AHX_filter__R22
  loadw  (reg__AHX_filter__source_mid),AHX__main__filtre_low
- movei  #$007F0000,reg__AHX_filter__R7
+ movei  #$007F0000,reg__AHX_filter__R23
  shlq   #16,AHX__main__filtre_low
  shlq   #16,AHX__main__filtre_mid
  sharq  #8,AHX__main__filtre_low
  sharq  #8,AHX__main__filtre_mid   ; ext.l + asl.l #8
- movei  #buffer_temp_wave,reg__AHX_filter__R14
- move   pc,reg__AHX_filter__R20
+ movei  #buffer_temp_wave,reg__AHX_filter__R30
+
+ move   pc,reg__AHX_filter__R31
 ;----------- boucle ------------
 AHX__main__routine__filtre__boucle_calcul_filtre:
- load   (reg__AHX_filter__R14),AHX__main__filtre_in  ; valeur sur 8 bits signée
+ load   (reg__AHX_filter__R30),AHX__main__filtre_in  ; valeur sur 8 bits signée
  moveq  #0,AHX__main__filtre_high
  sub    AHX__main__filtre_mid,AHX__main__filtre_high
  shlq   #24,AHX__main__filtre_in
@@ -1479,15 +1481,15 @@ AHX__main__routine__filtre__boucle_calcul_filtre:
  add    AHX__main__filtre_in,AHX__main__filtre_high
 
 ; clipper  AHX__main__filtre_high entre $FF80 et $007F
- cmp    reg__AHX_filter__R6,AHX__main__filtre_high
+ cmp    reg__AHX_filter__R22,AHX__main__filtre_high
  jr     pl,AHX__main__routine__filtre__high__superieur_au_minimum
- cmp    reg__AHX_filter__R7,AHX__main__filtre_high
- move   reg__AHX_filter__R6,AHX__main__filtre_high
+ cmp    reg__AHX_filter__R23,AHX__main__filtre_high
+ move   reg__AHX_filter__R22,AHX__main__filtre_high
 ;;;  if high < minimum then not > maximum
 AHX__main__routine__filtre__high__superieur_au_minimum:
  jr     mi,AHX__main__routine__filtre__high__inferieur_au_maximum
  nop
- move   reg__AHX_filter__R7,AHX__main__filtre_high
+ move   reg__AHX_filter__R23,AHX__main__filtre_high
 
 AHX__main__routine__filtre__high__inferieur_au_maximum:
 ; fre  = (high >> 8) * freq;
@@ -1498,15 +1500,15 @@ AHX__main__routine__filtre__high__inferieur_au_maximum:
 ; mid = mid + fre
  add    AHX__main__filtre_fre,AHX__main__filtre_mid
 ; clipper  AHX__main__filtre_mid entre $FF80 et $007F
- cmp    reg__AHX_filter__R6,AHX__main__filtre_mid
+ cmp    reg__AHX_filter__R22,AHX__main__filtre_mid
  jr     pl,AHX__main__routine__filtre__mid__superieur_au_minimum
- cmp    reg__AHX_filter__R7,AHX__main__filtre_mid
- move   reg__AHX_filter__R6,AHX__main__filtre_mid
+ cmp    reg__AHX_filter__R23,AHX__main__filtre_mid
+ move   reg__AHX_filter__R22,AHX__main__filtre_mid
 ;;;  if mid < minimum then not > maximum
 AHX__main__routine__filtre__mid__superieur_au_minimum:
  jr     mi,AHX__main__routine__filtre__mid__inferieur_au_maximum
  nop
- move   reg__AHX_filter__R7,AHX__main__filtre_mid
+ move   reg__AHX_filter__R23,AHX__main__filtre_mid
 AHX__main__routine__filtre__mid__inferieur_au_maximum:
 
 ; fre  = (mid  >> 8) * freq;
@@ -1518,32 +1520,32 @@ AHX__main__routine__filtre__mid__inferieur_au_maximum:
  add    AHX__main__filtre_fre,AHX__main__filtre_low
 
 ; clipper  AHX__main__filtre_low entre $FF80 et $007F
- cmp    reg__AHX_filter__R6,AHX__main__filtre_low
+ cmp    reg__AHX_filter__R22,AHX__main__filtre_low
  jr     pl,AHX__main__routine__filtre__low__superieur_au_minimum
- cmp    reg__AHX_filter__R7,AHX__main__filtre_low
- move   reg__AHX_filter__R6,AHX__main__filtre_low
+ cmp    reg__AHX_filter__R23,AHX__main__filtre_low
+ move   reg__AHX_filter__R22,AHX__main__filtre_low
 ;;;  if low < minimum then not > maximum
 AHX__main__routine__filtre__low__superieur_au_minimum:
  jr     mi,AHX__main__routine__filtre__low__inferieur_au_maximum
 ; choisis si on met low ou high en fonction de filterpos
  cmpq   #0,DSP_genere_wave__filterpos
 //-> nop
- move   reg__AHX_filter__R7,AHX__main__filtre_low
+ move   reg__AHX_filter__R23,AHX__main__filtre_low
 AHX__main__routine__filtre__low__inferieur_au_maximum:
 
 //->; choisis si on met low ou high en fonction de filterpos
 //-> cmpq   #0,DSP_genere_wave__filterpos
- move   AHX__main__filtre_high,reg__AHX_filter__R21 ;; store high
+ move   AHX__main__filtre_high,reg__AHX_filter__R3 ;; store high
  jr     pl,AHX__main__routine__filtre__store_done
  nop
 ; filterpos negatif : store low
- move   AHX__main__filtre_low,reg__AHX_filter__R21
+ move   AHX__main__filtre_low,reg__AHX_filter__R3
 AHX__main__routine__filtre__store_done:
- sharq  #16,reg__AHX_filter__R21
+ sharq  #16,reg__AHX_filter__R3
  subq   #1,DSP_genere_wave__wavelength_en_octets__pour_filtre
- store  reg__AHX_filter__R21,(reg__AHX_filter__R14)
- jump   ne,(reg__AHX_filter__R20)
- addqt  #4,reg__AHX_filter__R14
+ store  reg__AHX_filter__R3,(reg__AHX_filter__R30)
+ jump   ne,(reg__AHX_filter__R31)
+ addqt  #4,reg__AHX_filter__R30
 
 ; sortie
  jump   (AHX__main__pointeur_adresse_routine_etape_suivante)
@@ -1640,89 +1642,34 @@ DSP_genere_wave_routine_volume_a_zero__boucle:
 ; sortie : R0=octet
 ; utilise : R10/R11/R12/R13/R14/  /R17/R18/R19
 
-; V3, lecture sur 32 bis
-;--
-; adresse actuelle, multiple de 4
-; position actuelle du bit a lire , de 31 a 0
-; nb bits à lire
-;
-; tmp1 =  position actuelle du bit a lire - nb bits à lire
-; si positif, lire nb bits à lire , de position actuelle en bit à position
-;    actuelle en bit - nb bits à lire : un mask complet, sharq (position
-;    actuelle en bit - nb bits à lire)
-;       puis shlq (position actuelle en bit
-;     - nb bits à lire)
-;         puis shlq (31-position actuelle en bit)
-; si négatif, lire (nb bits à lire+ tmp1) :
+DSP_AHX_decode_streaming_V4__read_bits_from_bits_streaming:
+	jr	non_empty
+	moveq	#0,DSP_decode_bits__tmp1
+reload:
+	load   	(DSP_decode_bits__pointeur_lecture_bits),DSP_decode_bits_bitbuffer
+	addq   	#4,DSP_decode_bits__pointeur_lecture_bits
+	moveq	#0,DSP_decode_bits_bitcount
+	bset	#5,DSP_decode_bits_bitcount
+non_empty:
+	move	DSP_decode_bits_bitbuffer,DSP_decode_bits__bits_resultat
+	sub	DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits_bitcount
+	jr	pl,enough_bits
+	neg	DSP_decode_bits__nb_bits_a_lire
 
-DSP_AHX_decode_streaming_V3__read_bits_from_bits_streaming:
-; 32 bits maxi
- move   DSP_decode_bits__numero_bit_actuel,DSP_decode_bits__tmp1
- move   DSP_decode_bits__valeur_en_cours_lu_du_stream,DSP_decode_bits__tmp0    ; valeur deja lue
- addq   #1,DSP_decode_bits__tmp1
- moveq  #0,DSP_decode_bits__tmp3    ; bits de la premiere lecture, <<
- sub    DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__tmp1
- movei  #DSP_AHX_decode_streaming_V3__read_bits_from_bits_streaming__sans_relecture,DSP_decode_bits__tmp2
- jump   pl,(DSP_decode_bits__tmp2)
+	move	DSP_decode_bits__bits_resultat,DSP_decode_bits__tmp1
+	move	DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__bits_resultat
+	move	DSP_decode_bits_bitcount,DSP_decode_bits__nb_bits_a_lire
+	addq	#32,DSP_decode_bits__bits_resultat
+	neg	DSP_decode_bits__nb_bits_a_lire
+	jr	reload
+	sh	DSP_decode_bits__bits_resultat,DSP_decode_bits__tmp1
 
-; DSP_decode_bits__tmp1 négatif
-; il ne faut lire que DSP_decode_bits__nb_bits_a_lire - DSP_decode_bits__tmp1
-; bits puis incrementer le pointeur source de 4, puis mettre à jour
-; DSP_decode_bits__tmp1, mettre 31 dans DSP_decode_bits__numero_bit_actuel
-; les bits sont en bas de DSP_decode_bits__tmp0
-
-; ne garder que les bits du bas. shift gauche, puis shift droite
-;
- move   DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__tmp2
- add    DSP_decode_bits__tmp1,DSP_decode_bits__tmp2
- subq   #32,DSP_decode_bits__tmp2
-
-; vers la gauche
- sh     DSP_decode_bits__tmp2,DSP_decode_bits__tmp0
-; vers la droite
- neg    DSP_decode_bits__tmp2
- sh     DSP_decode_bits__tmp2,DSP_decode_bits__tmp0
-
- subq   #32,DSP_decode_bits__tmp2 ; back to original value
-
-; vers la gauche  car tmp1 est negatif
- sh     DSP_decode_bits__tmp1,DSP_decode_bits__tmp0
- move   DSP_decode_bits__tmp0,DSP_decode_bits__tmp3
-; tmp3 = bits du haut, décalés
- addq   #4,DSP_decode_bits__pointeur_lecture_bits
- add    DSP_decode_bits__tmp2,DSP_decode_bits__nb_bits_a_lire
- load   (DSP_decode_bits__pointeur_lecture_bits),DSP_decode_bits__valeur_en_cours_lu_du_stream
-
- moveq  #0,DSP_decode_bits__tmp1
- bset   #5,DSP_decode_bits__tmp1
- move   DSP_decode_bits__valeur_en_cours_lu_du_stream,DSP_decode_bits__tmp0
- moveq  #31,DSP_decode_bits__numero_bit_actuel
- sub    DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__tmp1
-
-DSP_AHX_decode_streaming_V3__read_bits_from_bits_streaming__sans_relecture:
-; DSP_decode_bits__tmp1=position apres le dernier bit a lire
-; positif => right
- subq   #1,DSP_decode_bits__tmp1
- sh     DSP_decode_bits__tmp1,DSP_decode_bits__tmp0
- neg    DSP_decode_bits__tmp1
-; vers la gauche
- sh     DSP_decode_bits__tmp1,DSP_decode_bits__tmp0
-
- move   DSP_decode_bits__numero_bit_actuel,DSP_decode_bits__tmp1
- subq   #31,DSP_decode_bits__tmp1
-; vers la gauche
- sh     DSP_decode_bits__tmp1,DSP_decode_bits__tmp0
-;  les bits sont tout en haut a gauche
- moveq  #0,DSP_decode_bits__tmp1
- bset   #5,DSP_decode_bits__tmp1
- sub    DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__tmp1
-; a droite
- sh     DSP_decode_bits__tmp1,DSP_decode_bits__tmp0
- sub    DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__numero_bit_actuel
- or     DSP_decode_bits__tmp3,DSP_decode_bits__tmp0
- jump   (DSP_decode_bits__adresse_retour)
- move   DSP_decode_bits__tmp0,DSP_decode_bits__bits_resultat
-
+enough_bits:
+	sh	DSP_decode_bits__nb_bits_a_lire, DSP_decode_bits_bitbuffer
+	addq	#32,DSP_decode_bits__nb_bits_a_lire
+	sh	DSP_decode_bits__nb_bits_a_lire,DSP_decode_bits__bits_resultat
+	jump	(DSP_decode_bits__adresse_retour)
+	or	DSP_decode_bits__tmp1,DSP_decode_bits__bits_resultat
 ; ---------------------------------------- DSP Datas
          .long
 
@@ -1740,7 +1687,6 @@ DSP_module_streaming_bits_cur:  dc.l 0
 DSP_module_streaming_bits_end:  dc.l 0
 DSP_NB_channels:                dc.l 0
 DSP_ratio_Amiga_Jaguar__a_virgule_9_bits:  dc.l    0
-numero_bit_actuel_dans_streaming_bits:   dc.l  0
 
 ;;;
 HIVELY_datas_channels:
