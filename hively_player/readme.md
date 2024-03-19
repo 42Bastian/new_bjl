@@ -2,9 +2,9 @@
 
 This is an optimized standalone version of the hively player be Ericde45.
 
-This is still WIP !!!
+Demo can be found in the separate repo:
 
-Usage demo will follow.
+https://github.com/42Bastian/JagHivelyPlayer
 
 # Setup
 
