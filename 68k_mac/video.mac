@@ -1,3 +1,4 @@
+; -*-asm-*-
  IF ^^defined PAL = 0
 
 PAL		EQU 1
