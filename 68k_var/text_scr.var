@@ -1,3 +1,4 @@
-                RSL TextScreen
+; -*-asm-*-
+		RSL TextScreen
                 RSL Cursor
 		RSL tsInvert
