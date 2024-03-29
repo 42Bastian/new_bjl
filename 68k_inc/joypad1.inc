@@ -1,3 +1,4 @@
+*-*-asm-*-
 * left Joypad
 * var-base is A6
 * predefined vars : long joy_pad[3]

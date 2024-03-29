@@ -1,3 +1,4 @@
+*-*-asm-*-
 *****************
 * Hex-Print routines using a "Hex" font
 

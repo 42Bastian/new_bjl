@@ -1,3 +1,4 @@
+*-*-asm-*-
 * TextScreen (8x8 Font)
 * created 24.9.95
 * (c) Bastian Schick
