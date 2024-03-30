@@ -13,9 +13,8 @@
 DST		REG 21
 SRC		REG 20
 
-LR_save		REG 13
-LR2		REG 12
-BC		REG 11
+LR3		REG 12
+LR2		REG 11
 STOR		REG 10
 GETBIT		REG 9
 ELIAS		REG 8
@@ -24,23 +23,22 @@ LITERALS	REG 7
 OFFSET		REG 6
 NEW_OFF		reg 5
 COPY_MATCH	reg 4
-_256		REG 3
+
 VALUE		REG 2
 tmp1		REG 1
 tmp0		REG 0
 
 unzx0::
-	move	LR,LR_save
 	movei	#.getbit,GETBIT
-	movei	#.elias,ELIAS
 	movei	#.copy_match,COPY_MATCH
-	movei	#.new_off,NEW_OFF
-	moveq	#1,_256
-	moveq	#0,BC
-	shlq	#8,_256
+	move	GETBIT,ELIAS
+	move	COPY_MATCH,NEW_OFF
+	subq	#.getbit-.elias,ELIAS
+	addq	#.new_off-.copy_match,NEW_OFF
+	moveq	#0,STOR
 	moveq	#1,OFFSET
-
 	moveq	#1,VALUE
+
 .literals
 	move	pc,LITERALS
 
@@ -52,15 +50,20 @@ unzx0::
 	addqt	#1,SRC
 	subq	#1,VALUE
 	storeb	r0,(DST)
-	jr	ne,.copylit
+	jump	ne,(LR2)
 	addqt	#1,DST
 
-	BL	(GETBIT)
+	move	pc,LR3
+	jump	(GETBIT)
+	addq	#6,LR3
+
 	jump	cs,(NEW_OFF)
 	moveq	#1,VALUE
 	;; last offset
 	jump	(ELIAS)
 	move	COPY_MATCH,LR2
+
+	addqt	#1,VALUE
 .copy_match
 	move	DST,r1
 	sub	OFFSET,r1
@@ -72,45 +75,59 @@ unzx0::
 	jr	ne,.copy_match_loop
 	addq	#1,DST
 
-	BL	(GETBIT)
+	move	pc,LR3
+	jump	(GETBIT)
+	addq	#6,LR3
+
 	jump	cc,(LITERALS)
 	moveq	#1,VALUE
 .new_off:
 	move	pc,LR2
 	jump	(ELIAS)
 	addq	#6,LR2
-	cmp	_256,VALUE
+
 	move	VALUE,OFFSET
-	jump	eq,(LR_save)
-	loadb	(SRC),VALUE
+	shrq	#8,VALUE
+	loadb	(SRC),r1
+	jump	ne,(LR)
 	shlq	#7,OFFSET
 	addqt	#1,SRC
-	move	VALUE,r1
-	shrq	#1,VALUE
-	sub	VALUE,OFFSET
-	shrq	#1,r1
 	moveq	#1,VALUE
-	move	PC,LR2
+	move	COPY_MATCH,LR2
+	shrq	#1,r1
+	subqt	#2,LR2
 	jr	cc,.elias_pre
-	addq	#6,LR2
-	jump	(COPY_MATCH)
-	addqt	#1,VALUE
+	sub	r1,OFFSET
+	jump	(LR2)
+//->	nop			; ATARI says: NOP needed (next is move pc,lr)
 
 .elias
-	BL	(GETBIT)
+	move	pc,LR3
+	jump	(GETBIT)
+	addq	#6,LR3
+
 	jump	cs,(LR2)
 //->	nop			; ATARI says: NOP needed (next is move pc,lr)
 .elias_pre
-	BL	(GETBIT)
+	move	pc,LR3
+	jump	(GETBIT)
+	addq	#6,LR3
+
+//->	move	pc,LR3		; quicker, but 2 bytes longer
+//->	add	STOR,STOR
+//->	jr	eq,.getbyte
+//->	addqt	#8,LR3
+
 	jump	(ELIAS)
 	addc	VALUE,VALUE
 
 .getbit
-	subq	#1,BC
-	jump	pl,(LR)
 	add	STOR,STOR
+	jump	ne,(LR3)
+	nop
+.getbyte
 	loadb	(SRC),STOR
-	moveq	#8,BC
 	addqt	#1,SRC
-	jump	(GETBIT)
 	shlq	#24,STOR
+	jump	(GETBIT)
+	bset	#23,STOR
