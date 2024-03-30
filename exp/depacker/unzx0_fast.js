@@ -14,7 +14,7 @@ DST		REG 21
 SRC		REG 20
 
 BYTE_PRELOAD	REG 13
-LR_save		REG 12
+LR3		REG 12
 LR2		REG 11
 BC		REG 10
 STOR		REG 9
@@ -29,12 +29,11 @@ tmp1		REG 1
 tmp0		REG 0
 
 unzx0::
-	move	LR,LR_save
 	movei	#.getbit,GETBIT
 	movei	#.elias,ELIAS
 	movei	#.copy_match,COPY_MATCH
 	movei	#.new_off,NEW_OFF
-	moveq	#0,BC
+	moveq	#0,STOR
 	moveq	#1,OFFSET
 	loadb	(SRC),BYTE_PRELOAD
 	addq	#1,SRC
@@ -54,12 +53,17 @@ unzx0::
 	jump	ne,(LR2)
 	addqt	#1,DST
 
-	BL	(GETBIT)
+	move	PC,LR3
+	jump	(GETBIT)
+	addq	#6,LR3
+
 	jump	cs,(NEW_OFF)
 	moveq	#1,VALUE
 	;; last offset
 	jump	(ELIAS)
 	move	COPY_MATCH,LR2
+
+	addqt	#1,VALUE
 .copy_match
 	move	DST,r1
 	sub	OFFSET,r1
@@ -88,7 +92,10 @@ unzx0::
 	jr	ne,.copy_match_loop
 	addq	#1,DST
 .done
-	BL	(GETBIT)
+	move	PC,LR3
+	jump	(GETBIT)
+	addq	#6,LR3
+
 	jump	cc,(LITERALS)
 	moveq	#1,VALUE
 .new_off:
@@ -98,60 +105,48 @@ unzx0::
 
 	move	VALUE,OFFSET
 	shlq	#24,VALUE
-	jump	eq,(LR_save)
-	nop
-	move	BYTE_PRELOAD,VALUE
+	move	BYTE_PRELOAD,r1
+	jump	eq,(LR)
 	loadb	(SRC),BYTE_PRELOAD
-
 	shlq	#7,OFFSET
 	addqt	#1,SRC
-	move	VALUE,r1
-	shrq	#1,VALUE
-	sub	VALUE,OFFSET
 	shrq	#1,r1
+	move	COPY_MATCH,LR2
 	moveq	#1,VALUE
-	move	PC,LR2
-	jr	cc,.elias_pre
-	addq	#6,LR2
-	jump	(COPY_MATCH)
-	addqt	#1,VALUE
-
-.elias0
-	addc	VALUE,VALUE
+	subqt	#2,LR2
+	jump	cs,(LR2)
+	sub	r1,OFFSET
+	jr	.elias_pre
 .elias
-	subq	#1,BC
-	jr	pl,.elias_bit
 	add	STOR,STOR
+	jr	ne,.elias_bit
+	nop
 
-	moveq	#7,BC
 	move	BYTE_PRELOAD,STOR
 	loadb	(SRC),BYTE_PRELOAD
 	shlq	#24,STOR
 	addqt	#1,SRC
+	bset	#23,STOR
 	add	STOR,STOR
+
 .elias_bit
 	jump	cs,(LR2)
 	nop
-.elias_pre
-	subq	#1,BC
-	jr	pl,.elias0
 	add	STOR,STOR
-
+.elias_pre
+	jr	ne,.elias
+	addc	VALUE,VALUE
 	move	BYTE_PRELOAD,STOR
+.getbyte
 	loadb	(SRC),BYTE_PRELOAD
 	shlq	#24,STOR
 	addqt	#1,SRC
 	jr	.elias_pre
-	moveq	#8,BC
+	bset	#23,STOR
 
 .getbit
-	subq	#1,BC
-	jump	pl,(LR)
 	add	STOR,STOR
-
+	jump	ne,(LR3)
+	nop
+	jr	.getbyte
 	move	BYTE_PRELOAD,STOR
-	loadb	(SRC),BYTE_PRELOAD
-	shlq	#24,STOR
-	addqt	#1,SRC
-	jump	(GETBIT)
-	moveq	#8,BC
