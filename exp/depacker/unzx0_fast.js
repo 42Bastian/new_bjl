@@ -29,7 +29,7 @@ tmp1		REG 1
 tmp0		REG 0
 
 unzx0::
-	movei	#.getbit,GETBIT
+	movei	#.getbyte1,GETBIT
 	movei	#.elias,ELIAS
 	movei	#.copy_match,COPY_MATCH
 	movei	#.new_off,NEW_OFF
@@ -53,9 +53,10 @@ unzx0::
 	jump	ne,(LR2)
 	addqt	#1,DST
 
+	add	STOR,STOR
 	move	PC,LR3
-	jump	(GETBIT)
-	addq	#6,LR3
+	jump	eq,(GETBIT)
+	addqt	#4,LR3
 
 	jump	cs,(NEW_OFF)
 	moveq	#1,VALUE
@@ -92,9 +93,10 @@ unzx0::
 	jr	ne,.copy_match_loop
 	addq	#1,DST
 .done
+	add	STOR,STOR
 	move	PC,LR3
-	jump	(GETBIT)
-	addq	#6,LR3
+	jump	eq,(GETBIT)
+	addqt	#4,LR3
 
 	jump	cc,(LITERALS)
 	moveq	#1,VALUE
@@ -119,16 +121,8 @@ unzx0::
 	jr	.elias_pre
 .elias
 	add	STOR,STOR
-	jr	ne,.elias_bit
+	jr	eq,.getbyte0
 	nop
-
-	move	BYTE_PRELOAD,STOR
-	loadb	(SRC),BYTE_PRELOAD
-	shlq	#24,STOR
-	addqt	#1,SRC
-	bset	#23,STOR
-	add	STOR,STOR
-
 .elias_bit
 	jump	cs,(LR2)
 	nop
@@ -136,14 +130,17 @@ unzx0::
 .elias_pre
 	jr	ne,.elias
 	addc	VALUE,VALUE
+.getbyte0
+	move	ELIAS,LR3
+.getbyte1
 	move	BYTE_PRELOAD,STOR
+	addqt	#2,LR3
 .getbyte
 	loadb	(SRC),BYTE_PRELOAD
 	shlq	#24,STOR
 	addqt	#1,SRC
-	jr	.elias_pre
 	bset	#23,STOR
-
+	jump	(LR3)
 .getbit
 	add	STOR,STOR
 	jump	ne,(LR3)
