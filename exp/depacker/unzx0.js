@@ -99,27 +99,18 @@ unzx0::
 	jr	cc,.elias_pre
 	sub	r1,OFFSET
 	jump	(LR2)
-//->	nop			; ATARI says: NOP needed (next is move pc,lr)
+	nop
 
+	addc	VALUE,VALUE
 .elias
 	move	pc,LR3
 	jump	(GETBIT)
 	addq	#6,LR3
 
 	jump	cs,(LR2)
-//->	nop			; ATARI says: NOP needed (next is move pc,lr)
 .elias_pre
-	move	pc,LR3
-	jump	(GETBIT)
-	addq	#6,LR3
-
-//->	move	pc,LR3		; quicker, but 2 bytes longer
-//->	add	STOR,STOR
-//->	jr	eq,.getbyte
-//->	addqt	#8,LR3
-
-	jump	(ELIAS)
-	addc	VALUE,VALUE
+	move	ELIAS,LR3
+	subqt	#2,LR3
 
 .getbit
 	add	STOR,STOR
