@@ -402,7 +402,11 @@ packed:
 	incbin	"packed_data/voyager.cry.shr"
  ENDIF
  IF ZX0 = 1 | ZX0_fast
+ IF ASTEROIDS = 1
+	incbin	"packed_data/voyager_asteroids.cry.zx0"
+ ELSE
 	incbin	"packed_data/voyager.cry.zx0"
+ ENDIF
  ENDIF
  IF N0 = 1
 	incbin	"packed_data/voyager.cry.n0"
