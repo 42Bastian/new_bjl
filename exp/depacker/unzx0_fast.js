@@ -55,10 +55,9 @@ unzx0::
 
 	add	STOR,STOR
 	move	PC,LR3
-	jump	eq,(GETBIT)
+	jump	ne_cs,(NEW_OFF)
 	addqt	#4,LR3
-
-	jump	cs,(NEW_OFF)
+	jump	eq,(GETBIT)
 	moveq	#1,VALUE
 	;; last offset
 	jump	(ELIAS)
@@ -99,8 +98,8 @@ unzx0::
 	addqt	#4,LR3
 
 	jump	cc,(LITERALS)
-	moveq	#1,VALUE
 .new_off:
+	moveq	#1,VALUE
 	move	pc,LR2
 	jump	(ELIAS)
 	addq	#6,LR2
@@ -121,11 +120,9 @@ unzx0::
 	jr	.elias_pre
 .elias
 	add	STOR,STOR
+	jump	cs_ne,(LR2)
+	nop
 	jr	eq,.getbyte0
-	nop
-.elias_bit
-	jump	cs,(LR2)
-	nop
 	add	STOR,STOR
 .elias_pre
 	jr	ne,.elias
