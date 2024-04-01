@@ -13,16 +13,15 @@
 DST		REG 21
 SRC		REG 20
 
-LR3		REG 12
-LR2		REG 11
-STOR		REG 10
-GETBIT		REG 9
-ELIAS		REG 8
-LITERALS	REG 7
+LR3		REG 10
+LR2		REG 9
+STOR		REG 8
+GETBIT		REG 7
+ELIAS		REG 6
+LITERALS	REG 5
 
-OFFSET		REG 6
-NEW_OFF		reg 5
-COPY_MATCH	reg 4
+OFFSET		REG 4
+COPY_MATCH	reg 3
 
 VALUE		REG 2
 tmp1		REG 1
@@ -30,15 +29,11 @@ tmp0		REG 0
 
 unzx0::
 	movei	#.getbit,GETBIT
-	movei	#.copy_match,COPY_MATCH
 	move	GETBIT,ELIAS
-	move	COPY_MATCH,NEW_OFF
 	subq	#.getbit-.elias,ELIAS
-	addq	#.new_off-.copy_match,NEW_OFF
 	moveq	#0,STOR
 	moveq	#1,OFFSET
 	moveq	#1,VALUE
-
 .literals
 	move	pc,LITERALS
 
@@ -53,17 +48,17 @@ unzx0::
 	jump	ne,(LR2)
 	addqt	#1,DST
 
+__xx	move	pc,COPY_MATCH
 	move	pc,LR3
 	jump	(GETBIT)
 	addq	#6,LR3
-
-	jump	cs,(NEW_OFF)
-	moveq	#1,VALUE
+	addqt	#.copy_match-__xx,COPY_MATCH
+	jr	cs,.new_off
 	;; last offset
-	jump	(ELIAS)
 	move	COPY_MATCH,LR2
+	jump	(ELIAS)
+	moveq	#1,VALUE
 
-	addqt	#1,VALUE
 .copy_match
 	move	DST,r1
 	sub	OFFSET,r1
@@ -80,12 +75,12 @@ unzx0::
 	addq	#6,LR3
 
 	jump	cc,(LITERALS)
-	moveq	#1,VALUE
 .new_off:
+	moveq	#1,VALUE
 	move	pc,LR2
 	jump	(ELIAS)
 	addq	#6,LR2
-
+__x0
 	move	VALUE,OFFSET
 	shrq	#8,VALUE
 	loadb	(SRC),r1
@@ -93,19 +88,19 @@ unzx0::
 	shlq	#7,OFFSET
 	addqt	#1,SRC
 	moveq	#1,VALUE
-	move	COPY_MATCH,LR2
 	shrq	#1,r1
-	subqt	#2,LR2
+	addqt	#__x1-__x0,LR2
 	jr	cc,.elias_pre
 	sub	r1,OFFSET
-	jump	(LR2)
-	nop
+__x1	jump	(COPY_MATCH)
+	addq	#1,VALUE
 
+.elias0
 	addc	VALUE,VALUE
 .elias
 	move	pc,LR3
 	jump	(GETBIT)
-	addq	#6,LR3
+	addqt	#6,LR3
 
 	jump	cs,(LR2)
 .elias_pre
