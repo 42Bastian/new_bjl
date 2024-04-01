@@ -2,7 +2,7 @@
 
 New and old examples.
 
-See [JaguarDemos](https://github.com/42Bastian/JaguarDemos]) for a bunch of more examples.
+See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
 ## gpu_check
 
