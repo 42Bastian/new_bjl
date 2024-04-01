@@ -71,7 +71,6 @@ unzx0::
 	jr	ne,.copy_match_loop
 	btst	#0,r1
 	jr	ne,.copy_match_loop
-	nop
 .copy_match_loop2
 	loadw	(r1),r0
 	subq	#2,VALUE
@@ -95,7 +94,7 @@ unzx0::
 	add	STOR,STOR
 	move	PC,LR3
 	jump	eq,(GETBIT)
-	addqt	#4,LR3
+	addqt	#6,LR3
 
 	jump	cc,(LITERALS)
 .new_off:
