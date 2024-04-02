@@ -401,7 +401,7 @@ packed:
  IF SHR = 1
 	incbin	"packed_data/voyager.cry.shr"
  ENDIF
- IF ZX0 = 1 | ZX0_fast
+ IF ZX0 = 1 | ZX0_fast = 1
  IF ASTEROIDS = 1
 	incbin	"packed_data/voyager_asteroids.cry.zx0"
  ELSE
