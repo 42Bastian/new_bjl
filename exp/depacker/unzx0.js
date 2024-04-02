@@ -6,7 +6,7 @@
 ;;; r30 : return address
 ;;;
 ;;; Register usage (destroyed!)
-;;; r0-r13,r20,r21
+;;; r0-r7,r20,r21
 ;;;
 ;;; pack with classic (V1) format.
 
@@ -25,7 +25,6 @@ COPY_MATCH	reg 1
 VALUE		REG 0
 
 unzx0::
-	movei	#.getbit,GETBIT
 	moveq	#0,STOR
 	move	pc,LR2
 	moveq	#1,OFFSET
@@ -98,22 +97,23 @@ __x1	jump	(COPY_MATCH)
 .elias
 	add	STOR,STOR
 	move	pc,LR3
-	jr	eq,.getbyte
-	addqt	#6,LR3
+	jump	ne_cs,(LR2)
+	addqt	#2,LR3
 
-	jump	cs,(LR2)
+	jr	eq,.getbyte
 	nop
 .elias_pre
 	move	PC,LR3
-	subq	#14,LR3
+	subqt	#14,LR3
 
 .getbit
 	add	STOR,STOR
+	move	PC,GETBIT
 	jump	ne,(LR3)
-	nop
+	subqt	#2,GETBIT
 .getbyte
 	loadb	(SRC),STOR
 	addqt	#1,SRC
 	shlq	#24,STOR
-	jump	(GETBIT)
+	jr	.getbit
 	bset	#23,STOR
