@@ -13,30 +13,33 @@
 ;;; r10       : jump destination
 ;;; r11       : end of packed data
 
+PRELOAD		reg 5
+FLAGS		reg 0
+
 untp::
 	load	(r20),r0	; resulting size
 	move	r21,r11
 	addq	#4,r20
 	add	r0,r11
-	loadb	(r20),r5	;flags: bit = 0 => literal
+	loadb	(r20),PRELOAD	;flags: bit = 0 => literal
 	addqt	#1,r20
 .loop
-	move	r5,r0
-	loadb	(r20),r5	;flags: bit = 0 => literal
+	move	PRELOAD,FLAGS
+	loadb	(r20),PRELOAD	;flags: bit = 0 => literal
 	addqt	#1,r20
 	cmp	r21,r11
 	moveq	#8,r1
 	jump	mi,(r30)
-	shlq	#24,r0
+	shlq	#24,FLAGS
 	move	pc,r10
 	addq	#4,r10
 .token_loop:
 	subq	#1,r1
 	jr	mi,.loop	; r1 < 0 => next token
-	move	r5,r2
+	move	PRELOAD,r2
 
-	loadb	(r20),r5
-	add	r0,r0
+	loadb	(r20),PRELOAD
+	add	FLAGS,FLAGS
 	moveq	#15,r3
 	jr	cs,.match
 	addqt	#1,r20
@@ -47,10 +50,10 @@ untp::
 	;; match
 .match
 	and	r2,r3
-	move	r5,r4
+	move	PRELOAD,r4
 	addq	#3,r3
 	shrq	#4,r2
-	loadb	(r20),r5
+	loadb	(r20),PRELOAD
 	shlq	#8,r2
 	addqt	#1,r20
 	or	r2,r4
