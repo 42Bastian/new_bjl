@@ -22,18 +22,19 @@ minihex_pixel_size	equ 2
 	align	4
 drawHex::
 	moveq	#8,r5
+dh_pc
 	move	pc,r6
 	subq	#1,r5
 	jump	mi,(LR)
 	rorq	#28,r0
 drawDigit::
-	movei	#_0,r1
 	moveq	#14,r3
 	and	r0,r3
+	addq	#(_0-dh_pc)/2,r3
 	shlq	#1,r3
-	add	r3,r1
+	add	r6,r3
 	btst	#0,r0
-	load	(r1),r1
+	load	(r3),r1
 	jr	eq,.even
 	move	txt_ptr,r4
 	shlq	#16,r1
@@ -56,10 +57,13 @@ drawDigit::
 	jr	ne,.lx
 	addqt	#1,r4
  ENDIF
-
 	movei	#(minihex_screen_width-3)*minihex_pixel_size,r2
 	moveq	#0,r3
+ IF minihex_pixel_size = 2
 	storew	r3,(r4)
+ ELSE
+	storeb	r3,(r4)
+ ENDIF
 	jr	.ly
 	add	r2,r4
 
@@ -97,3 +101,6 @@ _\0
 drawHex_e:
 sizedh	equ drawHex_e-drawHex
 	echo "drawHex:%HdrawHex %Dsizedh _0 %H_0"
+
+dd	equ (_0-dh_pc)/2
+	echo "D: %Ddd"
