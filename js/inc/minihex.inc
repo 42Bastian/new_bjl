@@ -101,6 +101,3 @@ _\0
 drawHex_e:
 sizedh	equ drawHex_e-drawHex
 	echo "drawHex:%HdrawHex %Dsizedh _0 %H_0"
-
-dd	equ (_0-dh_pc)/2
-	echo "D: %Ddd"
