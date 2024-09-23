@@ -46,4 +46,9 @@ clean:
 	rm -f *.o
 	rm -f *.equ
 	rm -f *~
-	rm -f *.cof *.j64 *.rom *.abs
+	rm -f *.cof *.rom *.abs
+
+.ONESHELL:
+.PHONY: real-clean
+real-clean: clean
+	rm -f *.j64
