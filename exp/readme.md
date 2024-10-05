@@ -4,6 +4,13 @@ New and old examples.
 
 See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
+## [raycast](raycast)
+
+A PoC for a raycast engine. Inspired by
+
+https://lodev.org/cgtutor/raycasting.html
+
+
 ## [gpu_check](gpu_check)
 
 A small template to test GPU instructions or timeing of small sequences.
