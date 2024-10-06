@@ -3,6 +3,7 @@
 
 	include <js/macro/help.mac>
 	include <js/macro/joypad1.mac>
+
 	include <js/symbols/blit_eq.js>
 	include <js/symbols/jagregeq.js>
 	include <js/symbols/joypad.js>
@@ -23,7 +24,6 @@ _ANGLE		equ 16
 
 screen0::	equ $00080000
 screen1::	equ $000a0000
-clut		equ $110
 
 parameter	equ $f03ff0
 
@@ -33,6 +33,8 @@ LastJoy		equ sintab-8
 START_X		equ 15
 START_Y		equ 17
 START_ANGLE	equ 128
+
+WORLD_WIDTH	equ 31
 
 	;; canvas
 rez_x::		equ 320		; 160/192/256/320
@@ -55,10 +57,10 @@ BLIT_WID	EQU BLIT_WID160
  ENDIF
 
 ;;; ****************************************
-;;; Fixpoint
+;;; Fixpoint (max. 7, else rounding errors appear)
+
 FP_BITS		EQU 7
 FP		EQU (1<<FP_BITS)
-
 
 	;; global registers
 IRQ_SP.a	REG 31
@@ -82,8 +84,7 @@ IRQ_RTS		REG 30
 IRQ_FLAGADDR	REG 29
 LR		REG 28
 VBLFlag		REG 27
-map_base	reg 26
-mask		reg 25
+
 
 tmp2		reg 2
 tmp1		reg 1
@@ -255,11 +256,12 @@ sideDistX	reg 99
 sideDistY	reg 99
 deltaDistX	reg 99
 deltaDistY	reg 99
-mapX		reg 99
-mapY		reg 99
+fp		reg 99
+world		reg 99
+
 sideDistX.a	reg 99
 sideDistY.a	reg 99
-
+world0.a	reg 99
 
 	movefa	angle.a,tmp2
 
@@ -292,21 +294,39 @@ planeY	reg 99
 
 	unreg	planeX,planeY
 
+	moveq	#0,fp
 	movei	#rez_x-1,x
-	move	x,cameraX
+	bset	#FP_BITS,fp
 
-	;; prepare stripe drawing
-	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADD0|BLIT_YADD1,tmp1
-	WAITBLITTER 		; wait for CLS to finish
-	store	tmp1,(blitter+_BLIT_A1_FLAGS)
-
-	movei	#FP-1,tmp2
+	move	fp,tmp2
+	subq	#1,tmp2
 	movefa	posX.a,tmp0
 	movefa	posY.a,tmp1
 	and	tmp2,tmp0
 	and	tmp2,tmp1
 	moveta	tmp0,sideDistX.a
 	moveta	tmp1,sideDistY.a
+
+mapX		reg 99
+mapY		reg 99
+
+	movefa	posY.a,mapY
+	movefa	posX.a,mapX
+	shrq	#FP_BITS,mapY
+	shrq	#FP_BITS,mapX
+	movefa	world.a,world
+	moveq	#WORLD_WIDTH,tmp0
+	add	mapX,world
+	mult	tmp0,mapY
+	add	mapY,world
+	moveta	world,world0.a
+
+	unreg	mapX,mapY
+
+	;; prepare stripe drawing
+	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADD0|BLIT_YADD1,tmp1
+	WAITBLITTER 		; wait for CLS to finish
+	store	tmp1,(blitter+_BLIT_A1_FLAGS)
 
 .x_loop:
 	//cameraX = 2*x*fp/_width-fp;
@@ -317,27 +337,18 @@ planeY	reg 99
 
 //->    int mapX = int(posX) & ~(int(fp)-1);
 //->    int mapY = int(posY) & ~(int(fp)-1);
-	movefa	posY.a,mapY
-	movefa	posX.a,mapX
-	shrq	#FP_BITS,mapY
-	moveq	#31,tmp0
-	shrq	#FP_BITS,mapX
-	mult	tmp0,mapY
 
-	moveq	#0,stepX
-	moveq	#0,stepY
-	movei	#FP*FP,deltaDistX
-	movei	#FP*FP,deltaDistY
-	moveq	#0,sideDistX
-	moveq	#0,sideDistY
+	move	fp,deltaDistX
+	mult	fp,deltaDistX
+	move	deltaDistX,deltaDistY
+
 ;;->    rayDirX = (dirX + planeX * cameraX/fp);
 ;;->    rayDirY = (dirY + planeY * cameraX/fp);
 
 	movefa	planeX.a,rayDirX
 	movefa	planeY.a,rayDirY
 
-	movei	#FP,tmp0
-	sub	tmp0,cameraX
+	sub	fp,cameraX
 
 	imult	cameraX,rayDirX
 	imult	cameraX,rayDirY
@@ -351,7 +362,7 @@ planeY	reg 99
 //->
 //->      if (rayDirX < 0) {
 //->        stepX = -1;
-d//->        sideDistX = sideDistX * deltaDistX/fp;
+//->        sideDistX = sideDistX * deltaDistX/fp;
 //->      } else {
 //->        stepX = 1;
 //->        sideDistX = (fp - sideDistX) * deltaDistX/fp;
@@ -360,9 +371,10 @@ d//->        sideDistX = sideDistX * deltaDistX/fp;
 
 	move	rayDirX,tmp0
 	abs	tmp0
-	movei	#FP,tmp2
+	moveq	#0,stepX
 	jr	eq,.zeroRayX
-	nop
+	moveq	#0,sideDistX
+
 	div	tmp0,deltaDistX
 	movefa	sideDistX.a,sideDistX
 	moveq	#1,stepX
@@ -371,7 +383,7 @@ d//->        sideDistX = sideDistX * deltaDistX/fp;
 
 	neg	sideDistX
 	moveq	#1,stepX
-	add	tmp2,sideDistX
+	add	fp,sideDistX
 .negRayX
 	imult	deltaDistX,sideDistX
 	sharq	#FP_BITS,sideDistX
@@ -379,23 +391,26 @@ d//->        sideDistX = sideDistX * deltaDistX/fp;
 
 	move	rayDirY,tmp0
 	abs	tmp0
+	moveq	#0,stepY
 	jr	eq,.zeroRayY
-	nop
+	moveq	#0,sideDistY
+
 	div	tmp0,deltaDistY
 	movefa	sideDistY.a,sideDistY
-	moveq	#31,stepY
+	moveq	#WORLD_WIDTH,stepY
 	jr	cc,.posRayY
 	neg	stepY
 
 	neg	sideDistY
-	moveq	#31,stepY
-	add	tmp2,sideDistY
+	moveq	#WORLD_WIDTH,stepY
+	add	fp,sideDistY
 .posRayY:
 	imult	deltaDistY,sideDistY
 	sharq	#FP_BITS,sideDistY
 .zeroRayY
 
 	unreg rayDirX,rayDirY
+
 
 //->    while (hit == 0 ) {
 //->      //jump to next map square, either in x-direction, or in y-direction
@@ -412,35 +427,37 @@ d//->        sideDistX = sideDistX * deltaDistX/fp;
 //->      hit = worldMap[int(mapX/fp)][int(mapY/fp)];
 //->    }
 
-hit		reg 99
+
 side		reg 99
 left		reg 99
 color		reg 99
 height		reg 99
 
+
 	moveq	#0,color
+	movefa	world0.a,world
 .wall_loop
 	cmpq	#0,color
 	jr	ne,.doneWall
 	cmp	sideDistX,sideDistY
-	movefa	world.a,tmp1
 	jr	mi,.yStep
+	nop
 	moveq	#0,side
-	add	stepX,mapX
-	jr	.cont1
+	add	stepX,world
 	add	deltaDistX,sideDistX
+	jr	.wall_loop
+	loadb	(world),color
+
 .yStep:
 	moveq	#1,side
-	add	stepY,mapY
+	add	stepY,world
 	add	deltaDistY,sideDistY
-.cont1
-	add	mapY,tmp1
-	add	mapX,tmp1
 	jr	.wall_loop
-	loadb	(tmp1),color
+	loadb	(world),color
 .doneWall
 
-	unreg	mapX,mapY
+	unreg	world
+
 
 //->    int perpWallDist;
 //->    if (side == 0) perpWallDist = (sideDistX - deltaDistX);
@@ -448,14 +465,15 @@ height		reg 99
 
 perpWallDist	reg 99
 
-	move	sideDistX,perpWallDist
-	sub	deltaDistX,perpWallDist
 	cmpq	#0,side
+	move	deltaDistX,tmp0
 	jr	eq,.front
-	nop
+	move	sideDistX,perpWallDist
+	move	deltaDistY,tmp0
 	move	sideDistY,perpWallDist
-	sub	deltaDistY,perpWallDist
 .front
+	sub	tmp0,perpWallDist
+
 //->    //Calculate _height of line to draw on screen
 //->    int line_height;
 //->    line_height = (_height*fp / perpWallDist);
@@ -526,11 +544,12 @@ perpWallDist	reg 99
 //->	store	tmp2,(blitter+_BLIT_CMD)
 //->	WAITBLITTER
 
-	regmap
-	unreg height,x,y,hit,side,left
+	unreg height,x,y,side,left,fp
 
 	unreg stepX,stepY,sideDistX,sideDistY,deltaDistX,deltaDistY
 	unreg cameraX,color
+
+	unreg sideDistX.a,sideDistY.a,world0.a
 
 ;;; ------------------------------
 ;;; move
@@ -578,7 +597,7 @@ posY	reg 99
 	move	posY,tmp1
 	shrq	#FP_BITS,tmp0
 	shrq	#FP_BITS,tmp1
-	moveq	#31,tmp2
+	moveq	#WORLD_WIDTH,tmp2
 	mult	tmp2,tmp1
 	movefa	world.a,tmp2
 	add	tmp0,tmp2

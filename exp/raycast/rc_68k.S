@@ -342,9 +342,9 @@ obl0:
  branch	VC = vde_pal-1, _gpu01
  nop
  IF max_x < 320
- scbitmap screen0,11,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,320.0/max_x,1.0,1.0,bpp,0,NOTRANS RELEASE,0,1
+ scbitmap screen0,9,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,320.0/max_x,1.0,1.0,bpp,0,NOTRANS RELEASE,0,1
  ELSE
- bitmap screen0,11,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANS RELEASE,0,1
+ bitmap screen0,9,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANS RELEASE,0,1
  ENDIF
  bitmap	txt_screen, 9,y_start_pal,(max_x_txt/64),(max_x_txt/64),max_y_txt, 0,127, TRANS RELEASE,0,1
  bitmap	logo_screen, 10,y_start_pal+max_y_txt+max_y_gr-9,1,1,9, 0,127,TRANS  RELEASE,0,1
@@ -363,9 +363,9 @@ obl1:
  branch	VC = vde_pal-1, _gpu11
  nop
  IF max_x < 320
- scbitmap screen1,11,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,320.0/max_x,1.0,1.0,bpp,0,NOTRANS RELEASE,0,1
+ scbitmap screen1,9,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,320.0/max_x,1.0,1.0,bpp,0,NOTRANS RELEASE,0,1
  ELSE
- bitmap screen1,11,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANSS RELEASE,0,1
+ bitmap screen1,9,y_start_pal+max_y_txt,gr_phrase,gr_phrase,max_y_gr,bpp,0,NOTRANSS RELEASE,0,1
  ENDIF
  bitmap	txt_screen, 9,y_start_pal,(max_x_txt/64),(max_x_txt/64),max_y_txt, 0,127, TRANS RELEASE,0,1
  bitmap	logo_screen, 10,y_start_pal+max_y_txt+max_y_gr-9,1,1,9, 0,127, TRANS RELEASE,0,1
