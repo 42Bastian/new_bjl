@@ -4,12 +4,19 @@ New and old examples.
 
 See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
+## [blit_tst2](blit_tst2)
+
+Another Blitter test: Copy 80 stripes from GPU RAM to RAM.
+
 ## [raycast](raycast)
 
 A PoC for a raycast engine. Inspired by
 
 https://lodev.org/cgtutor/raycasting.html
 
+## [blit_tst](blit_tst)
+
+Small demo to show rectangle moves with the Blitter.
 
 ## [gpu_check](gpu_check)
 
@@ -59,7 +66,3 @@ Test program for the Blitter line drawing function.
 
 A template for GPU/DSP only demos.
 `lsp_v15.S` by Ericde45 (see https://github.com/ericde45/LSP_Jaguar)
-
-## [blit_tst](blit_tst)
-
-Small demo to show rectangle moves with the Blitter.
