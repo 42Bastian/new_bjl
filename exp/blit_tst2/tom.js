@@ -17,6 +17,18 @@ screen	equ $f03ff4
 	nop
 	ENDM
 
+BPP::	equ 8
+
+ IF BPP = 8
+X_STEP		equ 8
+BLIT_PIXEL	equ BLIT_PIXEL8
+LOOP_STEP	equ 8
+ ELSE
+X_STEP		equ 4
+BLIT_PIXEL	equ BLIT_PIXEL16
+LOOP_STEP	equ 4
+ ENDIF
+
 x		reg 99
 dst		reg 99
 src		reg 99
@@ -48,17 +60,17 @@ waitStart:
 LOOPX	reg 99
 
 	store	dst,(blitter)
-	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID320|BLIT_XADDPHR,tmp0
+	movei	#BLIT_PITCH1|BLIT_PIXEL|BLIT_WID320|BLIT_XADDPHR,tmp0
 	store	tmp0,(blitter+_BLIT_A1_FLAGS)
-	movei	#0<<16|((320-4) & 0xffff),tmp0
+	movei	#0<<16|((320-X_STEP) & 0xffff),tmp0
 	store	tmp0,(blitter+_BLIT_A1_STEP)
 
 	movei	#data,tmp0
 	store	tmp0,(blitter+_BLIT_A2_BASE)
-	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID8|BLIT_XADDPHR,tmp0
+	movei	#BLIT_PITCH1|BLIT_PIXEL|BLIT_WID8|BLIT_XADDPHR,tmp0
 	store	tmp0,(blitter+_BLIT_A2_FLAGS)
 
-	movei	#320-4,x
+	movei	#320-LOOP_STEP,x
 	move	pc,LOOPX
 .loopx
 	store	x,(blitter+_BLIT_A1_PIXEL)
@@ -66,13 +78,13 @@ LOOPX	reg 99
 	moveq	#0,tmp0
 	store	tmp0,(blitter+_BLIT_A2_PIXEL)
 
-	movei	#200<<16|4,tmp0
+	movei	#200<<16|X_STEP,tmp0
 	store	tmp0,(blitter+_BLIT_COUNT)
 	movei	#BLIT_LFU_REPLACE|BLIT_SRCEN|BLIT_UPDA1,tmp0
 	store	tmp0,(blitter+_BLIT_CMD)
 	WAITBLITTER
 
-	subq	#4,x
+	subq	#LOOP_STEP,x
 	jump	pl,(LOOPX)
 	nop
 	jump	(LOOP)
@@ -80,9 +92,16 @@ LOOPX	reg 99
 
 align	8
 data:
+ IF BPP = 8
+	rept 200/2
+	dc.b 1,2,3,4,5,6,7,8
+	dc.b 8,7,6,5,4,3,2,254
+	endr
+ ELSE
 	rept 200/4
 	dc.w $ffff,$80ff,$50ff,$78ff
-	dc.w $ffff,$80ff,$50ff,$78ff
-	dc.w $f8ff,$87ff,$9fff,$00ff
-	dc.w $f8ff,$87ff,$9fff,$00ff
+        dc.w $ffff,$80ff,$50ff,$78ff
+        dc.w $f8ff,$87ff,$9fff,$00ff
+        dc.w $f8ff,$87ff,$9fff,$00ff
 	endr
+ ENDIF

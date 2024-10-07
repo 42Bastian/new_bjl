@@ -75,6 +75,14 @@ init:	INCLUDE "68k_inc/startup.inc"
 	move.l	a0,TextScreen(a6)
 	bsr	InitTxtScreen
 	move.w	#$f030,$f00058
+
+	moveq	#7,d0
+	move.l	#$f00400,a0
+	move.w	#$30ff,d1
+	clr.w	(a0)+
+.clut:	move.w	d1,(a0)+
+	add.w	#$0700,d1
+	dbra	d0,.clut
 ;;;********************
 ;;; Video setup
 	bsr	VideoInit
@@ -319,8 +327,15 @@ Hallo:	dc.b "    Jaguar Blitter test: Stripe copy   "
 vde_pal		equ (PAL_VMID+PAL_HEIGHT)/2+1
 vde_ntsc	equ (NTSC_VMID+NTSC_HEIGHT)/2+1
 
+ IF BPP = 8
+bpp		= 3
+gr_phrase	= max_x/8
+ ELSE
 bpp		= 4
 gr_phrase	= max_x/4
+ ENDIF
+
+
 y_start_pal	= 32
 y_start_ntsc	= 24
 
