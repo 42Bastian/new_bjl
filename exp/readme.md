@@ -4,6 +4,11 @@ New and old examples.
 
 See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
+## [blit_tst3](blit_tst3)
+
+Copy a 160x102 picture in stripes of 8 pixels from RAM to RAM.
+Alternating phrase and pixel wise.
+
 ## [blit_tst2](blit_tst2)
 
 Another Blitter test: Copy 80 stripes from GPU RAM to RAM.
