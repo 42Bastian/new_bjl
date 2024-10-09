@@ -4,6 +4,10 @@ New and old examples.
 
 See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
+## [blit_tst4](blit_tst4)
+
+Copy a 160x102 picture in stripes of 1 pixels stretching/shrinking on Y axis.
+
 ## [blit_tst3](blit_tst3)
 
 Copy a 160x102 picture in stripes of 8 pixels from RAM to RAM.
