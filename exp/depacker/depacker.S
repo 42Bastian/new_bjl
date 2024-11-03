@@ -95,24 +95,28 @@ init:	INCLUDE "68k_inc/startup.inc"
 	lea	Hallo(pc),a0
 	bsr	PrintA0
 
-	move.l	#26590<<16|$ffff,PIT0	 ; 1/1000s-Timer
+	move.l	#26590<<16|0,PIT0	 ; 1/1000s-Timer
+	move.l	#($1F00|C_VIDENA|C_GPUENA|C_PITENA)<<16,INT1
+
 	.globl again
 again:
 	move.l	screen(a6),a0
 	move.l	#320*200*2,d0
 	bsr	memzero
 
-	move.w	#$ffff,PIT1
+	moveq	#0,d7
+//->	move.w	#$ffff,PIT1
 	bsr	StartGPU
-	move.w	PIT1,d0
-	not.w	d0
+	move.l	d7,d0
+//->	move.w	PIT1,d0
+//->	not.w	d0
 
 	moveq	#2,d1
 	move.l	d1,Cursor(a6)
 	bsr	PrintDEZ
 
 	addq.w	#2,Cursor(a6)
-	move.l	d7,d0
+	move.l	d6,d0
 	bsr	PrintHEXl
 
 	bsr	swap		; now show last frame and wait for VBL
@@ -253,7 +257,6 @@ sw1:
 my_irq:
 	movem.l d0-d2/a0-a1,-(sp)
 	move.w	INT1,d2
-
 	btst	#0,d2
 	beq.s	no_vi
 
@@ -267,11 +270,16 @@ no_swap:
 	bsr	CopyOBL
 no_vi:
 	btst	#1,d2
+	beq.s	no_gpu
+	addq.l	#1,d6
+no_gpu:
+	btst	#3,d2
 	beq.s	cont_irq
+	;; PIT0/1
 	addq.l	#1,d7
 cont_irq:
 	lsl.w	#8,d2
-	or.w	#C_VIDENA|C_GPUENA,d2
+	or.w	#C_VIDENA|C_GPUENA|C_PITENA,d2
 	swap	d2
 	move.l	d2,INT1
 
