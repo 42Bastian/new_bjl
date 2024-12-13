@@ -62,6 +62,19 @@ ENDIF
 		MACRO DPHRASE
 		align 16
 		ENDM
+
+	MACRO CMPS
+	xor	\0,\1
+	jr	pl,.\equal_sign	; equal sign =>
+	xor	\0,\1
+
+	jr	.\done
+	cmp	\0,\1
+.\equal_sign:
+	cmp	\1,\0
+.\done
+	ENDM
+
 ***************
 		MACRO PUSH
 		IFVAR \0
