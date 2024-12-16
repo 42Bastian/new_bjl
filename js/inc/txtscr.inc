@@ -12,27 +12,25 @@
 ;;; r3 - font data
 
 InitTxtScreen::
-	PUSHLR	r4
+	PUSHLR	r14
 	shlq	#1,r0
-	movei	#$f00400,r4
-	add	r0,r4
-	store	r1,(r4)
-	movei	#TextScreen,r4
-	store	r2,(r4)
-	addq	#4,r4
+	movei	#$f00400,r14
+	store	r1,(r14+r0)
+	movei	#TextScreen,r14
+	store	r2,(r14)
 	addq	#8,r3		; skip header
-	store	r3,(r4)
-	addq	#4,r4
+	store	r3,(r14+4)
 
 	movei	#((max_x_txt>>3)*max_y_txt)>>2,r1
 	moveq	#0,r0
+	store	r0,(r14+8)
 .clr
 	subq	#1,r1
 	store	r0,(r2)
 	jr	nz,.clr
 	addqt	#4,r2
-	store	r0,(r4)
-	POPLR	r4
+
+	POPLR	r14
 
 ;;; ----------------------------------------
 ;;; Print  a zero terminated string
@@ -223,10 +221,11 @@ __PrintChar
 	movei	#((max_x_txt>>3)-1)<<16,r4
 	cmp	r1,r4
 	jr	pl,.no_nl
-	or	r3,r1		; combine with Y
-	moveq	#1,r1		; back to 1
-	add	r3,r1		; combine with Y
+	nop
+	addq	#1,r3
+	moveq	#0,r1		; back to 1
 .no_nl
+	or	r3,r1		; combine with Y
 	rorq	#16,r1		; back to y:x
 	shrq	#16,r4		; max_x-1
 	store	r1,(r14+8)
