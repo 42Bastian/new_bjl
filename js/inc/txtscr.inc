@@ -209,23 +209,23 @@ __PrintDigit::
 ;;;
 ;;; r0-r4 destroyed
 __PrintChar
-	load	(r14+8),r3	; y:x
+	load	(r14+8),r1	; y:x
 	load	(r14),r2	; screen pointer
-	move	r3,r1
-	shrq	#16,r3		; y
+	move	r1,r3
 	shlq	#16,r1
+	shrq	#16,r3		; y
 	shrq	#16,r1		; x
 	add	r1,r2
 	addq	#1,r1		; next x
-	shlq	#16,r1
 	movei	#((max_x_txt>>3)-1)<<16,r4
+	shlq	#16,r1
 	cmp	r1,r4
 	jr	pl,.no_nl
-	nop
-	addq	#1,r3
-	moveq	#0,r1		; back to 1
-.no_nl
 	or	r3,r1		; combine with Y
+	nop			; scoreboard bug fix
+	moveq	#1,r1		; back to 1
+	add	r3,r1
+.no_nl
 	rorq	#16,r1		; back to y:x
 	shrq	#16,r4		; max_x-1
 	store	r1,(r14+8)
@@ -237,7 +237,7 @@ __PrintChar
 	shrq	#24-3,r0	; (char & 255) * 8
 	add	r3,r2		; final destination
 	add	r0,r1		; final source
-	moveq	#7,r3
+	moveq	#8,r3
 .char
 	loadb	(r1),r0
 	addqt	#1,r1
