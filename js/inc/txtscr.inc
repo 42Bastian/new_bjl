@@ -211,33 +211,33 @@ __PrintDigit::
 ;;;
 ;;; r0-r4 destroyed
 __PrintChar
-	load	(r14+8),r3		; y:x
-	load	(r14),r2
+	load	(r14+8),r3	; y:x
+	load	(r14),r2	; screen pointer
 	move	r3,r1
-	shrq	#16,r3
+	shrq	#16,r3		; y
 	shlq	#16,r1
-	shrq	#16,r1
+	shrq	#16,r1		; x
 	add	r1,r2
-	addq	#1,r1
+	addq	#1,r1		; next x
 	shlq	#16,r1
 	movei	#((max_x_txt>>3)-1)<<16,r4
 	cmp	r1,r4
 	jr	pl,.no_nl
-	or	r3,r1
-	moveq	#1,r1
-	add	r3,r1
+	or	r3,r1		; combine with Y
+	moveq	#1,r1		; back to 1
+	add	r3,r1		; combine with Y
 .no_nl
-	rorq	#16,r1
-	shrq	#16,r4
+	rorq	#16,r1		; back to y:x
+	shrq	#16,r4		; max_x-1
 	store	r1,(r14+8)
-	addq	#1,r4
-	load	(r14+4),r1
-	mult	r4,r3
+	addq	#1,r4		; max_x
+	load	(r14+4),r1	; font data
+	mult	r4,r3		; address
 	shlq	#24,r0
-	shlq	#3,r3
-	shrq	#24-3,r0
-	add	r3,r2
-	add	r0,r1
+	shlq	#3,r3		; 8 lines high
+	shrq	#24-3,r0	; (char & 255) * 8
+	add	r3,r2		; final destination
+	add	r0,r1		; final source
 	moveq	#7,r3
 .char
 	loadb	(r1),r0
