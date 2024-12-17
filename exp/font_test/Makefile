@@ -1,4 +1,4 @@
-DEMO=template
+DEMO=font_test
 
 OS:=$(shell uname -s)
 
