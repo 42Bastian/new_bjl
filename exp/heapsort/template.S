@@ -124,6 +124,7 @@ InitGPU:
 	movea.l (a0)+,a1	; destination
 	move.l	a1,(a2)
 	move.l	(a0)+,d0	; Length in Bytes
+	addq.l	#3,d0		; round up
 	adda.l	#$8000,a1
 	bsr	memcpy
 

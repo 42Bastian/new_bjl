@@ -163,7 +163,6 @@ heapSort::
 
 	regmap
 
-	align	4
 compareFunc::
  IF 1
 ;;; -----------------------
@@ -174,7 +173,6 @@ compareFunc::
 
 	jump	(LR)
 	cmp	r0,r1
-	align	4
 .equal_sign
 	jump	(LR)
 	cmp	r1,r0
