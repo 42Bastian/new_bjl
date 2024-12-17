@@ -101,7 +101,9 @@ InitGPU:
 	move.l	d0,4(a2)	; GPU halt
 	movea.l (a0)+,a1	; destination
 	move.l	a1,(a2)
-	move.l	(a0)+,d0	; Length in Bytes
+	moveq	#3,d0
+	add.l	(a0)+,d0	; Length in Bytes
+
 	adda.l	#$8000,a1
 	bsr	memcpy
 
@@ -326,8 +328,10 @@ mc_wbl1:
 	beq.s	mc_wbl1
 	rts
 
-	LONG
-ASCII:		  .incbin "font/light8x8.fnt"
+	.align	4
+
+ASCII:
+	.incbin "font/light8x8.fnt"
 
 jag_end:
 	BSS

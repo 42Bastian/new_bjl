@@ -60,4 +60,10 @@ waitStart:
 	jump	(r0)
 	addq	#1,r20
 
+
 	include <js/inc/txtscr.inc>
+eof_text:
+sizeof_text equ eof_text-InitTxtScreen
+	echo "txscr: %D sizeof_text"
+
+//->	align	4
