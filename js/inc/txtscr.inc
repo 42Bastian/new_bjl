@@ -230,16 +230,30 @@ __PrintChar
 	shrq	#16,r4		; max_x-1
 	store	r1,(r14+8)
 	addq	#1,r4		; max_x
-	load	(r14+4),r14	; font data
+	load	(r14+4),r1	; font data
 	mult	r4,r3		; address
 	shlq	#24,r0
 	shlq	#3,r3		; 8 lines high
 	shrq	#24-3,r0	; (char & 255) * 8
 	add	r3,r2		; final destination
-	add	r0,r14		; final source
- IF 1
-	load	(r14),r0
-	load	(r14+4),r3
+	add	r0,r1		; final source
+ IFD SMALL_TXTSCR
+	moveq	#7,r3
+.char
+	loadb	(r1),r0
+	addqt	#1,r1
+	subq	#1,r3
+	storeb	r0,(r2)
+	jr	ne,.char
+	add	r4,r2
+
+	loadb	(r1),r0
+	jump	(LR)
+	storeb	r0,(r2)
+ ELSE
+	load	(r1),r0
+	addq	#4,r1
+	load	(r1),r3
 	REPT 4
 	rorq	#24,r0
 	storeb	r0,(r2)
@@ -253,17 +267,4 @@ __PrintChar
 	rorq	#24,r3
 	jump	(LR)
 	storeb	r3,(r2)
- ELSE
-	moveq	#7,r3
-.char
-	loadb	(r14),r0
-	addqt	#1,r14
-	subq	#1,r3
-	storeb	r0,(r2)
-	jr	ne,.char
-	add	r4,r2
-
-	loadb	(r14),r0
-	jump	(LR)
-	storeb	r0,(r2)
  ENDIF
