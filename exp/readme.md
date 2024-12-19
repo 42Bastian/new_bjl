@@ -4,6 +4,10 @@ New and old examples.
 
 See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
+## [template](template)
+
+A small example as template for 68k + GPU code. With some time measurement.
+
 ## [font_test](font_test)
 
 A small example showing GPU/DSP text output routines.
