@@ -181,7 +181,7 @@ clearmem:	movem.l d0-d3,-(a0)
 		clr.l	Cursor(a6)
 		lea	Hallo(pc),a0
 		bsr	PrintA0
-		moveq	#4*4,d0
+		moveq	#1*4,d0
 
 again:		move.l  d0,object_ptr(a6)
 		lea	faces_tab(pc),a0

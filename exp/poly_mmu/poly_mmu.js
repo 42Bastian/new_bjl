@@ -449,7 +449,11 @@ Drawfaces::
  IF _8Bit
 	movei	#BLIT_PITCH1|BLIT_PIXEL8|BLIT_WIDTH|BLIT_XADDPHR,tmp0
  ELSE
+ IF GOURAUD
+	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WIDTH|BLIT_XADDPIX,tmp0
+ ELSE
 	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WIDTH|BLIT_XADDPHR,tmp0
+ ENDIF
  ENDIF
 	store	tmp0,(blitter+$04)
 	movei	#$00010000,tmp0
@@ -864,7 +868,10 @@ DrawLines::
  ENDIF
 	store	tmp0,(blitter+_BLIT_PATD)
 	store	tmp0,(blitter+_BLIT_PATD+4)
-
+ IF GOURAUD
+	movei	#$28000,tmp0
+	store	tmp0,(blitter+_BLIT_IINC)
+ ENDIF
 	movei	#B_PATDSEL|B_GOURD*GOURAUD,bstart
 	movefa	x_save.a,xptr
 
