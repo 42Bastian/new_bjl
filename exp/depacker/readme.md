@@ -17,7 +17,7 @@ The number shown is the time to depack the picture.
 
 | lz4 | lz4 fast | zx0 | zx0 fast | TP  | TP fast | lzsa -p | fast lzsa -p | lzsa | n0  | upkr | upkr fast| Exomizer |
 | :-: | :-:      | :-: | :-:      | :-: | :-:     | :-:     | :-:          |  :-: | :-: | :-:  | :-:      | :-:      |
-| 94  | 138      | 132 | 192      | 70  | 136     | 168     | 195          | 182  | 162 | 266  | 318      | 328 |
+| 94  | 138      | 132 | 192      | 70  | 136     | 168     | 195          | 182  | 162 | 240  | 318      | 328 |
 
 * depack time (ms)
 
