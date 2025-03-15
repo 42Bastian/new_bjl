@@ -7,6 +7,8 @@
 
 	UNREG	SP,SP.a,LR,LR.a
 
+ATARI		equ 1
+
 	;; return values
 _MS_PER_FRAME	equ 0
 _VBLS_PER_FRAME	equ 4
@@ -185,6 +187,11 @@ pit.a		reg 99
 time.a		reg 99
 
 main::
+	movei	#$f0211c,r0
+	moveq	#ATARI,r1
+	store	r1,(r0)
+
+
 	movei	#$f02200,blitter
 //->	movei	#200<<16|320,tmp0
 	moveq	#0,tmp0
@@ -226,25 +233,26 @@ waitStart:
 ;;; ------------------------------
 ;;; CLS
 ;;; ------------------------------
-//->	moveq	#0,tmp0
-//->	store	tmp0,(blitter+_BLIT_PATD)
-//->	store	tmp0,(blitter+_BLIT_PATD+4)
-//->	store	tmp0,(blitter+$40)
-//->	store	tmp0,(blitter+$44)
-//->	bset	#10,tmp0	   ; == $400
-//->	store	tmp0,(blitter+$70)	; int inc
-//->	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDPHR,tmp0
-//->	movefa	currScreen.a,tmp1
-//->	store	tmp0,(blitter+_BLIT_A1_FLAGS)
-//->	store	tmp1,(blitter)	;_BLIT_A1_BASE
-//->	moveq	#0,tmp1
-//->	movei	#(1<<16)|(rez_y*rez_x),tmp0
-//->	store	tmp1,(blitter+_BLIT_A1_PIXEL)
-//->	movei	#B_PATDSEL|B_GOURD,tmp1
-//->	store	tmp0,(blitter+_BLIT_COUNT)
-//->	store	tmp1,(blitter+_BLIT_CMD)
-//->	WAITBLITTER 		; wait for CLS to finish
-
+ IF 0
+	moveq	#0,tmp0
+	store	tmp0,(blitter+_BLIT_PATD)
+	store	tmp0,(blitter+_BLIT_PATD+4)
+	store	tmp0,(blitter+$40)
+	store	tmp0,(blitter+$44)
+	bset	#10,tmp0	   ; == $400
+	store	tmp0,(blitter+$70)	; int inc
+	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDPHR,tmp0
+	movefa	currScreen.a,tmp1
+	store	tmp0,(blitter+_BLIT_A1_FLAGS)
+	store	tmp1,(blitter)	;_BLIT_A1_BASE
+	moveq	#0,tmp1
+	movei	#(1<<16)|(rez_y*rez_x),tmp0
+	store	tmp1,(blitter+_BLIT_A1_PIXEL)
+	movei	#B_PATDSEL|B_GOURD,tmp1
+	store	tmp0,(blitter+_BLIT_COUNT)
+	store	tmp1,(blitter+_BLIT_CMD)
+	WAITBLITTER 		; wait for CLS to finish
+ ENDIF
 cnt	REG 26
 DRAW	reg 25
 LOOP	reg 24
@@ -261,47 +269,47 @@ x1	reg 0!
 	move	pc,LOOP
 .loop
 	IF 0
-	movei	#100,x0
-	movei	#100,x1
-	movei	#0,y0
+	movei	#40,x0
+	movei	#10,y0
+	movei	#40,x1
 	movei	#100,y1
 	movei	#$fff0,color
 	BL	(DRAW)
 
-	movei	#100,x0
-	movei	#100,x1
-	movei	#101,y1
-	movei	#199,y0
-	movei	#$fff0,color
-	BL	(DRAW)
-
-	movei	#0,x0
-	movei	#199,x1
-	movei	#0,y1
-	movei	#199,y0
-	movei	#$08f0,color
-	BL	(DRAW)
-
-	movei	#0,x1
-	movei	#199,x0
-	movei	#0,y1
-	movei	#199,y0
-	movei	#$08f0,color
-	BL	(DRAW)
-
-	movei	#0,x1
-	movei	#110,y1
-	movei	#199,x0
-	movei	#100,y0
-	movei	#$48f0,color
-	BL	(DRAW)
-
-	movei	#0,x1
-	movei	#0,y1
-	movei	#199,x0
-	movei	#100,y0
-	movei	#$70f0,color
-	BL	(DRAW)
+//->	movei	#100,x0
+//->	movei	#100,x1
+//->	movei	#101,y1
+//->	movei	#199,y0
+//->	movei	#$fff0,color
+//->	BL	(DRAW)
+//->
+//->	movei	#0,x0
+//->	movei	#199,x1
+//->	movei	#0,y1
+//->	movei	#199,y0
+//->	movei	#$08f0,color
+//->	BL	(DRAW)
+//->
+//->	movei	#0,x1
+//->	movei	#199,x0
+//->	movei	#0,y1
+//->	movei	#199,y0
+//->	movei	#$08f0,color
+//->	BL	(DRAW)
+//->
+//->	movei	#0,x1
+//->	movei	#110,y1
+//->	movei	#199,x0
+//->	movei	#100,y0
+//->	movei	#$48f0,color
+//->	BL	(DRAW)
+//->
+//->	movei	#0,x1
+//->	movei	#0,y1
+//->	movei	#199,x0
+//->	movei	#100,y0
+//->	movei	#$70f0,color
+//->	BL	(DRAW)
  ELSE
 	movei	#rez_x-1,x0
 	move	cnt,x1
@@ -360,6 +368,9 @@ x1	reg 0!
 	jump	(tmp0)
 	moveta	r2,currScreen.a
 
+ IF ATARI = 1
+	include <js/inc/linedraw_atari.inc>
+ ELSE
 	include <js/inc/linedraw.inc>
-
+ ENDIF
 	align 4

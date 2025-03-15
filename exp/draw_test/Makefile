@@ -30,7 +30,7 @@ vjd vjd_rom vj_rom vj: _68KFLAGS+= -DDEBUG
 
 ALL: $(DEMO).cof $(DEMO).j64
 
-$(DEMO).o : $(DEMO).js ../../js/inc/linedraw.inc
+$(DEMO).o : $(DEMO).js ../../js/inc/linedraw.inc ../../js/inc/linedraw_atari.inc
 
 $(DEMO)_68k.o : $(DEMO)_68k.S $(DEMO).o $(DEMO).equ
 	$(RMAC) $(_68KFLAGS) $(DEMO)_68k.S

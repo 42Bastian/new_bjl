@@ -93,12 +93,12 @@ again:
 	move.l	d1,Cursor(a6)
 
 	move.l	(a4)+,d0
-	bsr	PrintDEZ2	; time
+	bsr	PrintDEZ	; time
 
 	addq.w	#1,Cursor(a6)
 	move.l	(a4),d0
 	clr.l	(a4)+
-	bsr	PrintDEZ2	; VBLs per frame
+	bsr	PrintDEZ	; VBLs per frame
 	addq.w	#1,Cursor(a6)
 
 //->	bsr.s	printVal
