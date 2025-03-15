@@ -15,16 +15,13 @@
 ;;; r0 - x1
 draw::
 
-SPEED_OPT	EQU 0
-
-tmp	reg 8
 cnt	reg 7
 finc	reg 6
 inc	reg 5
 ;;; -- parameter
 y0	reg 4
 x0	reg 3
-color	reg 2!
+color	reg 2
 y1	reg 1!
 x1	reg 0!
 
@@ -35,79 +32,64 @@ x1	reg 0!
 
 	sub	y0,y1
 	sub	x0,x1
-	move	x1,tmp
+	move	x1,finc
 	move	y1,cnt
-	abs	tmp
+	abs	finc
 	abs	cnt
-	add	tmp,cnt
+	add	finc,cnt
 
 	abs	y1
 	jr	cc,.posy
 	div	cnt,y1
- IF SPEED_OPT = 1
-	shrq	#16,x0
-	or	x0,y0
-	jr	.ycont
- ELSE
 	or	y1,y1
- ENDIF
 	neg	y1
 .posy
 	shrq	#16,x0
 	or	x0,y0
-.ycont
+
 	move	y1,inc
 	abs	x1
 
 	jr	cc,.posx
 	div	cnt,x1
- IF SPEED_OPT = 1
-	move	y1,finc
-	shrq	#16,inc
-	shlq	#16,finc
-	shlq	#16,inc
-	jr	.xcont
- ELSE
 	or	x1,x1
- ENDIF
 	neg	x1
 .posx
 	move	y1,finc
 	shrq	#16,inc
 	shlq	#16,finc
 	shlq	#16,inc
-.xcont
-	move	x1,tmp
+
+	move	x1,x0
 	shlq	#16,x1
-	shrq	#16,tmp
+	shrq	#16,x0
 	shrq	#16,x1
-	or	tmp,inc
+	or	x0,inc
 	or	x1,finc
 
 	shrq	#16,cnt
-	moveq	#0,x1
+	moveq	#0,x0
 	bset	#16,cnt
+	bset	#16,x0	; B_PATDSEL
 
 	WAITBLITTER
 
 	store	color,(blitter+_BLIT_PATD)
-
-	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDINC,tmp0
+	store	cnt,(blitter+_BLIT_COUNT)
+	movei	#BLIT_PITCH1|BLIT_PIXEL16|BLIT_WID|BLIT_XADDINC,cnt
 	movefa	currScreen.a,color
-	store	tmp0,(blitter+_BLIT_A1_FLAGS)
+	store	cnt,(blitter+_BLIT_A1_FLAGS)
 	store	color,(blitter)	;_BLIT_A1_BASE
 
 	store	y0,(blitter+_BLIT_A1_PIXEL)
 	store	x1,(blitter+_BLIT_A1_FPIXEL)
 	store	inc,(blitter+_BLIT_A1_INC)
 	store	finc,(blitter+_BLIT_A1_FINC)
-	store	cnt,(blitter+_BLIT_COUNT)
 
-	bset	#16,x1	; B_PATDSEL
 	jump	(LR)
-	store	x1,(blitter+_BLIT_CMD)
+	store	x0,(blitter+_BLIT_CMD)
 
-	UNREG	tmp,cnt,inc,finc
+	UNREG	cnt,inc,finc
 	UNREG	x0,y0,x1,y1,color
 
 draw_e::
