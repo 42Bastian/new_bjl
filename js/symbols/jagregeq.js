@@ -240,12 +240,16 @@ DSP_ENDRAM	EQU DSP_RAM+(8*1024)	; 8K bytes
 ;      VIDEO INITIALIZATION CONSTANTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-NTSC_WIDTH	EQU	1409		; Width of screen in pixel clocks
-NTSC_HMID	EQU	823		; Middle of screen in pixel clocks
+;;->NTSC_WIDTH	EQU	1409		; Width of screen in pixel clocks
+;;->NTSC_HMID	EQU	823		; Middle of screen in pixel clocks
+NTSC_WIDTH	EQU	1229		; CJ's values
+NTSC_HMID	EQU	787
 NTSC_HEIGHT	EQU	241		; Height of screen in scanlines
 NTSC_VMID	EQU	266		; Middle of screen in halflines
 
-PAL_WIDTH	EQU	1381		; Same as above for PAL...
-PAL_HMID	EQU	843
+;;->PAL_WIDTH	EQU	1381		; Same as above for PAL...
+;;->PAL_HMID	EQU	843
+PAL_WIDTH	EQU	1255		; CJ's values
+PAL_HMID	EQU	821
 PAL_HEIGHT	EQU	287
 PAL_VMID	EQU	322

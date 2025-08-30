@@ -228,7 +228,7 @@ ENDIF
 		ELSE
 		jump  \0
 		ENDIF
-		addqt #6,LR
+		addq #6,LR
 		ENDM
 
 		MACRO JSR
