@@ -22,6 +22,9 @@ minihex_pixel_size	equ 2
 	align	4
 drawHex::
 	moveq	#8,r5
+ if drawHex < $f03000
+	nop
+ endif
 dh_pc
 	move	pc,r6
 	subq	#1,r5
@@ -30,7 +33,12 @@ dh_pc
 drawDigit::
 	moveq	#14,r3
 	and	r0,r3
+ if drawHex < $f03000
+	addq	#(_0-dh_pc)/2-8,r3
+	addq	#8,r3
+ else
 	addq	#(_0-dh_pc)/2,r3
+ endif
 	shlq	#1,r3
 	add	r6,r3
 	btst	#0,r0
@@ -45,6 +53,9 @@ drawDigit::
 	moveq	#3,r2
 .lx
 	shrq	#1,r1
+ if drawHex < $f03000
+	nop
+ endif
 	jump	eq,(r6)
 	subc	r3,r3		; 0 or -1
 	subq	#1,r2
@@ -59,6 +70,9 @@ drawDigit::
  ENDIF
 	movei	#(minihex_screen_width-3)*minihex_pixel_size,r2
 	moveq	#0,r3
+ if drawHex < $f03000
+	nop
+ endif
  IF minihex_pixel_size = 2
 	storew	r3,(r4)
  ELSE
