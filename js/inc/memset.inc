@@ -36,10 +36,18 @@ memset::
 	store	r3,(r14+_BLIT_CMD)
 .ms2:	load	(r14+_BLIT_CMD),r3
 	shrq	#1,r3
+ if drawHex < $f03000
+	nop
+ endif
 	jr	cc,.ms2
 	cmpq	#0,r1
+ if drawHex < $f03000
+	nop
+ endif
 	move	r1,r3
 	jump	ne,(LR)
 	move	r1,r2
+ if drawHex < $f03000
 	nop
+ endif
 	POPLR	r14
