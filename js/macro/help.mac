@@ -222,13 +222,14 @@ ENDIF
 		ENDM
 
 		MACRO BL
-		move  pc,LR
+.\_pc		move  pc,LR
 		IFVAR \1	; condition?
 		jump \0,\1
 		ELSE
 		jump  \0
 		ENDIF
-		addq #6,LR
+		addq #.\_ret-.\_pc,LR
+.\_ret
 		ENDM
 
 		MACRO JSR
@@ -240,15 +241,7 @@ ENDIF
 		ENDIF
 .\ok_jsr	move pc,LR
 		subqt #4,SP
-		IF *<$f00000
-		  IF *&3<>0
-		    addqt #10,LR
-		  ELSE
-		    addqt #12,LR
-		  ENDIF
-		ELSE
-		   addqt #10,LR
-		ENDIF
+		addqt	#.\exit_jsr-.\ok_jsr,LR
 		IFVAR \1
 		  jump \0,\1
 		ELSE
@@ -256,7 +249,6 @@ ENDIF
 		ENDIF
 		store LR,(SP)
 .\exit_jsr
-
 		ENDM
 
 		MACRO RTS
