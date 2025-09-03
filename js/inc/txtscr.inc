@@ -11,6 +11,8 @@
 ;;; r2 - framebuffer
 ;;; r3 - font data
 
+	align 4
+
 InitTxtScreen::
 	PUSHLR	r14
 	shlq	#1,r0
@@ -29,13 +31,14 @@ InitTxtScreen::
 	store	r0,(r2)
 	jr	nz,.clr
 	addqt	#4,r2
-
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	POPLR	r14
 
 ;;; ----------------------------------------
 ;;; Print  a zero terminated string
 ;;; r0 - ptr to zero terminated string
-
 PrintString:
 	movei	#TextScreen+8,r1
 	load	(r1),r1
@@ -58,6 +61,9 @@ PrintString_YX:
 	jump	ne,(r6)
 	addq	#1,r5
 
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	POPLR	r4,r5,r6,r14
 ;;; ----------------------------------------
 ;;; Print 6 digit decimal value
@@ -67,38 +73,62 @@ PrintDEC::
 	movei	#TextScreen+8,r1
 	load	(r1),r1
 ;;; ----------------------------------------
-;;; Print 6 digit decimal value
+;;; Print 6 digit signed decimal value
 ;;; r0 - value
 ;;; r1 - y:x position
 
 PrintDEC_YX::
-	PUSHLR	r4,r5,r6,r7,r14
+	PUSHLR	r4,r5,r6,r14
 	movei	#TextScreen,r14
+	moveq	#31,r2
 	abs	r0
-	moveq	#0,r5
+	addqt	#1,r2
 	jr	cc,.pl
 	store	r1,(r14+8)
-	subq	#1,r5
+	addq	#"-" - " ",r2
 .pl
+	move	r0,r6
+	move	r2,r0
+	movei	#__PrintChar,r5
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
+	BL	(r5)
+.pd0
+	move	r6,r0
+
 	movei	#10000,r1
 	move	r0,r6
 	div	r1,r0
-	movei	#__PrintDEC2,r7
-	move	r0,r2
-	mult	r1,r2
-	sub	r2,r6
-	BL	(r7)
+	subq	#__PrintChar-__PrintDEC2-32,r5
+	subq	#32,r5
+	mult	r0,r1
+	sub	r1,r6
+	jump	(r5)
+	addqt	#.pd1-.pd0,LR
+.pd1
 	move	r6,r0
 	movei	#100,r1
 	div	r1,r0
-	move	r0,r2
-	mult	r1,r2
-	sub	r2,r6
-	BL	(r7)
+	mult	r0,r1
+	sub	r1,r6
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
+	jump	(r5)
+	addqt	#.pd2-.pd1,LR
+.pd2
 	move	r6,r0
-	BL	(r7)
-
-	POPLR	r4,r5,r6,r7,r14
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
+	jump	(r5)
+	addqt	#.pd3-.pd2,LR
+.pd3
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
+	POPLR	r4,r5,r6,r14
 
 ;;; ----------------------------------------
 ;;; Print 2 digit decimal value
@@ -119,12 +149,16 @@ PrintDEC2_YX::
 	store	r1,(r14+8)
 	movei	#__PrintChar,r1
 	PUSH	r0
-	movei	#'-',r0
+	moveq	#"-"-32,r0
+	addq	#32,r0
 	BL	(r1)
 	POP	r0
 .pl
 	movei	#__PrintDEC2,r1
 	BL	(r1)
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	POPLR	r4,r14
 
 ;;; ----------------------------------------
@@ -150,14 +184,23 @@ PrintHEX_YX::
 .lh
 	shrq	#28,r0
 	cmpq	#10,r0
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	jump	mi,(r5)
 	shlq	#4,r7
 	jump	(r5)
 	addq	#7,r0
 .ret
 	subq	#1,r6
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	jr	pl,.lh
 	move	r7,r0
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 
 	POPLR	r4,r5,r6,r7,r14
 ;;; ----------------------------------------
@@ -176,6 +219,9 @@ PrintChar_YX::
 	movei	#__PrintChar,r4
 	store	r1,(r14+8)
 	BL	(r4)
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	POPLR	r4,r14
 ;;; ----------------------------------------
 ;;; internal function
@@ -183,25 +229,29 @@ __PrintDEC2::
 	shlq	#24,r0
 	movei	#(65536+5)/10,r1
 	shrq	#24,r0
-	mult	r1,r0
 	moveq	#9,r2
+	mult	r1,r0
 	add	r0,r2
-	shrq	#16,r0
+
 	PUSH	LR,r2
-	movei	#__PrintDigit,r1
-	BL	(r1)
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
+	move	pc,LR
+	jr	__PrintDigit0
+	addq	#6,LR
 	POP	LR,r0
 	moveq	#10,r1
 	mult	r1,r0
+__PrintDigit0:
 	shrq	#16,r0
 	;; fall thru
 ;;; ----------------------------------------
 ;;; internal function
 ;;; Print R0
 __PrintDigit::
-	moveq	#'0'>>1,r1
-	add	r1,r0
-	add	r1,r0
+	addq	#32,r0
+	addq	#"0"-32,r0
 
 ;;; ----------------------------------------
 ;;; internal function
@@ -265,6 +315,9 @@ __PrintChar
 	add	r4,r2
 	ENDR
 	rorq	#24,r3
+ IF InitTxtScreen < $f03000
+	nop
+ ENDIF
 	jump	(LR)
 	storeb	r3,(r2)
  ENDIF
