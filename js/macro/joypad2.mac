@@ -19,11 +19,19 @@
 
 	MACRO JOYPAD2
 IFVAR \0
+ IF \0 = 99
+JOY             REG 99
+VALUE           REG 99
+MASKE_GJ        REG 99
+JOY_REG         REG 99
+DUMMY0          REG 99
+ ELSE
 JOY             REG (\0)
 VALUE           REG (\0)+1
 MASKE_GJ        REG (\0)+2
 JOY_REG         REG (\0)+3
 DUMMY0          REG (\0)+4
+  ENDIF
 ELSE
 JOY             REG 0
 VALUE           REG 1

@@ -14,6 +14,18 @@ Video setup for PAL/NTSC. Inline function.
 
 Line drawing function using blitter.
 
+# linedraw_atari.inc
+
+Atari's version of line drawing with the Blitter
+
 # minihex.inc
 
 A small (100 bytes) 4x6 hex print routine
+
+# memset.inc
+
+Set memory area to a defined value using blitter
+
+# memzero.inc
+
+Clearing memory area with Blitter

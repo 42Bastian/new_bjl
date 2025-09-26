@@ -62,6 +62,19 @@ ENDIF
 		MACRO DPHRASE
 		align 16
 		ENDM
+
+	MACRO CMPS
+	xor	\0,\1
+	jr	pl,.\equal_sign	; equal sign =>
+	xor	\0,\1
+
+	jr	.\done
+	cmp	\0,\1
+.\equal_sign:
+	cmp	\1,\0
+.\done
+	ENDM
+
 ***************
 		MACRO PUSH
 		IFVAR \0
@@ -209,13 +222,14 @@ ENDIF
 		ENDM
 
 		MACRO BL
-		move  pc,LR
+.\_pc		move  pc,LR
 		IFVAR \1	; condition?
 		jump \0,\1
 		ELSE
 		jump  \0
 		ENDIF
-		addqt #6,LR
+		addq #.\_ret-.\_pc,LR
+.\_ret
 		ENDM
 
 		MACRO JSR
@@ -227,15 +241,7 @@ ENDIF
 		ENDIF
 .\ok_jsr	move pc,LR
 		subqt #4,SP
-		IF *<$f00000
-		  IF *&3<>0
-		    addqt #10,LR
-		  ELSE
-		    addqt #12,LR
-		  ENDIF
-		ELSE
-		   addqt #10,LR
-		ENDIF
+		addqt	#.\exit_jsr-.\ok_jsr,LR
 		IFVAR \1
 		  jump \0,\1
 		ELSE
@@ -243,7 +249,6 @@ ENDIF
 		ENDIF
 		store LR,(SP)
 .\exit_jsr
-
 		ENDM
 
 		MACRO RTS
@@ -322,6 +327,16 @@ RSADDR	set \0
 	ELSE
 RSADDR	set $1000
 	ENDIF
+RSCOUNT	set RSADDR
+	ENDM
+
+	MACRO RSRESET ; offset
+	IFVAR \0
+RSADDR	set \0
+	ELSE
+RSADDR	set 0
+	ENDIF
+RSCOUNT	set RSADDR
 	ENDM
 
 	MACRO RSB
@@ -331,6 +346,7 @@ RSADDR	SET RSADDR+(\1)*1
 	ELSE
 RSADDR	SET RSADDR+1
 	ENDIF
+RSCOUNT	set RSADDR
 	ENDM
 
 	MACRO RSW
@@ -340,6 +356,7 @@ RSADDR	SET RSADDR+(\1)*2
 	ELSE
 RSADDR	SET RSADDR+2
 	ENDIF
+RSCOUNT	set RSADDR
 	ENDM
 
 	MACRO RSL
@@ -349,6 +366,7 @@ RSADDR	SET RSADDR+(\1)*4
 	ELSE
 RSADDR	SET RSADDR+4
 	ENDIF
+RSCOUNT	set RSADDR
 	ENDM
 
 	MACRO RSP
@@ -358,6 +376,7 @@ RSADDR	SET RSADDR+(\1)*8
 	ELSE
 RSADDR	SET RSADDR+8
 	ENDIF
+RSCOUNT	set RSADDR
 	ENDM
 
 		MACRO legacy_POP

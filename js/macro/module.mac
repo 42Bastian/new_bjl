@@ -12,7 +12,7 @@ MODextern_\0::	EQU 1
 	IFVAR \1
 MODrun_\0::	EQU \1
 	ELSE
-	  IF GPU
+	  IF GPU = 1
 MODrun_\0::	EQU $f03040
 	  ELSE
 MODrun_\0::	EQU $f1b040

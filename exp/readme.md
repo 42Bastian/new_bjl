@@ -4,6 +4,14 @@ New and old examples.
 
 See [JaguarDemos](https://github.com/42Bastian/JaguarDemos) for a bunch of more examples.
 
+## [template](template)
+
+A small example as template for 68k + GPU code. With some time measurement.
+
+## [font_test](font_test)
+
+A small example showing GPU/DSP text output routines.
+
 ## [blit_tst4](blit_tst4)
 
 Copy a 160x102 picture in stripes of 1 pixels stretching/shrinking on Y axis.

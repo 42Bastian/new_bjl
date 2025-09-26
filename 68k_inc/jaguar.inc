@@ -18,6 +18,9 @@
 ; more changes by 42Bastian
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+ IF ^^defined ATARI_VIDEO = 0
+ATARI_VIDEO EQU 0
+ ENDIF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      GENERIC DEFINES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -134,15 +137,26 @@ O_STOPINTS	EQU	$00000008	; Enable Interrupts in STOP object
 ;      VIDEO INITIALIZATION CONSTANTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+ IF ATARI_VIDEO = 1
 NTSC_WIDTH	EQU	1409		; Width of screen in pixel clocks
 NTSC_HMID	EQU	823		; Middle of screen in pixel clocks
+ ELSE
+NTSC_WIDTH	EQU	1229		; CJ's values
+NTSC_HMID	EQU	787
+ ENDIF
 NTSC_HEIGHT	EQU	241		; Height of screen in scanlines
 NTSC_VMID	EQU	266		; Middle of screen in halflines
 
+ IF ATARI_VIDEO = 1
 PAL_WIDTH	EQU	1381		; Same as above for PAL...
 PAL_HMID	EQU	843
+ ELSE
+PAL_WIDTH	EQU	1255		; CJ's values
+PAL_HMID	EQU	821
+ ENDIF
 PAL_HEIGHT	EQU	287
 PAL_VMID	EQU	322
+
 
 ;;; The following mask will extract the PAL/NTSC flag bit from the
 ;;; CONFIG register. NTSC = Bit Set, PAL = Bit Clear

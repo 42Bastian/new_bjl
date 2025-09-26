@@ -14,8 +14,6 @@
 ;;; r0 - x1
 draw::
 
-dx	reg 10
-dy	reg 9
 m	reg 8
 cnt	reg 7
 dir_x	reg 6
@@ -28,50 +26,48 @@ color	reg 2!
 y1	reg 1!
 x1	reg 0!
 
-
-	move	y1,dy
-	move	x1,dx
-	sub	y0,dy
+	sub	y0,y1
 	moveq	#1,step_y
 	jr	pl,.pos
-	sub	x0,dx
+	sub	x0,x1
 	subqt	#2,step_y
 .pos
 	jr	pl,.noswap0
 	moveq	#1,dir_x
 
-	move	x1,x0
-	move	y1,y0
+	add	x1,x0
+	add	y1,y0
 	neg	step_y
-	abs	dx
+	abs	x1
 .noswap0
-	abs	dy		; ABS and test for zero
-	move	dx,cnt
+	abs	y1		; ABS and test for zero
+	move	x1,cnt
 	jr	ne,.yno0
-	cmp	dy,dx
+	cmp	y1,x1
 	moveq	#0,step_y
 .yno0
 	jr	ne,.not_diag
-	move	dy,m
+	move	y1,m
 
-	;; dx == dy
+	;; x1 == y1
 	moveq	#0,m
 	moveq	#0,dir_x
 	shlq	#16,step_y
 	jr	.diagonal
 	addqt	#1,step_y	; => becomes A1_INC
 .not_diag
-	jr	cc,.no_swap
+	jr	cc,.no_swap	; cmp y1,x1!
 	shlq	#16,m
 
-	shlq	#16,dx
-	move	dy,cnt
-	move	dx,m
+	shlq	#16,x1
+	move	y1,cnt
+	move	x1,m
 	subq	#2,dir_x	; swap x_inc 1 => y_inc 1
 .no_swap
 	div	cnt,m
 .diagonal
 	shlq	#16,y0
+//->	moveq	#0,tmp1
 	movei	#$80008000,tmp1	; start in the middle of the 1st pixel
 	or	x0,y0
 
@@ -113,7 +109,7 @@ x1	reg 0!
 	jump	(LR)
 	store	tmp1,(blitter+_BLIT_CMD)
 
-	UNREG	dx,dy,m,cnt,dir_x,step_y,a1inc
+	UNREG	m,cnt,dir_x,step_y,a1inc
 	UNREG	x0,y0,x1,y1,color
 
 draw_e::
