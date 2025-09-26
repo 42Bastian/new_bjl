@@ -77,7 +77,7 @@ OFF_DIV EQU 1
 	shlq	#1,r6
 	storew	r6,(_a0)		; taille en bytes
 
-	move	a0,_a0
+	move	xa0,_a0
 	addq	#6,_a0
 
 	load	(_a0),r6		; pointeur sample repeat
