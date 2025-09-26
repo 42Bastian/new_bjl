@@ -1,6 +1,16 @@
 ;-*-asm-*-
 	dsp
 
+	mac
+MACMODE	EQU 1
+
+
+ IFD MACMODE
+OFF	EQU 1
+ ELSE
+OFF	EQU 4
+ ENDIF
+
 	include <68k_inc/jaguar.inc>
 
 DSP_STACK_SIZE	equ	32	; long words
@@ -323,7 +333,7 @@ DSP_LSP_Timer1_cloop:
 
 	sub	r3,r2
 DSP_LSP_Timer1_swCode:
-	load	(R14+2*4),R3	; R3=code table / m_codeTableAddr
+	load	(R14+2*OFF),R3	; R3=code table / m_codeTableAddr
 	add	R6,R2
 	move	R2,R6
 	add	R2,R2
@@ -332,12 +342,12 @@ DSP_LSP_Timer1_swCode:
 	cmpq	#0,R2
 	movei	#DSP_LSP_Timer1_noInst,R12
 	jump	eq,(R12)
-	load	(R14+3*4),R4		; R4=escape code rewind / m_escCodeRewind
+	load	(R14+3*OFF),R4		; R4=escape code rewind / m_escCodeRewind
 
 	cmp	R4,R2
 	movei	#DSP_LSP_Timer1_r_rewind,R12
 	jump	eq,(R12)
-	load	(R14+4*4),R4		; R4=escape code set bpm / m_escCodeSetBpm
+	load	(R14+4*OFF),R4		; R4=escape code set bpm / m_escCodeSetBpm
 
 	cmp	R4,R2
 	movei	#DSP_LSP_Timer1_r_chgbpm,R12
@@ -422,7 +432,7 @@ DSP_LSP_Timer1_noPb:
 	store	R4,(R5)
 DSP_LSP_Timer1_noPa:
 
-	load	(R14+4*4),R5		; R5= instrument table  ( =+$10)  = a2   / m_lspInstruments-1 = 5-1
+	load	(R14+4*OFF),R5		; R5= instrument table  ( =+$10)  = a2   / m_lspInstruments-1 = 5-1
 ;--------------------------
 ; gestion des instruments
 ;--------------------------
@@ -794,18 +804,18 @@ DSP_LSP_Timer1_noInst:
 ;------------------------------------
 ;rewind
 DSP_LSP_Timer1_r_rewind:
-	load	(R14+8*4),R0		; bouclage : R0 = byte stream / m_byteStreamLoop = 8
+	load	(R14+8*OFF),R0		; bouclage : R0 = byte stream / m_byteStreamLoop = 8
 	movei	#DSP_LSP_Timer1_process,R12
-	load	(R14+9*4),R3		; m_wordStreamLoop=9
+	load	(R14+9*OFF),R3		; m_wordStreamLoop=9
 	jump	(R12)
-	store	R3,(R14+1*4)		; m_wordStream=1
+	store	R3,(R14+1*OFF)		; m_wordStream=1
 
 ;------------------------------------
 ; change bpm
 DSP_LSP_Timer1_r_chgbpm:
 	loadb	(R0),R8
 	movei	#DSP_LSP_Timer1_process,R12
-	store	R8,(R14+7*4)		; R3=nouveau bpm / m_currentBpm = 7
+	store	R8,(R14+7*OFF)		; R3=nouveau bpm / m_currentBpm = 7
 ;application nouveau bpm dans Timer 1
 	movei	#60*256,R10
 	div	R8,R10			; 60/bpm

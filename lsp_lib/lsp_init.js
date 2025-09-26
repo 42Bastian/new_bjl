@@ -11,14 +11,19 @@ __a0	REG 16
 LOOP	REG 20
 dummy	REG 21
 
+ IFD MACMODE
+OFF_DIV EQU 4
+ ELSE
+OFF_DIV EQU 1
+ ENDIF
 	movei	#silence-8,r14
 	moveq	#0,r1
-	store	r0,(r14+2*4)
-	store	r0,(r14+3*4)
-	store	r0,(r14+4*4)
+	store	r0,(r14+2*OFF)
+	store	r0,(r14+3*OFF)
+	store	r0,(r14+4*OFF)
 
 	load	(r14),a0
-	load	(r14+1*4),a1
+	load	(r14+1*OFF),a1
 	addq	#4,a0
 	addq	#4,a0		;skip ID
 	addq	#2,a0		;skip version
@@ -26,17 +31,17 @@ dummy	REG 21
 
 	loadw	(a0),r6
 	addq	#2,a0
-	store	r6,(r14+(m_currentBpm-LSPVars))		; default BPM
+	store	r6,(r14+(m_currentBpm-LSPVars)/OFF_DIV)	; default BPM
 	movei	#LSP_BPM_frequence_replay,r0
 	store	r6,(r0)
 
 	loadw	(a0),r6
 	addq	#2,a0
-	store	r6,(r14+(m_escCodeRewind-LSPVars))
+	store	r6,(r14+(m_escCodeRewind-LSPVars)/OFF_DIV)
 
 	loadw	(a0),r6
 	addq	#2,a0
-	store	r6,(r14+(m_escCodeSetBpm-LSPVars))
+	store	r6,(r14+(m_escCodeSetBpm-LSPVars)/OFF_DIV)
 //->load	(a0),r20; nb de ticks du module en tout = temps de replay ( /BPM)
 	addq	#4,a0
 
@@ -46,7 +51,8 @@ dummy	REG 21
 	move	a0,a2
 	subq	#12,a2	; LSP data has -12 offset on instrument tab ( to win 2 cycles in fast player :) )
 
-	store	a2,(r14+(m_lspInstruments-LSPVars)); instrument tab addr ( minus 4 )
+
+	store	a2,(r14+(m_lspInstruments-LSPVars)/OFF_DIV); instrument tab addr ( minus 4 )
 
 	move	a0,__a0
 	addq	#2,__a0
@@ -98,7 +104,7 @@ dummy	REG 21
 	loadw	(a0),r0		; codes count (+2)
 	addq	#2,a0
 
-	store	a0,(r14+(m_codeTableAddr-LSPVars)) 	; code table
+	store	a0,(r14+(m_codeTableAddr-LSPVars)/OFF_DIV) 	; code table
 	shlq	#1,r0
 	add	r0,a0
 	move	a0,__a0
@@ -124,11 +130,11 @@ dummy	REG 21
 	or	r21,r2
 	addq	#4,a0
 
-	store	a0,(r14+(m_wordStream-LSPVars))
+	store	a0,(r14+(m_wordStream-LSPVars)/OFF_DIV)
 	move	a0,a1
 	add	r0,a1		; byte stream
 	store	a1,(r14)	;+m_byteStream-LSPVars)
 	add	r2,a0
 	add	r1,a1
-	store	a0,(r14+(m_wordStreamLoop-LSPVars))
-	store	a1,(r14+(m_byteStreamLoop-LSPVars))
+	store	a0,(r14+(m_wordStreamLoop-LSPVars)/OFF_DIV)
+	store	a1,(r14+(m_byteStreamLoop-LSPVars)/OFF_DIV)
