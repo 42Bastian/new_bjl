@@ -379,6 +379,19 @@ RSADDR	SET RSADDR+8
 RSCOUNT	set RSADDR
 	ENDM
 
+	;; Special case 0x8000.0000 not catched
+	MACRO FHS ; Rs,Rd
+	normi	\0,\1
+	addqt	#24,\1
+	ENDM
+
+	;; Special case 0 not catched
+	MACRO CLZ ; Rs,Rd
+	normi	\0,\1
+	subqt	#8,\1
+	neg	\1
+	ENDM
+
 		MACRO legacy_POP
 		IFVAR \0
 		  load (SP),\0
