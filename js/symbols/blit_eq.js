@@ -16,6 +16,7 @@ BLIT_UPDA1       EQU $00000200   ; d09:A1 update step
 BLIT_UPDA2       EQU $00000400   ; d10:A2 update step
 BLIT_DSTA2       EQU $00000800   ; d11:reverse usage of A1 and A2
 BLIT_GOURD       EQU $00001000   ; d12:enable Gouraud shading
+BLIT_GOURZ       EQU $00002000   ;
 BLIT_ZBUFF       EQU $00002000   ; d13:polygon Z data updates
 BLIT_TOPBEN      EQU $00004000   ; d14:intensity carry into byte
 BLIT_TOPNEN      EQU $00008000   ; d15:intensity carry into nibble
@@ -185,6 +186,7 @@ B_UPDA1         EQU $00000200   ; d09:A1 update step
 B_UPDA2         EQU $00000400   ; d10:A2 update step
 B_DSTA2         EQU $00000800   ; d11:reverse usage of A1 and A2
 B_GOURD         EQU $00001000   ; d12:enable Gouraud shading
+B_GOURZ         EQU $00002000   ;
 B_ZBUFF         EQU $00002000   ; d13:polygon Z data updates
 B_TOPBEN        EQU $00004000   ; d14:intensity carry into byte
 B_TOPNEN        EQU $00008000   ; d15:intensity carry into nibble
@@ -208,7 +210,7 @@ B_LFU_NSAD      EQU $00400000   ; NOT Source AND Destination
 B_LFU_NOTS      EQU $00600000   ; NOT Source
 B_LFU_SAND      EQU $00800000   ; Source AND NOT Destination
 B_LFU_NOTD      EQU $00A00000   ; NOT Destination
-B_LFU_N_SXORD   EQU $00C00000     ; NOT (Source XOR Destination)
+B_LFU_N_SXORD   EQU $00C00000   ; NOT (Source XOR Destination)
 B_LFU_NSORND    EQU $00E00000   ; NOT Source OR NOT Destination
 B_LFU_SAD       EQU $01000000   ; Source AND Destination
 B_LFU_SXORD     EQU $01200000   ; Source XOR Destination
@@ -221,7 +223,7 @@ B_LFU_ONE       EQU $01E00000   ; All Ones
 
 ; These are some common combinations with less boolean names
 
-B_LFU_REPLACE   EQU $01800000     ; Source REPLACEs destination
+B_LFU_REPLACE   EQU $01800000   ; Source REPLACEs destination
 B_LFU_XOR       EQU $01200000   ; Source XOR with destination
 B_LFU_CLEAR     EQU $00000000   ; CLEAR destination
 
