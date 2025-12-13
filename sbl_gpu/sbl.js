@@ -15,26 +15,24 @@ start:
 	load	(r10),r0
 	cmpq	#3,r0		; wait for first interrupt of BIOS
 	jr	cs,.wait
+
 	moveq	#$11,r15
 	shlq	#4,r15
+	move	r15,r14
+	movei	#_68k,r0
+	moveq	#(_68ke-_68k)/4,r1
+.l	load	(r0),r2
+	addq	#4,r0
+	subq	#1,r1
+	store	r2,(r15)
+	jr	pl,.l
+	addq	#4,r15
 
-	movei	#$23fcffff,r1
-	movei	#$000000f0,r2
-//->	movei	#$00e04e71,r3
-//->	movei	#$4e7160f0,r4	; NOP
-	movei	#$00e04e72,r3
-	movei	#$200060f0,r4	; stop #$2000
-
-	store	r1,(r15)
-	store	r2,(r15+4)
-	store	r3,(r15+8)
-	store	r4,(r15+12)
 	moveq	#4,r0
-	store	r0,(r0)
+	store	r0,(r0)			; STOP object
 
-//->	moveq	#$10,r0
-	shlq	#6,r0
-	store	r15,(r0)		; point INT to our ISR
+	shlq	#6,r0			; r0 = $100
+	store	r14,(r0)		; point INT to our ISR
 
 	moveq	#0,r0
 	moveq	#$f,r14
@@ -44,23 +42,22 @@ start:
 	;; stop DSP
 	movei	#$f1a100,r14
 	movei	#($1f<<9)|(0<<14)|(1<<17),r4
-	store	r0,(r14+$14)	; stop DSP
-	store	r4,(r14)	; clear interrupts
+	store	r4,(r14)		; clear interrupts
+	store	r0,(r14+$14)		; stop DSP
 
-//->	addq	#$c,r15
-	movei	#100000,r1
-.w	subq	#1,r1
-	jr	pl,.w
-	nop
-//->	movei	#$2700,r0	; stop #$2000
-//->	storew	r0,(r15)
+	movei	#$100000,r0
+;;->	movei	#$f00058,r1
+.wx	subq	#1,r0
+	jr	ne,.wx
+//->	storew	r0,(r1)
+
+	store	r4,(r14)	; clear DSP interrupts (one more time)
 
 	movei	#1<<14|%11111<<9,r0
 	movei	#GPU_FLAGS,r1
 	store	r0,(r1)
 	nop
 	nop
-
 ;; ----------------------------------------
 	movei	#$f03000,r15
 	movei	#$800410,r0	; skip "BS94" header
@@ -77,6 +74,10 @@ start:
 	store	r5,(r15+8)
 	jump	(r15)
 	store	r6,(r15+12)
+
+	long
+_68k:	incbin "_68k.bin"
+_68ke:
 
  IF 0
 .cpy
