@@ -62,6 +62,11 @@ $(DEMO).o: obl0.img
 %.img: %.o
 	$Q$(RLN) -rw -z -n -a $$10000 x x -o $@ $<
 
+_68k.bin: _68k.S
+	$Q$(RMAC) -fr $< -o $@
+
+sbl.bin: _68k.bin
+
 sbl.XXX: sbl.bin
 	$Qjagcrypt -q -u -tursi $<
 	truncate -s 1040 $@
