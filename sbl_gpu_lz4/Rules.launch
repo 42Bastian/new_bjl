@@ -85,10 +85,10 @@ endif
 #
 .PHONY: bpe_cof
 bpe_cof: $(DEMO).cof
-	$(CALLBPE) $< -devmode &
+	$(CALLBPE) $< -devmode -singleinst &
 	true
 
 .PHONY: bpe
 bpe: $(DEMO)$(DEMO_EXT).j64
-	$(CALLBPE) $< -devmode -logging &
+	$(CALLBPE) $< -devmode -logging -singleinst &
 	true

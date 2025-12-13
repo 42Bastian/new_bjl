@@ -62,7 +62,7 @@ $(DEMO).o: obl0.img
 %.img: %.o
 	$Q$(RLN) -rw -z -n -a $$10000 x x -o $@ $<
 
-$(DEMO).XXX: sbl.bin
+sbl.XXX: sbl.bin
 	$Qjagcrypt -q -u -tursi $<
 
 .ONESHELL:
@@ -71,6 +71,10 @@ $(DEMO).j64: sbl.XXX $(DEMO).o
 	cat $(DEMO).o >> $@
 	bzcat $(BJL_ROOT)/bin/allff.bin.bz2 >>$@
 	truncate -s 32K $@
+
+vj.j64: $(DEMO).j64
+	cp $< $@
+	truncate -s 128K $@
 
 .PHONY: clean
 clean:

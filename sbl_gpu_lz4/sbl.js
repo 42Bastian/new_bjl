@@ -10,43 +10,49 @@ BLOCKS		SET (WANTED_SIZE/64)		; max. is 10
 	RUN $00F035AC
 start:
 ;; ----------------------------------------
-	;; wait 2 VBLs of BIOS
-	movei	#$3721c,r2
+	movei	#$3721c,r10
 .wait
-	load	(r2),r3
-	cmpq	#2,r3			; wait for first interrupt of BIOS
+	load	(r10),r0
+	cmpq	#3,r0		; wait for first interrupt of BIOS
 	jr	cs,.wait
+	moveq	#$11,r15
+	shlq	#4,r15
 
-	moveq	#0,r15
-	;; stop 68k and STOP OP
-	movei	#$4e722700,r1		; stop #$2700
+	movei	#$23fcffff,r1
+	movei	#$000000f0,r2
+//->	movei	#$00e04e71,r3
+//->	movei	#$4e7160f0,r4	; NOP
+	movei	#$00e04e72,r3
+	movei	#$200060f0,r4	; stop #$2000
+
 	store	r1,(r15)
-	movei	#$60fa0004,r1		; bra.s .-4 + STOP OBJECT
-	store	r1,(r15+4)
-	moveq	#$10,r0
-	shlq	#4,r0
+	store	r2,(r15+4)
+	store	r3,(r15+8)
+	store	r4,(r15+12)
+	moveq	#4,r0
+	store	r0,(r0)
+
+//->	moveq	#$10,r0
+	shlq	#6,r0
 	store	r15,(r0)		; point INT to our ISR
 
+	moveq	#0,r0
 	moveq	#$f,r14
 	shlq	#20,r14
-	store	r15,(r14+$20)
-
-	;; disable and ACK 68k interrupts
-	movei	#$f000e0,r0
-	sat8	r4
-	shlq	#16,r4			; => $ffff0000
-	store	r4,(r0)
+	store	r0,(r14+$20)		; stop OP
 
 	;; stop DSP
-	movei	#DSP_CTRL,r1
-	store	r15,(r1)		; stop DSP
+	movei	#$f1a100,r14
+	movei	#($1f<<9)|(0<<14)|(1<<17),r4
+	store	r0,(r14+$14)	; stop DSP
+	store	r4,(r14)	; clear interrupts
 
-	bset	#14,r15			; switch to bank 1
+	movei	#1<<14|%11111<<9,r0
 	movei	#GPU_FLAGS,r1
-	store	r15,(r1)
+	store	r0,(r1)
+	nop
 	nop
 ;; ----------------------------------------
-	movei	#$f03000,r15
 	movei	#$800410,r14	; skip "BS94" header
 	load	(r14),r21	; get destination
 	load	(r14+4),r0	; get lenght in bytes
@@ -57,7 +63,7 @@ start:
 //->	move	pc,r30
 //->	jr	depack_lz4
 //->	addq	#6,r30
-//->ddd	jr	ddd
+//->.waitw	jr	.waitw
 //->	nop
 
 
@@ -164,18 +170,6 @@ depack_lz4::
 
 	jump	(r11)
 	subq	#1,r21		; compensate last write
-
- IF 0
-.cpy
-	addq	#4,r0
-	load	(r0),r3
-	subq	#4,r1
-	store	r3,(r14)
-	jr	nn,.cpy
-	addq	#4,r14
-	jump	(r30)
-	nop
- ENDIF
 
 end:
 size	set end-start

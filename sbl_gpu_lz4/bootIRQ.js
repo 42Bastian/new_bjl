@@ -1,10 +1,7 @@
 	;; -*-asm-*-
 	gpu
 	include <js/macro/help.mac>
-	include <js/macro/joypad1.mac>
-	include <js/symbols/blit_eq.js>
 	include <js/symbols/jagregeq.js>
-	include <js/symbols/joypad.js>
 
 	include "canvas.h"
 
@@ -43,27 +40,24 @@ SP		REG 23
 
 
 main		reg 21
-blit_count	reg 19
 screen_ptr	reg 18
 bg_col		reg 17
-blitter		reg 15
-sine_table	reg 14
-
 
 tmp1		reg 1
 tmp0		reg 0
 
-MACRO WAITBLITTER
-.\wait@
-	load (blitter+$38),tmp0
-	shrq #1,tmp0
-	jr cc,.\wait@
-	nop
-ENDM
-
 	RUN $4000
 start::
 	movei	#$f03030,IRQ_SP
+	movei	#GPU_FLAGS,IRQ_FLAGADDR
+	moveta	IRQ_SP,IRQ_SP.a
+	moveta	IRQ_FLAGADDR,IRQ_FLAGADDR.a
+
+	movei	#1<<14|%11111<<9|%00000<<4,r0
+	store	r0,(IRQ_FLAGADDR)
+	nop
+	nop
+
 	movei	#irq_code,r1
 	move	IRQ_SP,r0
 	moveq	#31,r2
@@ -74,16 +68,11 @@ start::
 	jr	pl,.cpy
 	addqt	#4,r0
 
-	movei	#GPU_FLAGS,IRQ_FLAGADDR
-	moveta	IRQ_SP,IRQ_SP.a
-	moveta	IRQ_FLAGADDR,IRQ_FLAGADDR.a
-	move	IRQ_SP,SP
-	subq	#16,SP
-
 	movei	#$f00028,r3
 	movei	#ScreenMode,r0
 	storew	r0,(r3)
 	addq	#$10,r3
+
  IF 1
 videoInit:
  IFD _PAL
@@ -94,8 +83,6 @@ videoInit:
 	movei	#(NTSC_HMID-(NTSC_WIDTH>>1)+4)<<16|(-(NTSC_VMID-NTSC_HEIGHT) & $ffff),r0
 	movei	#(NTSC_VMID+NTSC_HEIGHT+3)<<16|(((NTSC_WIDTH>>1)-1)|$0400),r1 ; VI|HDE
  ENDIF
-	movei	#$f00038,r3
-
 	store	r0,(r3)		; HDB1/HDB2
 	addq	#4,r3
 	storew	r1,(r3)		; HDE
@@ -118,6 +105,7 @@ vi_size	EQU videoInit_e - videoInit
  ELSE
 	movei	#(NTSC_VMID+NTSC_HEIGHT+3),r1
  ENDIF
+	movei	#-1,r1
 	storew	r1,(r0)
  ENDIF
 ;; ----------------------------------------
@@ -132,14 +120,14 @@ vi_size	EQU videoInit_e - videoInit
 	shlq	#16,r0
 	moveq	#(obl0e-obl0)/4,r1
 	movei	#obl0,r2
-	moveq	#8,r4		; reload copy
+	moveq	#16,r4		; reload copy
 .l	load	(r2),r3
 	addqt	#4,r2
 	subq	#1,r1
 	store	r3,(r4)
 	addqt	#4,r4
 	store	r3,(r0)
-	jr	ne,.l
+	jr	pl,.l
 	addq	#4,r0
 
 	;; enable OP IRQ
@@ -153,18 +141,6 @@ vi_size	EQU videoInit_e - videoInit
 
  IFD TIMING
 	movei	#$f00058,bg_col
- ENDIF
-
- IF 0
-	movei	#BLIT_A1_BASE,blitter
-	movei	#BLIT_PITCH1|BLIT_PIXEL32|BLIT_WID3584|BLIT_XADDPIX,r0
-	store	r0,(blitter+_BLIT_A1_FLAGS)
-	moveq	#16,r1
-	bset	#16+4,r1
-;;->	movei	#$800080,r1
-	store	screen_ptr,(blitter)	;_BLIT_A1_BASE
-	store	r1,(blitter+_BLIT_PATD)
-	movei	#(320*239*2/4)|(1<<16),blit_count
  ENDIF
 	move	pc,main
 	addq	#4,main
@@ -181,13 +157,8 @@ waitStart:
  IFD TIMING
 	storew	r6,(bg_col)
  ENDIF
-;;->	moveq	#B_PATDSEL>>16,r1
-;;->	store	r3,(blitter+_BLIT_A1_PIXEL)
-;;->	store	blit_count,(blitter+_BLIT_COUNT)
-;;->	shlq	#16,r1
-;;->	store	r1,(blitter+_BLIT_CMD)
-
 ;; ----------------------------------------
+
   IF 1
  IFD _PAL
 	movei	#141,r4		; jag w/ storew
@@ -222,17 +193,24 @@ iloop:
 	addq	#3,r6
 
 	;; get OBL (must be stored long aligned !)
-	long
+	align	8
+
 obl0:	incbin "obl0.img"
 obl0e:
+
 	long
 irq_code:
 	run $f03030
+
+	moveq	#0,r1
+	movei	#$f00058,r0
+	storew	r1,(r0)
+
 	load	(IRQ_FLAGADDR.a),IRQ_FLAG.a
 	bset	#9+3,IRQ_FLAG.a
 	load	(IRQ_SP.a),IRQ_RTS.a
 	bclr	#3,IRQ_FLAG.a
-	moveq	#8,IRQScratch0.a
+	moveq	#16,IRQScratch0.a
 	moveq	#1,IRQScratch1.a
 	shlq	#16,IRQScratch1.a
 	moveq	#(obl0e-obl0)/8,IRQScratch3.a
@@ -247,17 +225,13 @@ irq_code:
 	moveta	IRQScratch0.a,VBLFlag
 
 	movei	#$f00026,IRQScratch1.a
-;;->	jr	irq_return
 	storew	IRQScratch1.a,(IRQScratch1.a) ; resume OP
-;;->
-;;->timer_irq::
-;;->	nop
 irq_return
 	addqt	#2,IRQ_RTS.a
 	movefa	IRQ_SP,IRQ_SP.a
 	moveta	IRQ_RTS.a,IRQ_RTS ; only for VJ needed
-	store	IRQ_FLAG.a,(IRQ_FLAGADDR.a)
 	jump	(IRQ_RTS.a)
+	store	IRQ_FLAG.a,(IRQ_FLAGADDR.a)
 	nop
 irq_end:
 	RUN irq_code+irq_end-$f03030
