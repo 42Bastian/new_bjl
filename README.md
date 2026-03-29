@@ -1,6 +1,9 @@
 # new_bjl
 WIP: Move BJL over to rln/rmac/lyxass
 
+Moved to https://codeberg.org/42Bastian/new_bjl
+
+
 ## lyxass
 
 `lyxass` is used for TOM and JERRY coding
