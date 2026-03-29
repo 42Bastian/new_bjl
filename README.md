@@ -8,20 +8,21 @@ Moved to https://codeberg.org/42Bastian/new_bjl
 
 `lyxass` is used for TOM and JERRY coding
 
-https://github.com/42Bastian/lyxass
+https://codeberg.org/42Bastian/lyxass
 
 ## rmac
   
  `rmac` is used for 68k and OP code, but does also support TOM and JERRY.
 
-https://github.com/42Bastian/rmac
+https://codeberg.org/42Bastian/rmac
 
 ## rln
 
 A simple linker.
 
 My fork:
-https://github.com/42Bastian/rln
+
+https://codeberg.org/42Bastian/rln
 
 Based on:
 
